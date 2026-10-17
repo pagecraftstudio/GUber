@@ -193,19 +193,27 @@ select t.eq('super_admin reads all 3 companies', t.rows('select 1 from companies
 select t.eq('super_admin reads suspension_reason', (select suspension_reason from companies where id = t.u(103)), 'secret internal reason');
 select t.eq('super_admin reads company_notes', t.rows('select 1 from company_notes'), 1::bigint);
 select t.eq('super_admin reads suspended company data', t.rows('select 1 from routes where company_id = t.u(103)'), 1::bigint);
-select t.passes('super_admin can suspend company', $$update companies set status = 'suspended', suspended_at = now(), suspension_reason = 'test' where id = t.u(102)$$);
+-- 7.1: platform staff can no longer change companies directly (every change must be an audited RPC, 7.3). Suspension
+-- behaviour for tenants is still covered, via the trusted owner path (what the future RPC runs as).
+select t.raises('super_admin cannot suspend company directly (7.1)', $$update companies set status = 'suspended', suspended_at = now(), suspension_reason = 'test' where id = t.u(102)$$, '42501');
+select t.eq('company B still active after refused direct suspend', (select status from companies where id = t.u(102)), 'active');
+select t.as_admin();
+update companies set status = 'suspended', suspended_at = now(), suspension_reason = 'test' where id = t.u(102);
 select t.as_user(t.u(7));
 select t.eq('B owner sees nothing after suspension', t.rows('select 1 from routes'), 0::bigint);
+select t.as_admin();
+update companies set status = 'active', suspended_at = null where id = t.u(102);
 select t.as_user(t.u(1));
-select t.passes('super_admin can reactivate', $$update companies set status = 'active', suspended_at = null where id = t.u(102)$$);
+select t.raises('super_admin cannot reactivate directly (7.1)', $$update companies set status = 'active', suspended_at = null where id = t.u(103)$$, '42501');
+select t.eq('company C still suspended after refused direct reactivate', (select status from companies where id = t.u(103)), 'suspended');
 select t.raises('super_admin cannot hard-delete companies', 'delete from companies where id = t.u(101)', '42501');
 select t.as_user(t.u(9));   -- support
 select t.eq('support reads companies', t.rows('select 1 from companies'), 3::bigint);
-select t.eq('support cannot update companies', t.affected($$update companies set name = 'x' where id = t.u(101)$$), 0::bigint);
-select t.passes('support can add internal note', $$insert into company_notes (company_id, author_id, body) values (t.u(101), t.u(9), 'support note')$$);
+select t.raises('support cannot update companies', $$update companies set name = 'x' where id = t.u(101)$$, '42501');
+select t.raises('support cannot add internal note directly (7.1: becomes an audited RPC)', $$insert into company_notes (company_id, author_id, body) values (t.u(101), t.u(9), 'support note')$$, '42501');
 select t.as_user(t.u(10));  -- billing
-select t.passes('billing role can write invoices', $$insert into invoices (company_id,invoice_number,status,currency,subtotal,total) values (t.u(101),'INV-9','open','EGP',10,10)$$);
-select t.eq('billing role cannot update companies', t.affected($$update companies set name = 'x' where id = t.u(101)$$), 0::bigint);
+select t.raises('billing role cannot write invoices directly (7.1)', $$insert into invoices (company_id,invoice_number,status,currency,subtotal,total) values (t.u(101),'INV-9','open','EGP',10,10)$$, '42501');
+select t.raises('billing role cannot update companies', $$update companies set name = 'x' where id = t.u(101)$$, '42501');
 select t.as_user(t.u(2));
 select t.eq('tenant cannot read platform_users', t.rows('select 1 from platform_users'), 0::bigint);
 select t.eq('tenant sees own plan, not other non-public plans', (select array_agg(code order by code) from plans), array['professional']);

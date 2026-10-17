@@ -42,3 +42,16 @@ Legend: **L** = SQL + HTTP tested locally (real PostgreSQL/PostgREST). **B** = a
 | dashboard, super admin, other pages | none | real mode throws `NotIntegratedError` (never mock data) |
 
 Blocked by external config: live Supabase project/keys, Auth email + redirect URLs, SMS provider for phone claim, custom domains, Vercel.
+
+
+## Phase 7.1 - platform security foundation (migration 0015)
+- Platform staff (incl. super_admin) can no longer INSERT/UPDATE `companies`, `subscriptions`, `invoices`, `payments`,
+  `platform_users`, `plans`, `plan_entitlements`, `entitlement_definitions`, `company_notes` through the API
+  (policies dropped AND privileges revoked). Reads (`platform_select`) are unchanged. Changes arrive as audited
+  SECURITY DEFINER RPCs in 7.3/7.4. Platform roles are still granted only by `supabase/bootstrap/first_super_admin.sql`.
+- Known, accepted gap until Phase 12: direct super_admin writes to `domains` remain.
+- The last active super_admin cannot be demoted, deactivated or deleted (trigger on `platform_users` and `profiles.is_active`).
+- A subscription counts as live only while `current_period_end > now()` (`app_private.live_subscription`).
+  Expired = no NEW users/buses/drivers/routes/trips/bookings; reads keep working; only suspension locks a company out.
+- Helpers for admin RPCs: `app_private.assert_platform(roles[])`, `app_private.audit_platform(...)`.
+- `companies.contact_name` = responsible person (not exposed through `my_company`).

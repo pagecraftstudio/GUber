@@ -127,7 +127,7 @@ select t.eq('super_admin updates a company-A route', t.affected($$update routes 
 select t.as_user(t.u(9));   -- platform support: read-only on tenants
 select t.eq('support insert into A is stopped by RLS (42501)', left(t.err_of($$insert into buses (company_id, plate_number, capacity) values (t.u(101), 'SUP-1', 20)$$), 5), '42501');
 select t.as_user(t.u(10));  -- platform billing
-select t.passes('billing inserts an invoice for B', $$insert into invoices (company_id, invoice_number, status, currency, subtotal, total) values (t.u(102), 'INV-G1', 'open', 'EGP', 1, 1)$$);
+select t.raises('billing cannot insert an invoice for B directly (7.1)', $$insert into invoices (company_id, invoice_number, status, currency, subtotal, total) values (t.u(102), 'INV-G1', 'open', 'EGP', 1, 1)$$, '42501');
 select t.as_user(t.u(8));   -- owner of suspended C
 select t.eq('suspended owner insert into C: plain 42501', left(t.err_of($$insert into buses (company_id, plate_number, capacity) values (t.u(103), 'C-1', 5)$$), 5), '42501');
 select t.as_anon();
