@@ -1,11 +1,11 @@
 # Integration Map (frontend <-> backend)
 
-Status: UI mounted at `/app` (client-only, mock data). Backend = Phase 5A (migrations 0001-0011). NOT wired yet. Nothing tested on live Supabase.
+Status: UI mounted at `/` (client-only; real backend, mock only in dev). Backend = Phase 5A (migrations 0001-0011). NOT wired yet. Nothing tested on live Supabase.
 
 ## Layout
 - `src/ui/` Vite SPA, mock `localStorage` (`lib/transportService.ts`, `lib/authService.ts`)
-- `src/app/app/[[...slug]]` mounts it. Production: 404 unless `ENABLE_UI_PREVIEW=true` (UI has fake super-admin).
-- Backend: `supabase/migrations`, `src/lib`, `src/app` (login, dashboard, admin)
+- `src/app/(marketplace)` mounts it at `/`, `/login`, `/register`, `/my-bookings`. `/app/*` redirects to `/`. `ENABLE_UI_PREVIEW` is no longer used: in real mode the dashboard/super-admin views render NotAvailableYet and mock data is refused at build time.
+- Backend: `supabase/migrations`, `src/lib`, `src/app` (company/login, dashboard, admin, driver)
 
 ## Model mismatches (fix when wiring)
 | Frontend | Backend | Action |

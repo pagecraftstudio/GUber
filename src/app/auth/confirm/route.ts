@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { safeNextPath } from '@/lib/auth/redirect';
+import { loginPathFor, safeNextPath } from '@/lib/auth/redirect';
 import { getEnv } from '@/lib/env';
 
 /**
@@ -23,5 +23,5 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) return NextResponse.redirect(new URL(next, origin));
   }
-  return NextResponse.redirect(new URL('/login?error=confirm_failed', origin));
+  return NextResponse.redirect(new URL(`${loginPathFor(next)}?error=confirm_failed`, origin));
 }

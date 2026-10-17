@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { LocaleProvider } from './context/LocaleContext';
-import { TenantProvider, useTenant } from './context/TenantContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { TenantProvider, useTenant, type AppView } from './context/TenantContext';
+import { AuthProvider, useAuth, type AuthModalMode } from './context/AuthContext';
 import { PreviewBar } from './components/dev/PreviewBar';
 import { MasterMarketplace } from './components/marketplace/MasterMarketplace';
 import { PublicWebsite } from './components/public/PublicWebsite';
@@ -35,9 +35,40 @@ const NotAvailableYet: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   );
 };
 
-const AppContent: React.FC = () => {
+/** How a server route enters the client app. All fields are UX only; authorization is server-side + RLS. */
+export interface AppEntry {
+  /** First screen. Never a staff view in real mode (those render NotAvailableYet). */
+  initialView?: AppView;
+  /** Dedicated /login or /register page: open the auth modal immediately and hand off to /continue after sign-in. */
+  authPage?: Exclude<AuthModalMode, 'forgot_password'>;
+  /** Where /continue should go after sign-in on a dedicated auth page (allow-listed server-side). */
+  nextAfterAuth?: string;
+}
+
+const AppContent: React.FC<AppEntry> = ({ authPage, nextAfterAuth }) => {
   const { activeView, setActiveView } = useTenant();
-  const { isAuthModalOpen, authModalMode, closeAuthModal } = useAuth();
+  const { isAuthModalOpen, authModalMode, closeAuthModal, openAuthModal, isAuthenticated, loading } = useAuth();
+  const requested = useRef(false); // we asked for the modal
+  const shown = useRef(false); // the modal was actually rendered open at least once
+
+  // Dedicated auth page: open the modal once, then (a) after sign-in let the SERVER pick the destination by the
+  // user's real role (/continue), (b) if the person dismisses the modal without signing in, go back to the marketplace.
+  useEffect(() => {
+    if (authPage && !loading && !isAuthenticated && !requested.current) {
+      requested.current = true;
+      openAuthModal(authPage);
+    }
+  }, [authPage, loading, isAuthenticated, openAuthModal]);
+  useEffect(() => {
+    if (!authPage || loading) return;
+    if (isAuthModalOpen) shown.current = true;
+    if (isAuthenticated) {
+      const q = nextAfterAuth ? `?next=${encodeURIComponent(nextAfterAuth)}` : '';
+      window.location.assign(`/continue${q}`);
+    } else if (shown.current && !isAuthModalOpen) {
+      window.location.assign('/');
+    }
+  }, [authPage, nextAfterAuth, loading, isAuthenticated, isAuthModalOpen]);
 
   return (
     <div className="min-h-screen bg-[var(--surface-page)] text-[var(--text-primary)] transition-colors duration-200">
@@ -61,13 +92,13 @@ const AppContent: React.FC = () => {
   );
 };
 
-export default function App() {
+export default function App(entry: AppEntry) {
   return (
     <ThemeProvider>
       <LocaleProvider>
-        <TenantProvider>
+        <TenantProvider initialView={entry.initialView}>
           <AuthProvider>
-            <AppContent />
+            <AppContent {...entry} />
           </AuthProvider>
         </TenantProvider>
       </LocaleProvider>

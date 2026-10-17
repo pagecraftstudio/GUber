@@ -10,15 +10,11 @@ export const metadata = { title: 'No access' };
 export default async function NoAccessPage() {
   const ctx = await requireUser();
   const state = accessState(ctx);
-  if (state !== 'no_access' && state !== 'deactivated') redirect(homePathFor(ctx));
+  if (state !== 'deactivated') redirect(homePathFor(ctx)); // customers have a portal; only deactivated accounts land here
   return (
     <AuthCard
-      title={state === 'deactivated' ? 'Account deactivated' : 'No company access'}
-      subtitle={
-        state === 'deactivated'
-          ? 'This account has been deactivated. Please contact your company administrator.'
-          : 'Your account is not linked to a company yet. Open the invitation link your administrator sent you.'
-      }
+      title="Account deactivated"
+      subtitle="This account has been deactivated. Please contact support or your company administrator."
     >
       <form action={logoutAction}>
         <SubmitButton variant="ghost">Sign out</SubmitButton>

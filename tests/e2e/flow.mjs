@@ -5,7 +5,7 @@ const browser = await L.launch();
 const alice = { name: 'Alice Tester', email: 'alice@e2e.test', phone: '01011112222' };
 
 const authDialogTop = (p) => p.evaluate(() => { const ds = [...document.querySelectorAll('[role=dialog]')]; const top = ds.find((d) => { const r = d.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + 40); return t && d.contains(t); }); return top ? top.innerText : ''; });
-async function openApp(p) { await p.goto(L.BASE + '/app', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures|No trips|No Departures/i, 20000); await sleep(500); }
+async function openApp(p) { await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures|No trips|No Departures/i, 20000); await sleep(500); }
 async function signUp(p, u) {
   await clickText(p, 'Sign In'); console.log('SU1', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,100)); await clickText(p, 'Create Account', { scope: '[role=dialog]' }); console.log('SU2', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,100));
   await typeInto(p, '[role=dialog] input[placeholder*="Karim"]', u.name); await typeInto(p, '[role=dialog] input[type=email]', u.email);

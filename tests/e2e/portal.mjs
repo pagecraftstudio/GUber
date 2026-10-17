@@ -32,7 +32,7 @@ check('setup: capacity counters = booked seats', seatsBooked(T(805)) === 3 && se
 const browser = await L.launch();
 async function newSession(email, ctx = browser) { // a separate browser context = separate cookies, so two customers can be signed in at once
   const p = await L.newPage(ctx);
-  await p.goto(L.BASE + '/app', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000);
+  await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000);
   await clickText(p, 'Sign In');
   await typeInto(p, '[role=dialog] input[type=email]', email); await typeInto(p, '[role=dialog] input[type=password]', PW);
   await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2000);
@@ -116,7 +116,7 @@ await pc.keyboard.press('Escape'); await sleep(400);
 await clickText(pc, 'Cancel', { sel: 'button', scope: '[role=dialog]' }).catch(() => {});
 
 // ---------- 4. over-capacity in the booking UI ----------
-await pc.goto(L.BASE + '/app', { waitUntil: 'domcontentloaded' }); await waitText(pc, /Showing \d+ Departures/i, 20000); await sleep(800);
+await pc.goto(L.BASE + '/', { waitUntil: 'domcontentloaded' }); await waitText(pc, /Showing \d+ Departures/i, 20000); await sleep(800);
 const farDate = sql(`select to_char(departure_at at time zone 'Africa/Cairo','YYYY-MM-DD') from trips where id = '${T(806)}'`);
 await pc.$eval('input[type=date]', (el, v) => { const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }, farDate);
 await clickText(pc, 'Find Scheduled Trips'); await sleep(1200);
@@ -138,7 +138,7 @@ check('over-capacity: nothing was booked, counter unchanged', seatsBooked(T(806)
 await snap(pc, 'over-capacity');
 
 // ---------- 5. history correct after refresh ----------
-await pc.goto(L.BASE + '/app', { waitUntil: 'domcontentloaded' }); await waitText(pc, /Carol Customer/, 15000);
+await pc.goto(L.BASE + '/', { waitUntil: 'domcontentloaded' }); await waitText(pc, /Carol Customer/, 15000);
 await openPortal(pc, 'Carol'); await filter(pc, 'All Bookings');
 const hist = await portalText(pc);
 const dbRows = sql(`select b.reference || ':' || b.status from bookings b join customers c on c.id = b.customer_id join auth.users u on u.id = c.user_id where u.email = 'carol@e2e.test' order by b.reference`).split('\n');

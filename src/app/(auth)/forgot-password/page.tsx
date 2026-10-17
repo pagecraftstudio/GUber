@@ -19,7 +19,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
         <SubmitButton>Send reset link</SubmitButton>
       </form>
       <p className="text-center text-sm text-slate-500">
-        <Link href="/login" className="underline underline-offset-2 hover:text-slate-800">
+        <Link href="/company/login" className="underline underline-offset-2 hover:text-slate-800">
           Back to sign in
         </Link>
       </p>

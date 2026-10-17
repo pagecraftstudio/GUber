@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { loadContext } from '@/lib/auth/context';
 import { homePathFor } from '@/lib/auth/permissions';
 import { safeNextPath } from '@/lib/auth/redirect';
+import { COMPANY_LOGIN_PATH } from '@/lib/auth/paths';
 import { getEnv } from '@/lib/env';
 import { requireUser } from '@/lib/auth/guards';
 import {
@@ -47,16 +48,16 @@ function authErrorCode(error: AuthErrorLike): string {
 export async function loginAction(formData: FormData): Promise<void> {
   const next = safeNextPath(field(formData, 'next'), '');
   const parsed = loginSchema.safeParse({ email: field(formData, 'email'), password: field(formData, 'password') });
-  if (!parsed.success) redirect(url('/login', { error: 'invalid_credentials', next }));
+  if (!parsed.success) redirect(url(COMPANY_LOGIN_PATH, { error: 'invalid_credentials', next }));
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) redirect(url('/login', { error: authErrorCode(error), next }));
+  if (error) redirect(url(COMPANY_LOGIN_PATH, { error: authErrorCode(error), next }));
 
   const ctx = await loadContext(supabase);
   if (!ctx) {
     await supabase.auth.signOut({ scope: 'local' });
-    redirect(url('/login', { error: 'login_failed' }));
+    redirect(url(COMPANY_LOGIN_PATH, { error: 'login_failed' }));
   }
   redirect(safeNextPath(next, homePathFor(ctx)));
 }
@@ -64,7 +65,7 @@ export async function loginAction(formData: FormData): Promise<void> {
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: 'local' });
-  redirect('/login');
+  redirect(COMPANY_LOGIN_PATH);
 }
 
 // ---------------------------------------------------------------- password reset
@@ -113,7 +114,7 @@ async function acceptInvite(supabase: SupabaseClient, token: string): Promise<st
 
 export async function signUpWithInviteAction(formData: FormData): Promise<void> {
   const token = field(formData, 'token');
-  if (!inviteTokenSchema.safeParse(token).success) redirect(url('/login', { error: 'invalid_invite' }));
+  if (!inviteTokenSchema.safeParse(token).success) redirect(url(COMPANY_LOGIN_PATH, { error: 'invalid_invite' }));
   const invitePath = `/invite/${token}`;
 
   const parsed = inviteSignupSchema.safeParse({
@@ -153,14 +154,14 @@ export async function signUpWithInviteAction(formData: FormData): Promise<void> 
 
 export async function acceptInviteAction(formData: FormData): Promise<void> {
   const token = field(formData, 'token');
-  if (!inviteTokenSchema.safeParse(token).success) redirect(url('/login', { error: 'invalid_invite' }));
+  if (!inviteTokenSchema.safeParse(token).success) redirect(url(COMPANY_LOGIN_PATH, { error: 'invalid_invite' }));
   const invitePath = `/invite/${token}`;
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(url('/login', { next: invitePath }));
+  if (!user) redirect(url(COMPANY_LOGIN_PATH, { next: invitePath }));
 
   const failure = await acceptInvite(supabase, token);
   redirect(failure ? url(invitePath, { error: failure }) : '/dashboard');

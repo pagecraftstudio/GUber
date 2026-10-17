@@ -24,7 +24,7 @@ interface PublicHeaderProps {
 export const PublicHeader: React.FC<PublicHeaderProps> = ({ onBookClick }) => {
   const { currentCompany, setActiveView } = useTenant();
   const { locale, toggleLocale, t } = useLocale();
-  const { user, isAuthenticated, signOut, openAuthModal } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -166,13 +166,18 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ onBookClick }) => {
               )}
             </div>
           ) : (
-            <button
-              onClick={() => openAuthModal('login')}
-              className="p-2 text-slate-700 hover:text-slate-900 font-semibold text-xs flex items-center gap-1 cursor-pointer"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('signIn')}</span>
-            </button>
+            <>
+              <a href="/login" className="p-2 text-slate-700 hover:text-slate-900 font-semibold text-xs flex items-center gap-1">
+                <User className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t('logIn')}</span>
+              </a>
+              <a href="/register" className="p-2 text-slate-700 hover:text-slate-900 font-semibold text-xs hidden sm:inline">
+                {t('register')}
+              </a>
+              <a href="/company/login" className="p-2 text-slate-400 hover:text-slate-700 text-xs hidden md:inline whitespace-nowrap">
+                {t('operatorLogin')}
+              </a>
+            </>
           )}
 
           <Button

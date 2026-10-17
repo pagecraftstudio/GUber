@@ -76,7 +76,7 @@ export class RealAuthService {
       options: {
         // user_metadata is client-controlled: display convenience only, NEVER used for authorization.
         data: { full_name: d.fullName.trim(), phone: d.phone.trim(), student_id: d.studentId ?? '', university: d.university ?? '' },
-        emailRedirectTo: `${this.siteUrl}/auth/confirm?next=${encodeURIComponent('/app')}`,
+        emailRedirectTo: `${this.siteUrl}/auth/confirm?next=${encodeURIComponent('/my-bookings')}`,
       },
     });
     if (error) throw new AuthServiceError(classify(error, 'signup_failed'));

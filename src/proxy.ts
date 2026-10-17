@@ -1,12 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/proxy';
+import { loginPathFor } from '@/lib/auth/redirect';
 
 /**
  * Coarse gate + session refresh. NOT the security boundary: real authorization happens in server guards
  * (lib/auth/guards.ts) and, above all, in Postgres RLS. This only keeps signed-out visitors off app pages
  * and keeps the auth cookie fresh.
  */
-const SESSION_REQUIRED = ['/dashboard', '/driver', '/admin', '/reset-password', '/suspended', '/no-access'];
+/** '/' (marketplace), '/login', '/register', '/company/login' and the trip search are deliberately NOT here: public. */
+const SESSION_REQUIRED = ['/dashboard', '/driver', '/admin', '/my-bookings', '/reset-password', '/suspended', '/no-access'];
 
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
@@ -15,7 +17,7 @@ export async function proxy(request: NextRequest) {
   const needsSession = SESSION_REQUIRED.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   if (!user && needsSession) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = loginPathFor(pathname);
     url.search = '';
     url.searchParams.set('next', `${pathname}${search}`);
     const redirect = NextResponse.redirect(url);

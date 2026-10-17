@@ -59,10 +59,10 @@ const DEMO_FALLBACK_COMPANY: Company = process.env.NODE_ENV === 'production' ? (
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TenantProvider: React.FC<{ children: React.ReactNode; initialView?: AppView }> = ({ children, initialView = 'marketplace' }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [currentCompanyId, setCurrentCompanyId] = useState<string>(demoCompanyId());
-  const [activeView, setActiveView] = useState<AppView>('marketplace');
+  const [activeView, setActiveView] = useState<AppView>(initialView);
 
   const reloadCompanies = async () => {
     const list = await transportService.getCompanies();

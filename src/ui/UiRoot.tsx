@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import type { AppEntry } from './App';
 
 /**
  * The UI keeps browser-only state (localStorage-backed mock data, theme, locale), so it is rendered on the client
@@ -11,6 +12,6 @@ const App = dynamic(() => import('./App'), {
   loading: () => <div className="min-h-screen bg-[var(--surface-page)]" aria-busy="true" />,
 });
 
-export function UiRoot() {
-  return <App />;
+export function UiRoot(props: AppEntry) {
+  return <App {...props} />;
 }

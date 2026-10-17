@@ -26,7 +26,7 @@ export default async function InvitePage({
   const invalid = (
     <AuthCard title="Invitation not valid">
       <Alert kind="error">This invitation is invalid, expired, or was already used. Ask your company administrator for a new one.</Alert>
-      <Link href="/login" className="block text-center text-sm underline underline-offset-2">
+      <Link href="/company/login" className="block text-center text-sm underline underline-offset-2">
         Go to sign in
       </Link>
     </AuthCard>
@@ -81,7 +81,7 @@ export default async function InvitePage({
       </form>
       <p className="text-center text-sm text-slate-500">
         Already have an account?{' '}
-        <Link href={`/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="underline underline-offset-2 hover:text-slate-800">
+        <Link href={`/company/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="underline underline-offset-2 hover:text-slate-800">
           Sign in
         </Link>
       </p>

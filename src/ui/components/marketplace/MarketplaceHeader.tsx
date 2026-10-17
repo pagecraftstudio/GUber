@@ -23,7 +23,7 @@ interface MarketplaceHeaderProps {
 
 export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({ onBrowseOperators }) => {
   const { locale, toggleLocale, t } = useLocale();
-  const { user, isAuthenticated, signOut, openAuthModal } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
   const { setActiveView } = useTenant();
   const { resolvedTheme, toggleTheme } = useTheme();
 
@@ -55,7 +55,7 @@ export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({ onBrowseOp
         {/* Zone 2: Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
           <a href="#search-section" className="hover:text-[#3563E9] transition-colors whitespace-nowrap">
-            {t('findRoute')}
+            {t('navSearchTrips')}
           </a>
           <button
             onClick={onBrowseOperators}
@@ -63,6 +63,12 @@ export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({ onBrowseOp
           >
             {t('allOperators')}
           </button>
+          <a href="/my-bookings" className="hover:text-[#3563E9] transition-colors whitespace-nowrap">
+            {t('myBookings')}
+          </a>
+          <a href="/company/login" className="text-slate-400 hover:text-[#3563E9] transition-colors whitespace-nowrap">
+            {t('operatorLogin')}
+          </a>
         </nav>
 
         {/* Zone 3: Actions (Theme, Language, Auth) */}
@@ -156,16 +162,23 @@ export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({ onBrowseOp
               )}
             </div>
           ) : (
-            <Button
-              size="sm"
-              onClick={() => openAuthModal('login')}
-              icon={<User className="w-3.5 h-3.5" />}
-            >
-              {t('signIn')}
-            </Button>
+            <>
+              <a href="/login" className="px-2 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#3563E9] whitespace-nowrap">
+                {t('logIn')}
+              </a>
+              <a href="/register">
+                <Button size="sm" icon={<User className="w-3.5 h-3.5" />}>{t('register')}</Button>
+              </a>
+            </>
           )}
         </div>
       </div>
+      {/* Small screens: the same entry points, in one scrollable strip */}
+      <nav className="md:hidden border-t border-slate-100 px-4 py-2 flex items-center gap-5 overflow-x-auto text-xs font-semibold text-slate-600">
+        <a href="#search-section" className="whitespace-nowrap">{t('navSearchTrips')}</a>
+        <a href="/my-bookings" className="whitespace-nowrap">{t('myBookings')}</a>
+        <a href="/company/login" className="whitespace-nowrap text-slate-400">{t('operatorLogin')}</a>
+      </nav>
     </header>
   );
 };

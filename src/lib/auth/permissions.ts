@@ -1,4 +1,5 @@
 import type { AuthContext, Membership, PlatformRole } from './types';
+import { CUSTOMER_HOME_PATH, MARKETPLACE_PATH } from './paths';
 
 /**
  * THE one place that turns an AuthContext into access decisions. Pure (no I/O) so it is unit-testable.
@@ -35,7 +36,7 @@ export type AccessState =
   | 'platform'
   | 'tenant'
   | 'tenant_locked' // member of a suspended/cancelled company, or membership suspended
-  | 'no_access'; // signed in, but no membership and no platform role
+  | 'customer'; // signed in, no company membership, no platform role: a marketplace customer (being a customer is not a role)
 
 export function accessState(ctx: AuthContext | null): AccessState {
   if (!ctx) return 'anonymous';
@@ -43,7 +44,7 @@ export function accessState(ctx: AuthContext | null): AccessState {
   if (ctx.platformRole) return 'platform';
   if (activeMembership(ctx)) return 'tenant';
   if (ctx.membership) return 'tenant_locked';
-  return 'no_access';
+  return 'customer';
 }
 
 /** Where a signed-in user belongs after login. */
@@ -57,9 +58,10 @@ export function homePathFor(ctx: AuthContext | null): string {
     case 'tenant_locked':
       return '/suspended';
     case 'deactivated':
-    case 'no_access':
       return '/no-access';
+    case 'customer':
+      return CUSTOMER_HOME_PATH;
     case 'anonymous':
-      return '/login';
+      return MARKETPLACE_PATH;
   }
 }

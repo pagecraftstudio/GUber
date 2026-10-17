@@ -60,13 +60,24 @@ describe('hasPlatformRole()', () => {
 
 describe('accessState() / homePathFor()', () => {
   it('routes each kind of user to the right home', () => {
-    expect(homePathFor(null)).toBe('/login');
+    expect(homePathFor(null)).toBe('/'); // anonymous visitors belong on the public marketplace, never on a login page
     expect(homePathFor({ ...base, platformRole: 'super_admin' })).toBe('/admin');
     expect(homePathFor(tenant())).toBe('/dashboard');
     expect(homePathFor(tenant({ companyStatus: 'suspended' }))).toBe('/suspended');
     expect(homePathFor(tenant({ memberStatus: 'suspended' }))).toBe('/suspended');
-    expect(homePathFor(base)).toBe('/no-access');
+    expect(homePathFor(base)).toBe('/my-bookings'); // signed in, no membership, no platform role = customer
     expect(homePathFor({ ...base, isActive: false })).toBe('/no-access');
+  });
+  it('customer is derived from the absence of staff/platform access, never from a client-supplied role', () => {
+    expect(accessState(base)).toBe('customer');
+    expect(accessState({ ...base, membership: tenant().membership })).toBe('tenant');
+    expect(accessState({ ...base, platformRole: 'support' })).toBe('platform');
+    // a customer holds no staff permission anywhere
+    expect(can(base, 'trips.read')).toBe(false);
+    expect(can(base, 'trips.read_assigned')).toBe(false);
+  });
+  it('staff of a suspended company are NOT treated as customers', () => {
+    expect(accessState(tenant({ companyStatus: 'suspended' }))).toBe('tenant_locked');
   });
   it('a member with only assigned-trip access is a driver and lands on /driver; staff with trips.read stay on /dashboard', () => {
     expect(homePathFor(tenant({ roleKey: 'driver', permissions: ['trips.read_assigned'] }))).toBe('/driver');

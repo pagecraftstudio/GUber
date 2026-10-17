@@ -27,14 +27,14 @@ const b2 = (await rpc(carolTok, 'create_my_booking', { p_trip_id: T(996), p_seat
 check('setup: bookings exist and each seat got a ticket in the same transaction', b1?.reference && b2?.reference && sql(`select count(*) from tickets where booking_id = '${b1.id}'`) === '2' && sql(`select count(*) from tickets where booking_id = '${b2.id}'`) === '1');
 
 const browser = await L.launch();
-async function signIn(ctx, email, path = '/login') {
+async function signIn(ctx, email, path = '/company/login') {
   const p = await L.newPage(ctx);
   await p.goto(L.BASE + path, { waitUntil: 'domcontentloaded', timeout: 60000 });
   return p;
 }
 async function staffLogin(email) {
   const ctx = await browser.createBrowserContext(); const p = await L.newPage(ctx);
-  await p.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await p.goto(L.BASE + '/company/login', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await typeInto(p, 'input[name=email]', email); await typeInto(p, 'input[name=password]', PW);
   await clickText(p, 'Sign in', { sel: 'button[type=submit]' }); await sleep(3500);
   return { ctx, p };
@@ -44,7 +44,7 @@ async function staffLogin(email) {
 const cctx = await browser.createBrowserContext(); const cp = await L.newPage(cctx);
 const qrBodies = []; // what the browser itself received from my_ticket_qr (the only place a raw token ever appears)
 cp.on('response', async (r) => { if (r.url().includes('/rpc/my_ticket_qr') && r.ok()) { try { qrBodies.push(await r.json()); } catch {} } });
-await cp.goto(L.BASE + '/app', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(cp, /Showing \d+ Departures/i, 20000);
+await cp.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(cp, /Showing \d+ Departures/i, 20000);
 await clickText(cp, 'Sign In'); await typeInto(cp, '[role=dialog] input[type=email]', 'tix-carol@e2e.test'); await typeInto(cp, '[role=dialog] input[type=password]', PW);
 await clickText(cp, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2000);
 const h = await cp.evaluateHandle(() => [...document.querySelectorAll('button')].find((e) => e.offsetParent && e.innerText.includes('Tix')));
@@ -105,10 +105,10 @@ const cust = await rpc(await L.tokenFor('tix-carol@e2e.test', PW), 'board_ticket
 check('customer: cannot board by calling the RPC', cust.body?.code === 'P0002', JSON.stringify(cust.body));
 const cctx2 = await browser.createBrowserContext(); const anon = await L.newPage(cctx2);
 await anon.goto(L.BASE + '/driver', { waitUntil: 'domcontentloaded' }); await sleep(1500);
-check('anonymous: /driver redirects to sign-in', new URL(anon.url()).pathname === '/login', anon.url());
+check('anonymous: /driver redirects to sign-in', new URL(anon.url()).pathname === '/company/login', anon.url());
 // a customer account (no membership) must not reach the driver page
 const cust2 = await browser.createBrowserContext(); const cpg = await L.newPage(cust2);
-await cpg.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded' });
+await cpg.goto(L.BASE + '/company/login', { waitUntil: 'domcontentloaded' });
 await typeInto(cpg, 'input[name=email]', 'tix-carol@e2e.test'); await typeInto(cpg, 'input[name=password]', PW);
 await clickText(cpg, 'Sign in', { sel: 'button[type=submit]' }); await sleep(3000);
 await cpg.goto(L.BASE + '/driver', { waitUntil: 'domcontentloaded' }); await sleep(1500);

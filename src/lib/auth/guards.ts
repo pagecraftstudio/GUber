@@ -1,6 +1,7 @@
 import 'server-only';
 import { notFound, redirect } from 'next/navigation';
 import { getAuthContext } from './context';
+import { COMPANY_LOGIN_PATH, CUSTOMER_LOGIN_PATH, CUSTOMER_HOME_PATH } from './paths';
 import { accessState, activeMembership, can, hasPlatformRole, homePathFor } from './permissions';
 import type { AuthContext, Membership, PlatformRole } from './types';
 
@@ -13,7 +14,19 @@ export type TenantContext = AuthContext & { membership: Membership };
 
 export async function requireUser(): Promise<AuthContext> {
   const ctx = await getAuthContext();
-  if (!ctx) redirect('/login');
+  if (!ctx) redirect(COMPANY_LOGIN_PATH); // staff-area helper; customers use requireCustomer()
+  return ctx;
+}
+
+/**
+ * Signed-in marketplace customer (no staff membership, no platform role). Staff, drivers and platform admins are
+ * bounced to their own area, so the customer portal and the operator areas never overlap. Data access is still
+ * enforced by RLS (own customers rows only); this is routing + defence in depth.
+ */
+export async function requireCustomer(): Promise<AuthContext> {
+  const ctx = await getAuthContext();
+  if (!ctx) redirect(`${CUSTOMER_LOGIN_PATH}?next=${encodeURIComponent(CUSTOMER_HOME_PATH)}`);
+  if (accessState(ctx) !== 'customer') redirect(homePathFor(ctx));
   return ctx;
 }
 
@@ -38,7 +51,7 @@ export async function requireDriver(): Promise<TenantContext> {
 /** Platform staff only. Unknown to everyone else (404, not 403) so /admin is not discoverable. */
 export async function requirePlatform(allowed?: readonly PlatformRole[]): Promise<AuthContext> {
   const ctx = await getAuthContext();
-  if (!ctx) redirect('/login?next=/admin');
+  if (!ctx) redirect(`${COMPANY_LOGIN_PATH}?next=/admin`);
   if (!hasPlatformRole(ctx, allowed)) notFound();
   return ctx;
 }
