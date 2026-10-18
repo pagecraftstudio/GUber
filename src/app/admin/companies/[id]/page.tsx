@@ -65,8 +65,8 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
 
   const { company: c, subscription: s, counts, owners, pendingInvites, notes, settings, resumeStatus } = result.data;
   // UI visibility only. The services and Postgres authorise every one of these actions again.
-  const isSuper = ctx.platformRole === 'super_admin';
-  const canSub = isSuper || ctx.platformRole === 'billing';
+  const isSuper = ctx.auth.platformRole === 'super_admin';
+  const canSub = isSuper || ctx.auth.platformRole === 'billing';
   let planOptions: { value: string; label: string }[] = [];
   if (canSub && c.status !== 'cancelled') {
     try {
@@ -75,7 +75,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
       planOptions = []; // the assign button is hidden when the plan list cannot load; the rest of the page still renders
     }
   }
-  const canNote = isSuper || ctx.platformRole === 'support';
+  const canNote = isSuper || ctx.auth.platformRole === 'support';
 
   return (
     <div className="space-y-8">

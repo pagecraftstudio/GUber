@@ -33,7 +33,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
   } catch (e) {
     result = { error: toClientError(e).message };
   }
-  const canWrite = ctx.platformRole === 'super_admin' || ctx.platformRole === 'billing';
+  const canWrite = ctx.auth.platformRole === 'super_admin' || ctx.auth.platformRole === 'billing';
   const filtersActive = Boolean(query.q || query.state);
 
   return (

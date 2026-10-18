@@ -27,7 +27,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Ra
   } catch (e) {
     result = { error: toClientError(e).message };
   }
-  const canCreate = ctx.platformRole === 'super_admin';
+  const canCreate = ctx.auth.platformRole === 'super_admin';
   const filtersActive = Boolean(query.q || query.status);
 
   return (
