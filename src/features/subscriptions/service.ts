@@ -1,3 +1,4 @@
+import { ROLE_SETS } from '@/features/platform/permissions';
 import { parseInput } from '@/lib/errors';
 import { PERMISSIONS } from '@/lib/auth/permission-keys';
 import { requirePermission, requirePlatformAccess } from '@/lib/service/authorize';
@@ -17,7 +18,7 @@ import type { Plan, Subscription } from './types';
  * Known gap: only holders of `billing.read` (owner) can read their subscription, so a manager cannot see plan
  * limits. The database still enforces them. A `my_entitlements()` RPC (Phase 11) fixes the display side.
  */
-const SUB_WRITERS = ['super_admin', 'billing'] as const;
+const SUB_WRITERS = ROLE_SETS.subscriptionWriters;
 
 export function makeSubscriptionService(repo: SubscriptionRepository) {
   return {

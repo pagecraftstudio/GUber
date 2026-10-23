@@ -70,8 +70,8 @@ describe('admin nav', () => {
   it('every platform role sees the overview', () => {
     for (const r of ['super_admin', 'support', 'billing'] as const) expect(navFor(r).some((i) => i.href === '/admin')).toBe(true);
   });
-  it('overview, companies, subscriptions and plans are available in 7.4 (audit logs still disabled, no dead links)', () => {
-    expect(ADMIN_NAV.filter((i) => i.available).map((i) => i.href)).toEqual(['/admin', '/admin/companies', '/admin/subscriptions', '/admin/plans']);
+  it('every section is built after 7.5: all nav items are real links (no dead ones left)', () => {
+    expect(ADMIN_NAV.filter((i) => i.available).map((i) => i.href)).toEqual(['/admin', '/admin/companies', '/admin/subscriptions', '/admin/plans', '/admin/audit-logs']);
   });
   it('active matching: overview is exact, sections match by prefix without false positives', () => {
     expect(isNavActive('/admin', '/admin')).toBe(true);

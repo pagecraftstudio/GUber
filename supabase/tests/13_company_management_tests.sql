@@ -234,7 +234,7 @@ select t.raises('F: bad phone -> 22023', format($q$select public.admin_update_co
 select t.raises('F: unknown company -> P0002', $q$select public.admin_update_company('00000000-0000-4000-8000-0000000fffff', '{"name":"x"}')$q$, 'P0002');
 select t.as_admin();
 select t.eq('F: failed patches changed nothing', (select name from companies where id = (select id from t13_n)), 'Phase73 Renamed');
-select t.eq('F: failed patches wrote no audit rows (still the two successful ones)', t.audits('company.updated', (select id from t13_n)), 2::bigint);
+select t.eq('F: failed patches wrote no audit rows (still the three successful ones: rename, multi-field, clear)', t.audits('company.updated', (select id from t13_n)), 3::bigint);
 select t.eq('F: fixture companies untouched by update tests', (select count(*) from companies where id in (t.u(101), t.u(102)) and name in ('Company A','Company B')), 2::bigint);
 
 -- ======================= G. STATUS =======================

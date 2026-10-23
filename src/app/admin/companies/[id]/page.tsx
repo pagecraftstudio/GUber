@@ -16,6 +16,10 @@ import {
 import type { AdminCompanyDetail } from '@/features/companies/admin-output';
 import { companyService } from '@/features/companies/service';
 import { subscriptionService } from '@/features/subscriptions/service';
+import { AuditTable } from '@/components/admin/AuditTable';
+import { auditHref } from '@/features/audit/links';
+import type { AuditItem } from '@/features/audit/schema';
+import { auditService } from '@/features/audit/service';
 import { AppError, toClientError } from '@/lib/errors';
 import { getPlatformServiceContext } from '@/lib/service/server';
 import { idSchema } from '@/lib/validation/common';
@@ -76,6 +80,12 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
     }
   }
   const canNote = isSuper || ctx.auth.platformRole === 'support';
+  let activity: AuditItem[] | null = null;
+  try {
+    activity = (await auditService.list(ctx, { company: c.id, limit: 10 })).items;
+  } catch {
+    activity = null; // the activity card is secondary: the page still renders without it
+  }
 
   return (
     <div className="space-y-8">
@@ -300,6 +310,16 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
             </ul>
           )}
         </div>
+      </Section>
+
+      <Section id="h-activity" title="Recent activity" aside={<Link href={auditHref({ company: c.id })} className="text-xs text-slate-600 underline">View all</Link>}>
+        {activity === null ? (
+          <p className="text-sm text-slate-500">Activity could not be loaded.</p>
+        ) : activity.length === 0 ? (
+          <p className="text-sm text-slate-500">No recorded activity for this company yet.</p>
+        ) : (
+          <AuditTable items={activity} compact />
+        )}
       </Section>
     </div>
   );

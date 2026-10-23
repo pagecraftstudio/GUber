@@ -1,3 +1,4 @@
+import { ROLE_SETS } from '@/features/platform/permissions';
 import type { PlatformRole } from '@/lib/auth/types';
 
 export type AdminNavItem = {
@@ -9,15 +10,15 @@ export type AdminNavItem = {
   roles: readonly PlatformRole[];
 };
 
-const ALL: readonly PlatformRole[] = ['super_admin', 'support', 'billing'];
+const ALL = ROLE_SETS.anyStaff;
 
-// Role-to-section matrix is a 7.6 decision; until then every platform role sees every section.
+// 7.6 decision: every platform role may browse every section (read-only for most); mutations are gated per action by ROLE_SETS.
 export const ADMIN_NAV: readonly AdminNavItem[] = [
   { href: '/admin', label: 'Overview', available: true, roles: ALL },
   { href: '/admin/companies', label: 'Companies', available: true, roles: ALL },
   { href: '/admin/subscriptions', label: 'Subscriptions', available: true, roles: ALL },
   { href: '/admin/plans', label: 'Plans', available: true, roles: ALL },
-  { href: '/admin/audit-logs', label: 'Audit logs', available: false, roles: ALL },
+  { href: '/admin/audit-logs', label: 'Audit logs', available: true, roles: ALL },
 ];
 
 export const navFor = (role: PlatformRole | null): AdminNavItem[] =>

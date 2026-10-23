@@ -52,6 +52,9 @@ const RULES: Rule[] = [
   { match: /subscription period ended/, code: 'business_rule', detail: 'subscription_period_ended' },
   { match: /subscription not extendable/, code: 'business_rule', detail: 'subscription_not_extendable' },
   { match: /company cancelled/, code: 'business_rule', detail: 'company_cancelled' },
+  // audit read RPCs (0019)
+  { match: /invalid filter|invalid range|invalid cursor|invalid limit/, code: 'validation', detail: 'invalid_filter' },
+  { match: /audit entry not found/, code: 'not_found', detail: 'audit_not_found' },
   // booking RPCs (0010)
   { match: /invalid phone number/, code: 'validation', detail: 'invalid_phone', fields: { phone: 'invalid_phone' } },
   { match: /idempotency key reused/, code: 'conflict', detail: 'idempotency_conflict' },

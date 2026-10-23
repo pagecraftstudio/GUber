@@ -1,5 +1,6 @@
 'use server';
 
+import { ROLE_SETS } from '@/features/platform/permissions';
 import { revalidatePath } from 'next/cache';
 import { companyService } from '@/features/companies/service';
 import { subscriptionService } from '@/features/subscriptions/service';
@@ -18,9 +19,9 @@ import type { AdminActionState } from './action-state';
  * Next.js checks Origin against Host on every Server Action POST (CSRF defence).
  */
 
-const SUPER_ADMIN = ['super_admin'] as const;
-const NOTE_WRITERS = ['super_admin', 'support'] as const;
-const SUB_WRITERS = ['super_admin', 'billing'] as const;
+const SUPER_ADMIN = ROLE_SETS.superAdminOnly;
+const NOTE_WRITERS = ROLE_SETS.noteWriters;
+const SUB_WRITERS = ROLE_SETS.subscriptionWriters;
 
 function field(fd: FormData, key: string): string {
   const v = fd.get(key);

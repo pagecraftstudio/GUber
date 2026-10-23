@@ -7,13 +7,13 @@ const alice = { name: 'Alice Tester', email: 'alice@e2e.test', phone: '010111122
 const authDialogTop = (p) => p.evaluate(() => { const ds = [...document.querySelectorAll('[role=dialog]')]; const top = ds.find((d) => { const r = d.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + 40); return t && d.contains(t); }); return top ? top.innerText : ''; });
 async function openApp(p) { await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures|No trips|No Departures/i, 20000); await sleep(500); }
 async function signUp(p, u) {
-  await clickText(p, 'Sign In'); console.log('SU1', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,100)); await clickText(p, 'Create Account', { scope: '[role=dialog]' }); console.log('SU2', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,100));
+  await p.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded' }); await waitText(p, /Sign In|Create Account/i, 15000); await sleep(600); console.log('SU1', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,100)); await clickText(p, 'Create Account', { scope: '[role=dialog]' }); console.log('SU2', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,100));
   await typeInto(p, '[role=dialog] input[placeholder*="Karim"]', u.name); await typeInto(p, '[role=dialog] input[type=email]', u.email);
   await typeInto(p, '[role=dialog] input[type=tel]', u.phone); await typeInto(p, '[role=dialog] input[type=password]', PW);
   await clickText(p, 'Create Account', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(1500);
 }
 async function signIn(p, u) {
-  if (!(await dialogText(p))) await clickText(p, 'Sign In');
+  if (!(await dialogText(p))) await p.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded' }); await waitText(p, /Sign In|Create Account/i, 15000); await sleep(600);
   await typeInto(p, '[role=dialog] input[type=email]', u.email); await typeInto(p, '[role=dialog] input[type=password]', PW);
   await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(1800);
 }
@@ -76,8 +76,11 @@ const err1 = await p.evaluate(() => (document.querySelector('[role=dialog] [role
 check('login before confirmation: clear error shown', /confirm your email/i.test(err1), err1);
 await L.confirmEmail(alice.email);
 await signIn(p, alice);
+for (let i = 0; i < 40 && (await dialogText(p)); i++) await sleep(250);
+console.log('URL2', p.url(), await hasSession());
 console.log('AFTER-LOGIN2', (await dialogText(p)).replace(/\n+/g,' | ').slice(0,300));
 check('login after confirmation: dialog closes, session cookie set by real supabase-js', !(await dialogText(p)) && (await hasSession()));
+await openApp(p); // customer login is now the /login page, which redirects to the portal; go back to the trip search
 const hdr = await p.evaluate(() => [...document.querySelectorAll('header button, header a, nav button, nav a')].map((e) => e.innerText.trim()).filter(Boolean));
 console.log('HEADER ITEMS', JSON.stringify(hdr));
 await snap(p, 'logged-in');

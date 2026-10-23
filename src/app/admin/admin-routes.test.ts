@@ -22,7 +22,7 @@ describe('admin route guards', () => {
     const rel = pages.map((f) => f.slice(ROOT.length));
     expect(rel).toEqual(expect.arrayContaining(['/companies/page.tsx', '/companies/new/page.tsx', '/companies/[id]/page.tsx', '/companies/[id]/edit/page.tsx']));
     for (const p of ['/companies/new/page.tsx', '/companies/[id]/edit/page.tsx']) {
-      expect(readFileSync(join(ROOT, p), 'utf8')).toMatch(/getPlatformServiceContext\(\['super_admin'\]\)/);
+      expect(readFileSync(join(ROOT, p), 'utf8')).toMatch(/getPlatformServiceContext\(ROLE_SETS\.superAdminOnly\)/);
     }
   });
   it('7.4 pages exist and call a platform guard', () => {

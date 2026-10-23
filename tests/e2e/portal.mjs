@@ -33,9 +33,10 @@ const browser = await L.launch();
 async function newSession(email, ctx = browser) { // a separate browser context = separate cookies, so two customers can be signed in at once
   const p = await L.newPage(ctx);
   await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000);
-  await clickText(p, 'Sign In');
+  await p.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded' }); await waitText(p, /Sign In|Create Account/i, 15000); await sleep(600);
   await typeInto(p, '[role=dialog] input[type=email]', email); await typeInto(p, '[role=dialog] input[type=password]', PW);
   await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2000);
+  await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000); // login now lands on /my-bookings
   return p;
 }
 async function openPortal(p, who) {

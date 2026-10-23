@@ -1,3 +1,4 @@
+import { ROLE_SETS } from '@/features/platform/permissions';
 import { AppError, parseInput } from '@/lib/errors';
 import { PERMISSIONS } from '@/lib/auth/permission-keys';
 import type { Page } from '@/lib/db/pagination';
@@ -24,8 +25,8 @@ import type { CompanyProfile, CompanySettings, PlatformCompany } from './types';
  * The role sets below are PROVISIONAL until the 7.6 role matrix decision.
  * A tenant cannot edit its own legal/contact profile yet: `companies` has no tenant write policy (needs an RPC).
  */
-const SUPER_ADMIN = ['super_admin'] as const;
-const NOTE_WRITERS = ['super_admin', 'support'] as const;
+const SUPER_ADMIN = ROLE_SETS.superAdminOnly;
+const NOTE_WRITERS = ROLE_SETS.noteWriters;
 
 export function makeCompanyService(repo: CompanyRepository) {
   return {

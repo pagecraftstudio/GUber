@@ -35,13 +35,13 @@ server-port = 3100
 CONF
 setsid nohup "$POSTGREST" /tmp/pgrst.conf >/tmp/pgrst.log 2>&1 &
 JWT_SECRET=$SECRET REST_URL=http://127.0.0.1:3100 PSQL_BIN=$PSQL DB=$DB AUTOCONFIRM=$AUTOCONFIRM setsid nohup node tests/e2e/auth-stub.mjs >/tmp/stub.log 2>&1 &
-export NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3200 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=local-publishable-key-0123456789 NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3000
+export NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3200 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=local-publishable-key-0123456789 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 if [ -z "${SKIP_BUILD:-}" ]; then npx next build > /tmp/e2e_build.log 2>&1; echo "e2e build exit $?"; fi
-SUPABASE_SERVICE_ROLE_KEY=unused-in-e2e setsid nohup npx next start -p 3000 -H 127.0.0.1 >/tmp/next.log 2>&1 &
-for _ in $(seq 1 40); do curl -sf -m 2 http://127.0.0.1:3000/ >/dev/null && break; sleep 1; done
-curl -s -o /dev/null -w "app http %{http_code}\n" http://127.0.0.1:3000/
+SUPABASE_SERVICE_ROLE_KEY=unused-in-e2e setsid nohup npx next start -p 3000 -H localhost >/tmp/next.log 2>&1 &
+for _ in $(seq 1 40); do curl -sf -m 2 http://localhost:3000/ >/dev/null && break; sleep 1; done
+curl -s -o /dev/null -w "app http %{http_code}\n" http://localhost:3000/
 mkdir -p /tmp/e2e/shots; ln -sfn "$TOOLS/node_modules" tests/e2e/node_modules
-NODE_PATH="$TOOLS/node_modules" BASE=http://127.0.0.1:3000 STUB=http://127.0.0.1:3200 DB=$DB PSQL_BIN=$PSQL node "tests/e2e/$SCRIPT"; rc=$?
+NODE_PATH="$TOOLS/node_modules" BASE=http://localhost:3000 STUB=http://127.0.0.1:3200 DB=$DB PSQL_BIN=$PSQL node "tests/e2e/$SCRIPT"; rc=$?
 echo "e2e script exit $rc"
 killall_e2e
 exit $rc

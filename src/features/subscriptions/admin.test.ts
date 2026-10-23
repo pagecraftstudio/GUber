@@ -162,5 +162,5 @@ describe('subscription server actions (structural guard)', () => {
     expect(guard).toBeGreaterThan(-1);
     expect(guard).toBeLessThan(body.indexOf('try {'));
   });
-  it('SUB_WRITERS is exactly super_admin and billing', () => expect(src).toMatch(/SUB_WRITERS = \['super_admin', 'billing'\]/));
+  it('SUB_WRITERS is exactly super_admin and billing', () => expect(src).toMatch(/SUB_WRITERS = ROLE_SETS\.subscriptionWriters/));
 });

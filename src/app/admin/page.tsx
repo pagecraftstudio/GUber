@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { actionLabel } from '@/features/audit/catalog';
 import { AdminEmptyState, AdminErrorState } from '@/components/admin/StateViews';
 import { StatCard } from '@/components/admin/StatCard';
 import { platformOverviewService } from '@/features/platform/service';
@@ -79,7 +80,7 @@ export default async function AdminOverviewPage() {
       <section aria-labelledby="h-activity" className="space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 id="h-activity" className="text-sm font-semibold text-slate-700">Recent platform activity</h2>
-          <span className="text-xs text-slate-400">Full audit log: coming in 7.5</span>
+          <Link href="/admin/audit-logs" className="text-xs text-slate-600 underline">View all</Link>
         </div>
         {recentActivity.length === 0 ? (
           <AdminEmptyState title="No activity yet" description="Privileged platform actions are recorded here." />
@@ -88,7 +89,7 @@ export default async function AdminOverviewPage() {
             {recentActivity.map((a) => (
               <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">{a.action}</p>
+                  <Link href={`/admin/audit-logs/${a.id}`} className="block truncate text-sm font-medium text-slate-900 underline-offset-2 hover:underline">{actionLabel(a.action)}</Link>
                   <p className="truncate text-xs text-slate-500">
                     {a.entityType} · {a.actorType.replace('_', ' ')}
                     {a.companyName ? ` · ${a.companyName}` : ''}

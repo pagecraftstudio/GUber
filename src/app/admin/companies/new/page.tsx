@@ -1,3 +1,4 @@
+import { ROLE_SETS } from '@/features/platform/permissions';
 import Link from 'next/link';
 import { AdminErrorState } from '@/components/admin/StateViews';
 import { CreateCompanyForm, type PlanOption } from '@/components/admin/CompanyForms';
@@ -9,7 +10,7 @@ export const metadata = { title: 'New company · Admin' };
 export const dynamic = 'force-dynamic';
 
 export default async function NewCompanyPage() {
-  const ctx = await getPlatformServiceContext(['super_admin']); // support and billing get a 404, like any non-staff user
+  const ctx = await getPlatformServiceContext(ROLE_SETS.superAdminOnly); // support and billing get a 404, like any non-staff user
 
   let plans: PlanOption[] = [];
   let error: string | null = null;

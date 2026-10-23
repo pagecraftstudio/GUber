@@ -1,3 +1,4 @@
+import { ROLE_SETS } from '@/features/platform/permissions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EditCompanyForm } from '@/components/admin/CompanyForms';
@@ -12,7 +13,7 @@ export const metadata = { title: 'Edit company · Admin' };
 export const dynamic = 'force-dynamic';
 
 export default async function EditCompanyPage({ params }: { params: Promise<{ id: string }> }) {
-  const ctx = await getPlatformServiceContext(['super_admin']);
+  const ctx = await getPlatformServiceContext(ROLE_SETS.superAdminOnly);
   const { id } = await params;
   if (!idSchema.safeParse(id).success) notFound();
 

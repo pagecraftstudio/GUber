@@ -45,8 +45,9 @@ const cctx = await browser.createBrowserContext(); const cp = await L.newPage(cc
 const qrBodies = []; // what the browser itself received from my_ticket_qr (the only place a raw token ever appears)
 cp.on('response', async (r) => { if (r.url().includes('/rpc/my_ticket_qr') && r.ok()) { try { qrBodies.push(await r.json()); } catch {} } });
 await cp.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(cp, /Showing \d+ Departures/i, 20000);
-await clickText(cp, 'Sign In'); await typeInto(cp, '[role=dialog] input[type=email]', 'tix-carol@e2e.test'); await typeInto(cp, '[role=dialog] input[type=password]', PW);
+await cp.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded' }); await waitText(cp, /Sign In|Create Account/i, 15000); await sleep(600); await typeInto(cp, '[role=dialog] input[type=email]', 'tix-carol@e2e.test'); await typeInto(cp, '[role=dialog] input[type=password]', PW);
 await clickText(cp, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2000);
+await cp.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(cp, /Showing \d+ Departures/i, 20000);
 const h = await cp.evaluateHandle(() => [...document.querySelectorAll('button')].find((e) => e.offsetParent && e.innerText.includes('Tix')));
 await h.asElement().click(); await sleep(300); await clickText(cp, 'My Trips'); await waitText(cp, /My Trips & Bookings/, 8000); await sleep(1200);
 const portal = await text(cp);

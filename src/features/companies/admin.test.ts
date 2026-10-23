@@ -256,8 +256,9 @@ describe('company admin service: authorize -> validate -> repository', () => {
 describe('admin server actions (structural guard)', () => {
   const src = readFileSync(join(__dirname, '../admin/actions.ts'), 'utf8');
   const actions = [...src.matchAll(/export async function (\w+Action)\(/g)].map((m) => m[1]!);
-  it('finds all six actions', () => {
-    expect(actions).toEqual(['createCompanyAction', 'updateCompanyAction', 'setCompanyStatusAction', 'addCompanyNoteAction', 'inviteOwnerAction', 'revokeInviteAction']);
+  it('finds all ten actions', () => {
+    expect(actions).toEqual(['createCompanyAction', 'updateCompanyAction', 'setCompanyStatusAction', 'addCompanyNoteAction', 'inviteOwnerAction', 'revokeInviteAction',
+      'assignSubscriptionAction', 'setSubscriptionStatusAction', 'setSubscriptionPeriodAction', 'expireStaleSubscriptionsAction']);
   });
   it.each(actions)('%s runs the platform guard before its try block', (name) => {
     const body = src.slice(src.indexOf(`function ${name}(`)).split(/\nexport async function /)[0]!;
@@ -271,7 +272,7 @@ describe('admin server actions (structural guard)', () => {
     expect(src).not.toMatch(/field\(fd, '(role|roleKey|actor|actorId|userId|platformRole)'\)/);
   });
   it('only write actions for super_admin use the super_admin guard; notes also allow support', () => {
-    expect(src).toMatch(/NOTE_WRITERS = \['super_admin', 'support'\]/);
+    expect(src).toMatch(/NOTE_WRITERS = ROLE_SETS\.noteWriters/);
     const noteBody = src.slice(src.indexOf('function addCompanyNoteAction(')).split(/\nexport async function /)[0]!;
     expect(noteBody).toContain('getPlatformServiceContext(NOTE_WRITERS)');
   });
