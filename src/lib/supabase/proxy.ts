@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getEnv } from '@/lib/env';
+import { withSecure } from './cookie-options';
 
 /**
  * Refreshes the Supabase session cookie on every matched request and returns the verified user.
@@ -16,7 +17,7 @@ export async function updateSession(request: NextRequest) {
       setAll: (cookiesToSet, headers) => {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, withSecure(options, env.NEXT_PUBLIC_SITE_URL)));
         Object.entries(headers ?? {}).forEach(([key, value]) => response.headers.set(key, value));
       },
     },

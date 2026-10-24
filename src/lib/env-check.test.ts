@@ -76,3 +76,17 @@ describe('assertEnv / shouldEnforce', () => {
     expect(shouldEnforce({ SKIP_ENV_VALIDATION: 'true' }, 'build').enforce).toBe(true);
   });
 });
+
+describe('Phase 8D: SKIP_ENV_VALIDATION on hosted deployments', () => {
+  it('is ignored on Vercel preview (staging often runs as a preview) as well as production', () => {
+    for (const VERCEL_ENV of ['preview', 'production', 'development']) {
+      expect(shouldEnforce({ SKIP_ENV_VALIDATION: '1', VERCEL_ENV }, 'build').enforce).toBe(true);
+      expect(shouldEnforce({ SKIP_ENV_VALIDATION: '1', VERCEL_ENV }, 'server').enforce).toBe(true);
+      expect(() => assertEnv({ SKIP_ENV_VALIDATION: '1', VERCEL_ENV }, 'build')).toThrow();
+    }
+    expect(shouldEnforce({ SKIP_ENV_VALIDATION: '1', VERCEL: '1' }, 'build').enforce).toBe(true);
+  });
+  it('still works for a plain local/CI compile', () => {
+    expect(shouldEnforce({ SKIP_ENV_VALIDATION: '1' }, 'build')).toEqual({ enforce: false, skippedBy: 'SKIP_ENV_VALIDATION=1' });
+  });
+});

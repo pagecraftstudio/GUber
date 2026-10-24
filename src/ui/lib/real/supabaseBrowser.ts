@@ -1,6 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getEnv } from '@/lib/env';
+import { siteIsHttps } from '@/lib/supabase/cookie-options';
 
 let client: SupabaseClient | undefined;
 
@@ -12,6 +13,8 @@ let client: SupabaseClient | undefined;
 export function getSupabaseBrowser(): SupabaseClient {
   if (client) return client;
   const env = getEnv();
-  client = createBrowserClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+  client = createBrowserClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
+    cookieOptions: siteIsHttps(env.NEXT_PUBLIC_SITE_URL) ? { secure: true } : {},
+  });
   return client;
 }

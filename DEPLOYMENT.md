@@ -11,14 +11,15 @@ Status: procedure only (staging first: docs/STAGING-CHECKLIST.md). NOT executed 
 6. Do NOT run `supabase/maintenance/cleanup_test_fixtures.sql` in production.
 
 ## 2. Vercel
-Environment variables (Production + Preview), none are secrets except as noted:
+Full checklist: **docs/VERCEL-CHECKLIST.md** (settings, per-environment variables, preview-URL pitfalls, first-run checks). Summary:
+Set Production and Preview variables separately. None are secrets. `NEXT_PUBLIC_*` is inlined at build, so changing one needs a redeploy.
 | Name | Value |
 |---|---|
 | NEXT_PUBLIC_SUPABASE_URL | https://<ref>.supabase.co |
 | NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY | publishable (anon) key, >=20 chars |
-| NEXT_PUBLIC_SITE_URL | https://<production host>, no trailing slash |
-Never set `NEXT_PUBLIC_UI_DATA_MODE=mock` (production builds throw if it is set). Never prefix a secret with `NEXT_PUBLIC_`.
-Build command `next build`; Node 22.
+| NEXT_PUBLIC_SITE_URL | https://<stable host>, origin only, no trailing slash |
+Build/boot fails with variable names (never values) if these are missing or unsafe. Never set `NEXT_PUBLIC_UI_DATA_MODE=mock` or `SKIP_ENV_VALIDATION` (ignored on Vercel). Never prefix a secret with `NEXT_PUBLIC_`.
+Build command `next build`; Node **22.x** (pinned in package.json). After deploy: `scripts/smoke/deploy-smoke.sh https://<host>`.
 
 ## 3. Pre-deploy gate (run locally or in CI)
 `tsc --noEmit`, `vitest run`, `bash tests/run-all-local.sh` (set E2E_TOOLS/CHROME_PATH for browser suites), `next build`, `bash tests/bundle-scan.sh`, `npm audit --omit=dev`.

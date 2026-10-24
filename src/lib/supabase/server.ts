@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getEnv } from '@/lib/env';
+import { withSecure } from './cookie-options';
 
 /** Per-request Supabase client bound to the caller's cookies. Runs with the USER's JWT, so RLS applies. */
 export async function createClient() {
@@ -11,7 +12,7 @@ export async function createClient() {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, withSecure(options, env.NEXT_PUBLIC_SITE_URL)));
         } catch {
           // Called from a Server Component (read-only cookies). Safe to ignore: proxy.ts refreshes the session.
         }

@@ -34,9 +34,9 @@ export function buildReportOnlyCsp(cfg: HeaderConfig): string {
   return [
     "default-src 'self'",
     `script-src ${script.join(' ')}`,
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",   // marketplace layout loads Google Fonts CSS
     `img-src ${img.join(' ')}`,
-    "font-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src ${connect.join(' ')}`,
     "media-src 'self' blob:",
     "worker-src 'self' blob:",

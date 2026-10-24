@@ -93,12 +93,12 @@ export function formatEnvIssues(issues: EnvIssue[]): string {
 /**
  * Whether a failing check must stop the build / server start.
  *   - SKIP_ENV_VALIDATION=1 is an explicit, loud opt-out for CI jobs that compile without configuration (never a default).
- *   - It is IGNORED on Vercel production, so a deployment can never ship unvalidated.
+ *   - It is IGNORED on every Vercel environment (production AND preview: staging often runs as a preview), so a hosted deployment can never ship unvalidated.
  *   - `next dev` never blocks (it warns), and mock mode in development needs no Supabase variables.
  */
 export function shouldEnforce(env: EnvInput, phase: 'build' | 'server' | 'dev'): { enforce: boolean; skippedBy?: string } {
   if (phase === 'dev') return { enforce: false };
-  if (env.SKIP_ENV_VALIDATION === '1' && env.VERCEL_ENV !== 'production') return { enforce: false, skippedBy: 'SKIP_ENV_VALIDATION=1' };
+  if (env.SKIP_ENV_VALIDATION === '1' && !env.VERCEL_ENV && !env.VERCEL) return { enforce: false, skippedBy: 'SKIP_ENV_VALIDATION=1' };
   return { enforce: true };
 }
 

@@ -40,3 +40,15 @@ describe('security headers', () => {
     expect(pp).toContain('geolocation=()');
   });
 });
+
+describe('Phase 8D: report-only policy matches what the pages really load', () => {
+  it('allows the Google Fonts hosts used by the marketplace layout, and nothing broader', () => {
+    const csp = buildReportOnlyCsp(cfg);
+    expect(csp).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com");
+    expect(csp).toContain("font-src 'self' data: https://fonts.gstatic.com");
+    expect(csp).not.toMatch(/\*|https:\s|http:\s/);
+  });
+  it('the enforced policy is unaffected', () => {
+    expect(buildEnforcedCsp(true)).not.toMatch(/fonts\./);
+  });
+});
