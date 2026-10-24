@@ -84,6 +84,8 @@ export function mapDbError(error: DbErrorLike): AppError {
     new AppError(r.code, { detail: r.detail, ...(r.fields ? { fields: r.fields } : {}), cause: error });
 
   switch (error.code) {
+    case 'PT429': // 0020 rate limiter (PostgREST answers HTTP 429); `hint` carries the seconds until the window resets
+      return new AppError('rate_limited', { ...(/^\d{1,6}$/.test(error.hint ?? '') ? { detail: `retry_after_${error.hint}` } : {}), cause: error });
     case '42501': // RLS violation, missing grant, or trigger-raised
       if (/no active subscription/.test(text)) return new AppError('subscription_required', { cause: error });
       return new AppError('forbidden', { cause: error });

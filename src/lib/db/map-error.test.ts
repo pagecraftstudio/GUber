@@ -66,3 +66,16 @@ describe('mapDbError', () => {
     expect(err.cause).toBeDefined();
   });
 });
+
+describe('mapDbError: rate limiter (0020, SQLSTATE PT429)', () => {
+  it('maps to rate_limited with the retry hint as a stable detail', () => {
+    const e = mapDbError({ code: 'PT429', message: 'rate limit exceeded', hint: '123' });
+    expect(e.code).toBe('rate_limited');
+    expect(e.detail).toBe('retry_after_123');
+  });
+  it('ignores a malformed hint (no injection into detail)', () => {
+    const e = mapDbError({ code: 'PT429', message: 'rate limit exceeded', hint: '12; drop table' });
+    expect(e.code).toBe('rate_limited');
+    expect(e.detail).toBeUndefined();
+  });
+});

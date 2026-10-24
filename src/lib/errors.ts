@@ -14,6 +14,7 @@ export const APP_ERROR_CODES = [
   'conflict',
   'plan_limit',
   'subscription_required',
+  'rate_limited',
   'business_rule',
   'internal',
 ] as const;
@@ -29,6 +30,7 @@ const DEFAULT_MESSAGES: Record<AppErrorCode, string> = {
   conflict: 'This conflicts with existing data.',
   plan_limit: 'Your plan limit has been reached.',
   subscription_required: 'The company does not have an active subscription.',
+  rate_limited: 'Too many requests. Please wait a moment and try again.',
   business_rule: 'This action is not allowed.',
   internal: 'Something went wrong. Please try again.',
 };
@@ -95,6 +97,8 @@ export function httpStatusFor(code: AppErrorCode): number {
     case 'plan_limit':
     case 'subscription_required':
       return 402;
+    case 'rate_limited':
+      return 429;
     case 'internal':
       return 500;
   }

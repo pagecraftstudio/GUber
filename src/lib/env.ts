@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { checkEnv, formatEnvIssues } from './env-check';
 
 const schema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
@@ -23,8 +24,14 @@ export function getEnv(): Env {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   });
   if (!parsed.success) {
+    // names + kinds of problems only; never values
+    const r = checkEnv({
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    });
     const keys = [...new Set(parsed.error.issues.map((i) => i.path.join('.')))].join(', ');
-    throw new Error(`Invalid or missing environment variables: ${keys}`);
+    throw new Error(r.issues.length ? formatEnvIssues(r.issues) : `Invalid or missing environment variables: ${keys}`);
   }
   cached = parsed.data;
   return cached;

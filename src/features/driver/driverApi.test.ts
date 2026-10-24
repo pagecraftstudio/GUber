@@ -14,3 +14,9 @@ describe('classifyBoardError', () => {
     ['XX000', 'boom', 'unknown'],
   ])('%s / %s -> %s', (code, msg, want) => expect(classifyBoardError(code, msg)).toBe(want));
 });
+
+describe('classifyBoardError: rate limiting (0020)', () => {
+  it('PT429 -> rate_limited (and does not leak the database message)', () => {
+    expect(classifyBoardError('PT429', 'rate limit exceeded')).toBe('rate_limited');
+  });
+});

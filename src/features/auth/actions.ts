@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { loadContext } from '@/lib/auth/context';
 import { homePathFor } from '@/lib/auth/permissions';
-import { safeNextPath } from '@/lib/auth/redirect';
+import { audienceFrom, safeNextPath } from '@/lib/auth/redirect';
 import { COMPANY_LOGIN_PATH } from '@/lib/auth/paths';
 import { getEnv } from '@/lib/env';
 import { requireUser } from '@/lib/auth/guards';
@@ -71,17 +71,18 @@ export async function logoutAction(): Promise<void> {
 // ---------------------------------------------------------------- password reset
 
 export async function forgotPasswordAction(formData: FormData): Promise<void> {
+  const from = audienceFrom(field(formData, 'from'));   // whitelisted to 'customer' | 'operator'; carried through every redirect
   const parsed = forgotPasswordSchema.safeParse({ email: field(formData, 'email') });
-  if (!parsed.success) redirect(url('/forgot-password', { error: 'invalid_form' }));
+  if (!parsed.success) redirect(url('/forgot-password', { error: 'invalid_form', from }));
 
   const supabase = await createClient();
-  const redirectTo = `${getEnv().NEXT_PUBLIC_SITE_URL}/auth/confirm?next=${encodeURIComponent('/reset-password')}`;
+  const redirectTo = `${getEnv().NEXT_PUBLIC_SITE_URL}/auth/confirm?next=${encodeURIComponent('/reset-password')}&from=${from}`;
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo });
   if (error && (error.status === 429 || error.code === 'over_email_send_rate_limit')) {
-    redirect(url('/forgot-password', { error: 'rate_limited' }));
+    redirect(url('/forgot-password', { error: 'rate_limited', from }));
   }
   // Same response whether or not the account exists.
-  redirect(url('/forgot-password', { notice: 'reset_sent' }));
+  redirect(url('/forgot-password', { notice: 'reset_sent', from }));
 }
 
 export async function resetPasswordAction(formData: FormData): Promise<void> {

@@ -92,7 +92,7 @@ export class RealAuthService {
   }
 
   async resetPasswordForEmail(email: string): Promise<boolean> {
-    const redirectTo = `${this.siteUrl}/auth/confirm?next=${encodeURIComponent('/reset-password')}`;
+    const redirectTo = `${this.siteUrl}/auth/confirm?next=${encodeURIComponent('/reset-password')}&from=customer`;
     const { error } = await this.client.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     if (error && classify(error, 'unknown') === 'rate_limited') throw new AuthServiceError('rate_limited');
     return true; // identical answer whether or not the account exists

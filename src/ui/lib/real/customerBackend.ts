@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Operation } from '@/lib/log';
+import { reportOperationFailure } from '../reportFailure';
 
 /** Rows exactly as the database RPCs return them (snake_case). Mapped to UI types in adapters.ts. */
 export interface PublicTripRow {
@@ -34,7 +36,7 @@ export interface SearchInput { origin?: string; destination?: string; date?: str
 export type BackendErrorCode =
   | 'auth_required' | 'trip_unavailable' | 'seats_unavailable' | 'seats_per_booking' | 'phone_registered'
   | 'invalid_input' | 'invalid_phone' | 'cancel_window_closed' | 'booking_closed' | 'booking_not_found'
-  | 'idempotency_conflict' | 'plan_limit' | 'tickets_unavailable' | 'unknown';
+  | 'idempotency_conflict' | 'plan_limit' | 'tickets_unavailable' | 'rate_limited' | 'unknown';
 
 export class BackendError extends Error {
   constructor(readonly code: BackendErrorCode, message: string, readonly pgCode?: string, readonly hint?: string) {
@@ -57,12 +59,14 @@ const MESSAGES: Record<BackendErrorCode, { en: string; ar: string }> = {
   idempotency_conflict: { en: 'This request conflicts with an earlier one. Please start again.', ar: 'يتعارض هذا الطلب مع طلب سابق. يرجى البدء من جديد.' },
   plan_limit: { en: 'This company cannot accept more bookings right now.', ar: 'لا تستطيع هذه الشركة قبول المزيد من الحجوزات حالياً.' },
   tickets_unavailable: { en: 'Tickets are not available for this booking (it may be cancelled or the trip has closed).', ar: 'التذاكر غير متاحة لهذا الحجز (قد يكون ملغى أو أُغلقت الرحلة).' },
+  rate_limited: { en: 'Too many requests. Please wait a moment and try again.', ar: 'عدد كبير من الطلبات. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى.' },
   unknown: { en: 'Something went wrong. Please try again.', ar: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.' },
 };
 
 /** Map a PostgREST/Postgres error (SQLSTATE + message from the RPCs in 0010/0012/0013) to a stable code. */
 export function classifyError(pgCode: string | undefined, message: string): BackendErrorCode {
   const m = message.toLowerCase();
+  if (pgCode === 'PT429') return 'rate_limited';
   if (pgCode === '28000' || m.includes('not authenticated') || pgCode === 'PGRST301') return 'auth_required';
   if (pgCode === '42501') return m.includes('permission denied') || m.includes('jwt') ? 'auth_required' : 'unknown';
   if (pgCode === 'P0002') return m.includes('booking') ? 'booking_not_found' : 'trip_unavailable';
@@ -89,10 +93,24 @@ export function describeBackendError(err: unknown, locale: 'ar' | 'en'): string 
 
 interface RpcError { code?: string; message: string; hint?: string }
 
+/** RPCs whose failures are reported to the server log (see api/telemetry/failure). Everything else stays silent. */
+const REPORTED_OPS: Record<string, Operation> = {
+  create_my_booking: 'booking.create', cancel_my_booking: 'booking.cancel', my_ticket_qr: 'ticket.qr',
+};
+
 async function rpc<T>(client: SupabaseClient, fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = (await client.rpc(fn, args)) as { data: T | null; error: RpcError | null };
   if (error) {
     const code = classifyError(error.code, error.message);
+    const op = REPORTED_OPS[fn];
+    if (op) {
+      // identifiers only: never names, phones, notes, idempotency keys or QR tokens
+      const tripId = typeof args.p_trip_id === 'string' ? args.p_trip_id : undefined;
+      const bookingId = typeof args.p_booking_id === 'string' ? args.p_booking_id : undefined;
+      reportOperationFailure(op, { pgCode: error.code }, {
+        ...(tripId ? { tripId } : {}), ...(bookingId ? { bookingId } : {}), ...(typeof args.p_seats === 'number' ? { seats: args.p_seats } : {}),
+      });
+    }
     throw new BackendError(code, MESSAGES[code].en, error.code, error.hint);
   }
   return data as T;

@@ -106,3 +106,13 @@ describe('RealTransportService', () => {
   });
   it('exposes no buses to customers', async () => { expect(await new RealTransportService({} as never, toE164Egypt).getBuses()).toEqual([]); });
 });
+
+describe('rate limiting (0020) surfaces as a friendly, translated error', () => {
+  it('PT429 -> rate_limited, in both locales, with no database text', () => {
+    expect(classifyError('PT429', 'rate limit exceeded')).toBe('rate_limited');
+    const err = new BackendError('rate_limited', 'x', 'PT429', '42');
+    expect(describeBackendError(err, 'en')).toMatch(/too many requests/i);
+    expect(describeBackendError(err, 'ar')).toMatch(/[\u0600-\u06FF]/);
+    expect(describeBackendError(err, 'en')).not.toMatch(/PT429|rate limit exceeded/);
+  });
+});

@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: { searchParams: RawSea
         <SubmitButton>Sign in</SubmitButton>
       </form>
       <p className="text-center text-sm text-slate-500">
-        <Link href="/forgot-password" className="underline underline-offset-2 hover:text-slate-800">
+        <Link href="/forgot-password?from=operator" className="underline underline-offset-2 hover:text-slate-800">
           Forgot your password?
         </Link>
       </p>

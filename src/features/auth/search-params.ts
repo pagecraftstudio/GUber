@@ -15,5 +15,6 @@ export async function readFlash(searchParams: RawSearchParams) {
     error: errorCode ? (Object.hasOwn(ERROR_MESSAGES, errorCode) ? ERROR_MESSAGES[errorCode] : ERROR_MESSAGES.generic) : undefined,
     notice: noticeCode && Object.hasOwn(NOTICE_MESSAGES, noticeCode) ? NOTICE_MESSAGES[noticeCode] : undefined,
     next: first(sp.next),
+    from: first(sp.from),
   };
 }
