@@ -10,6 +10,14 @@
 --      "append-only / never delete" guard triggers on the affected tables FOR THIS TRANSACTION ONLY, then switches them
 --      back on. If any fixture row survives, or anything errors, EVERYTHING rolls back (including the trigger changes).
 begin;
+-- SAFETY GATE: this file deletes rows, so it is inert as shipped. After reading the PREVIEW above, change 'no' to 'yes' on the next line.
+-- (is_local = true: the setting dies with this transaction and can never leak into a later session.)
+select set_config('app.confirm_fixture_cleanup', 'no', true);
+do $$ begin
+  if current_setting('app.confirm_fixture_cleanup', true) is distinct from 'yes' then
+    raise exception 'REFUSING: nothing was deleted. Run the PREVIEW first, then change ''no'' to ''yes'' in the set_config line right after BEGIN.';
+  end if;
+end $$;
 do $$
 declare
   pat constant text := '00000000-0000-4000-8000-%';

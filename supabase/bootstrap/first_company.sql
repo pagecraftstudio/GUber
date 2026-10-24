@@ -1,4 +1,5 @@
--- DEV/BOOTSTRAP ONLY, until the Phase 10 Super Admin UI exists. Run in the Supabase SQL editor (runs as postgres).
+-- FALLBACK ONLY. The Super Admin UI (/admin/companies/new + 'Invite owner') is the supported way to create a company since Phase 7.3.
+-- Use this script only if the admin area is unreachable. Run in the Supabase SQL editor (runs as postgres).
 -- Creates a company, a trial subscription, and an OWNER invitation. Prints the invite link ONCE; only its hash is stored.
 -- Edit the four values in `params`. Plan limits are PLACEHOLDERS (migration 0005, decision D8).
 with params as (

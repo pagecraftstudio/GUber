@@ -1,10 +1,10 @@
 # Deployment runbook (GitHub -> Vercel -> Supabase)
 
-Status: procedure only. NOT executed against a hosted Supabase project or Vercel in this repo's test runs.
+Status: procedure only (staging first: docs/STAGING-CHECKLIST.md). NOT executed against a hosted Supabase project or Vercel in this repo's test runs.
 
 ## 1. Supabase project
 1. Create the project. Keep the service-role key out of Vercel unless a feature explicitly needs it (the app code uses none; `grep -rn service_role src` is empty).
-2. Apply migrations in filename order: `supabase db push` (0001 ... 0019, incl. 0013b). Never edit an applied migration; add a new one.
+2. Apply migrations 0001-0020 (21 files, incl. `0013b`) with `scripts/db/apply-migrations.sh` (psql + checksum ledger). **Do NOT use `supabase db push`**: CLI 2.122 skips `0013b_*` (name is not `<digits>_name.sql`), so the booking idempotency helper would be missing. If you must use the CLI, generate a renamed copy with `scripts/db/export-cli-migrations.sh` and never mix it with the ledger. Full procedure: `docs/STAGING-CHECKLIST.md`. Never edit an applied migration; add a new one.
 3. Auth settings: Site URL = production URL; add `<site>/auth/confirm` and `<site>/**` to Redirect URLs; keep "Confirm email" ON.
 4. Create the first platform user: Dashboard -> Authentication -> Add user (auto-confirm), then run `supabase/bootstrap/first_super_admin.sql` with that email. This is the only path that grants platform roles.
 5. Create the first company from the Super Admin UI (`/admin/companies/new`); `bootstrap/first_company.sql` is the fallback.
@@ -31,7 +31,7 @@ Build command `next build`; Node 22.
 
 ## 5. Rollback
 - App: Vercel "Promote previous deployment".
-- DB: migrations are forward-only. Each admin migration (0016-0019) header lists its rollback statements; apply them manually only after assessing data impact. Take a Supabase backup before every `db push`.
+- DB: migrations are forward-only. Each admin migration (0015-0020) header lists its rollback statements; apply them manually only after assessing data impact. Take a Supabase backup before every migration run.
 
 ## 6. Known gaps before real traffic
 Rate limiting on auth/booking endpoints (Supabase Auth limits + Vercel firewall), custom domains/wildcard DNS, payment provider, monitoring/alerting, and a test run against a real Supabase project (all only tested here against local Postgres + PostgREST + a GoTrue stub).

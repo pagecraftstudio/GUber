@@ -75,6 +75,9 @@ DB=bus_aud bash tests/integration/reset-db.sh >/dev/null || fail=1
 serve bus_aud || fail=1
 itest tests/integration/audit.int.test.ts; rc=$?; echo "integration(audit) exit $rc"; [ $rc = 0 ] || fail=1
 
+step "staging scripts (applier, seed guard, bootstrap, cleanup gate)"
+bash tests/staging/db-scripts.sh | grep -E "^(FAIL|== STAGING)"; [ "${PIPESTATUS[0]}" = 0 ] || fail=1
+
 pkill -9 -x postgrest 2>/dev/null
 if [ -n "${E2E_TOOLS:-}" ]; then   # real browser (production build + next start) + local Postgres/PostgREST + GoTrue STUB. Needs puppeteer-core + CHROME_PATH or @sparticuz/chromium.
   step "browser e2e: guest/sign-in/booking flow"
