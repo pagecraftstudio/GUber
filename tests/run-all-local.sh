@@ -34,7 +34,7 @@ npx vitest run src; rc=$?; echo "vitest exit $rc"; [ $rc = 0 ] || fail=1
 
 step "SQL suites on bus_sql"
 DB=bus_sql bash tests/integration/reset-db.sh >/dev/null || fail=1
-for f in 02_tests 03_auth_tests 04_tenant_guard_tests 05_booking_tests 06_trip_machine_tests 07_customer_identity_tests 08_customer_booking_web_tests 09_idempotency_cancel_tests 10_tickets_boarding_tests 11_platform_foundation_tests 12_platform_overview_tests 13_company_management_tests 14_subscription_management_tests 15_audit_logs_tests 16_rate_limit_tests; do
+for f in 02_tests 03_auth_tests 04_tenant_guard_tests 05_booking_tests 06_trip_machine_tests 07_customer_identity_tests 08_customer_booking_web_tests 09_idempotency_cancel_tests 10_tickets_boarding_tests 11_platform_foundation_tests 12_platform_overview_tests 13_company_management_tests 14_subscription_management_tests 15_audit_logs_tests 16_rate_limit_tests 17_lifecycle_policy_tests; do
   $PSQL -q -d bus_sql -f "supabase/tests/$f.sql" > "/tmp/$f.log" 2>&1 || true
   p=$($PSQL -tA -d bus_sql -c "select count(*) filter (where ok) from t.results"); n=$($PSQL -tA -d bus_sql -c "select count(*) filter (where not ok) from t.results")
   echo "$f: cumulative passed=$p failed=$n"; [ "$n" = "0" ] || fail=1
@@ -88,5 +88,9 @@ if [ -n "${E2E_TOOLS:-}" ]; then   # real browser (production build + next start
   EXTRA_SEED=tests/e2e/seed-portal.sql SKIP_BUILD=1 bash tests/e2e/run-e2e.sh portal.mjs 0; rc=$?; echo "e2e(portal) exit $rc"; [ $rc = 0 ] || fail=1
   step "browser e2e: platform audit logs viewer"
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh audit.mjs 1; rc=$?; echo "e2e(audit) exit $rc"; [ $rc = 0 ] || fail=1
+  step "browser e2e: hosted-smoke script (scripts/smoke/flow-smoke.mjs) against the local stack"
+  SKIP_BUILD=1 bash tests/e2e/run-e2e.sh flow-smoke-local.mjs 1; rc=$?; echo "e2e(flow-smoke) exit $rc"; [ $rc = 0 ] || fail=1
+  step "browser e2e: sign-out + protected routes"
+  SKIP_BUILD=1 bash tests/e2e/run-e2e.sh signout.mjs 1; rc=$?; echo "e2e(signout) exit $rc"; [ $rc = 0 ] || fail=1
 else echo "(browser e2e skipped: set E2E_TOOLS to run it)"; fi
 echo; echo "== OVERALL: $([ $fail = 0 ] && echo PASS || echo FAIL)"; exit $fail

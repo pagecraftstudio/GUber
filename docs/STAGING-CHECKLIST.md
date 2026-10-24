@@ -55,7 +55,10 @@ Status: NOT executed. Nothing here has been run against a hosted Supabase projec
 - [ ] `/` shows 3 upcoming Cairo -> Galala trips for company `staging-demo`.
 - Cleanup: `supabase/maintenance/cleanup_test_fixtures.sql` is inert until you change `'no'` to `'yes'`; staging only, read it first.
 
-## 8. Manual verification
+## 8. Smoke tests
+Run `scripts/smoke/deploy-smoke.sh` and `scripts/smoke/flow-smoke.mjs`; see docs/SMOKE-TESTS.md for env vars and the full matrix.
+
+## 8b. Manual verification
 - [ ] Customer signup -> confirmation email -> link lands on `/auth/confirm` -> signed in.
 - [ ] Forgot password -> email -> `/auth/confirm` -> reset form -> new password works; "back" link returns to the right page.
 - [ ] Book a seat; repeat quickly >limit times -> HTTP 429 from PostgREST (0020). Note actual limit behaviour.

@@ -25,6 +25,8 @@ Build command `next build`; Node **22.x** (pinned in package.json). After deploy
 `tsc --noEmit`, `vitest run`, `bash tests/run-all-local.sh` (set E2E_TOOLS/CHROME_PATH for browser suites), `next build`, `bash tests/bundle-scan.sh`, `npm audit --omit=dev`.
 
 ## 4. Post-deploy smoke test
+Automated: `scripts/smoke/deploy-smoke.sh <url>` (read-only) and `scripts/smoke/flow-smoke.mjs` (staging only, writes then cancels; refuses production). Full matrix and manual steps: `docs/SMOKE-TESTS.md`.
+
 - `/` lists trips; `/login` signs a customer in; `/admin` returns 404 for a customer and a login redirect when signed out.
 - Super admin: `/admin` overview loads; open a company; `/admin/audit-logs` shows the bootstrap actions.
 - With a support and a billing user: support cannot create/suspend a company or change a subscription; billing sees audit entries redacted.
