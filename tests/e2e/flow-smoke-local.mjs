@@ -17,7 +17,7 @@ sql(`insert into drivers (id, company_id, full_name, phone) values ('${T(952)}',
 sql(`insert into trips (id, company_id, route_id, bus_id, driver_id, departure_at, arrival_at, price, capacity, status) values
  ('${T(945)}','${A}','${T(201)}','${T(941)}','${T(951)}', now() + interval '90 minutes', now() + interval '210 minutes', 40, 10, 'scheduled'),
  ('${T(946)}','${A}','${T(201)}','${T(942)}','${T(952)}', now() + interval '95 minutes', now() + interval '215 minutes', 40, 10, 'scheduled')`);
-const run = (extra = {}) => spawnSync('node', ['scripts/smoke/flow-smoke.mjs'], { encoding: 'utf8', env: { PATH: process.env.PATH, SMOKE_TARGET: 'local', SUPABASE_URL: L.STUB, SUPABASE_PUBLISHABLE_KEY: 'local-publishable-key-0123456789', SMOKE_COMPANY_SLUG: 'company-a',
+const run = (extra = {}) => spawnSync('node', ['scripts/smoke/flow-smoke.mjs'], { encoding: 'utf8', env: { PATH: process.env.PATH, SMOKE_TARGET: 'local', SMOKE_APP_URL: L.BASE, SUPABASE_URL: L.STUB, SUPABASE_PUBLISHABLE_KEY: 'local-publishable-key-0123456789', SMOKE_COMPANY_SLUG: 'company-a',
   SMOKE_CUSTOMER_EMAIL: 'smk-c1@e2e.test', SMOKE_CUSTOMER_PASSWORD: PW, SMOKE_CUSTOMER2_EMAIL: 'smk-c2@e2e.test', SMOKE_CUSTOMER2_PASSWORD: PW,
   SMOKE_DRIVER_EMAIL: 'smk-drv@e2e.test', SMOKE_DRIVER_PASSWORD: PW, SMOKE_BOARD_TRIP_ID: T(945), SMOKE_OTHER_TRIP_ID: T(946),
   SMOKE_ADMIN_EMAIL: 'smk-super@e2e.test', SMOKE_ADMIN_PASSWORD: PW, ...extra } });

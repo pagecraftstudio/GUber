@@ -44,6 +44,14 @@ hb=$(curl -s -m 20 -D /tmp/.health.h "$BASE/api/health"); hc=$(head -1 /tmp/.hea
 [ "$hc" = 200 ] && echo "$hb" | grep -q '"status":"ok"' && ok "GET /api/health -> 200 ok" || bad "GET /api/health -> $hc"
 tr 'A-Z' 'a-z' < /tmp/.health.h | grep -q 'cache-control: no-store' && ok "health is no-store" || bad "health cacheable"
 rm -f /tmp/.health.h
+# 4c. anonymous public catalogue routes (GET only): 200 + JSON array, browser-safe Cache-Control, invalid input -> 400 no-store
+pt=$(curl -s -m 20 -D /tmp/.pub.h "$BASE/api/public/trips?limit=1"); pc=$(head -1 /tmp/.pub.h | awk '{print $2}')
+[ "$pc" = 200 ] && echo "$pt" | grep -q '"data":\[' && ok "GET /api/public/trips -> 200 {data:[...]}" || bad "GET /api/public/trips -> $pc"
+pcc=$(grep -i '^cache-control:' /tmp/.pub.h | tr -d '\r'); echo "$pcc" | grep -qi 'max-age=0' && ! echo "$pcc" | grep -qi 'stale-while-revalidate' && ok "/api/public/trips Cache-Control browser-safe ($pcc)" || bad "/api/public/trips Cache-Control not browser-safe: $pcc"
+grep -qi '^set-cookie:' /tmp/.pub.h && bad "/api/public/trips sets a cookie (must never be cacheable)" || ok "/api/public/trips sets no cookie"
+c=$(code "/api/public/trips?limit=100000"); [ "$c" = 400 ] && ok "GET /api/public/trips?limit=100000 -> 400" || bad "invalid public search -> $c (want 400)"
+c=$(code "/api/public/trips/not-a-uuid/stops"); [ "$c" = 400 ] && ok "GET /api/public/trips/not-a-uuid/stops -> 400" || bad "invalid stops id -> $c (want 400)"
+c=$(curl -s -o /dev/null -m 20 -w '%{http_code}' -X POST "$BASE/api/public/trips"); [ "$c" = 405 ] && ok "POST /api/public/trips -> 405" || bad "POST /api/public/trips -> $c (want 405)"
 # 5. security headers on a page and on an error page
 h=$(curl -sI -m 20 "$BASE/login"); hn=$(curl -sI -m 20 "$BASE/definitely-not-a-page")
 for want in 'x-content-type-options: nosniff' 'x-frame-options: deny' 'referrer-policy:' 'permissions-policy:' 'strict-transport-security:' "content-security-policy: base-uri 'self'" 'content-security-policy-report-only:'; do

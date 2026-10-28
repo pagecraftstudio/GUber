@@ -18,6 +18,8 @@ Never logged (enforced by `src/lib/log/redact.ts`, tested): passwords, tokens, J
 
 **Important blind spot.** Customer booking, cancel, QR and driver boarding go browser -> Supabase directly, not through Next. Their failures reach the log only through `POST /api/telemetry/failure` (browser report, unverified input, capped at 8/min per page, needs a session). A user whose browser blocks the report, or who is offline, is invisible here. The authoritative record for those operations is Postgres: `audit_logs`, `bookings`, tickets, and the Supabase **API logs** and **Postgres logs** in the dashboard.
 
+Public catalogue routes log `public_search.trips.failed` / `public_search.stops.failed` (fields: `pgCode httpStatus outcome`), `*.bad_shape` and `*.exception`; upstream details are never returned to the caller (502/429 only, `no-store`).
+
 ## 2. Checking for failure
 ### App (Vercel)
 1. `curl -s https://<host>/api/health` -> `{"status":"ok","release":"abc1234"}`. This proves the deployment serves requests. It does not prove the database is reachable.
@@ -50,14 +52,14 @@ Never logged (enforced by `src/lib/log/redact.ts`, tested): passwords, tokens, J
 
 ### Database
 - Applied migrations are never edited. Fix forward with a new migration.
-- Manual undo only if data impact is understood: migrations 0015-0020 list their ROLLBACK statements in the header. 0020 renames functions into another schema, so reverse the renames in the stated order. Run first on a staging copy.
+- Manual undo only if data impact is understood: migrations 0015-0021 list their ROLLBACK statements in the header. 0020 renames functions into another schema, so reverse the renames in the stated order. Run first on a staging copy.
 - Never run rollback SQL on production without a fresh backup and your approval.
 
 ## 4. Backup and recovery
 Check what your Supabase plan actually includes; this repo cannot verify it. Typical: free projects have no managed backups, paid projects have daily backups, point-in-time recovery (PITR) is a paid add-on. **Confirm in Dashboard -> Database -> Backups before relying on any of this.**
 
 Before every production migration:
-1. Confirm a backup exists from the last 24h (or enable PITR), or take a manual dump: `pg_dump "$DIRECT_DB_URL" --schema=public --schema=auth -Fc -f pre-0021.dump` (direct connection string from the dashboard; keep the file private, it contains customer data; never commit it).
+1. Confirm a backup exists from the last 24h (or enable PITR), or take a manual dump: `pg_dump "$DIRECT_DB_URL" --schema=public --schema=auth -Fc -f pre-migration.dump` (direct connection string from the dashboard; keep the file private, it contains customer data; never commit it).
 2. Run `TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run` on staging and read the list. There is no production mode in that script (DEPLOYMENT.md 4.4); never use `supabase db push` (it skips `0013b`).
 3. Apply on staging first, run the SQL + smoke suites, then production.
 

@@ -22,8 +22,16 @@ import { logger } from '@/lib/log';
  */
 export const UPSTREAM_TIMEOUT_MS = 8000;
 /** Seats change on every booking, so the shared cache is short. The booking RPC is always authoritative. */
-export const TRIPS_CACHE = 'public, max-age=0, s-maxage=30, stale-while-revalidate=60';
-export const STOPS_CACHE = 'public, max-age=0, s-maxage=120, stale-while-revalidate=300';
+/**
+ * Browsers must always revalidate (max-age=0) and must NOT get stale-while-revalidate: Chrome honours it for private caches
+ * and would show seat counts up to a minute old (found by the portal browser test: a trip freed in the DB still showed
+ * "Fully Booked"). Stale-while-revalidate is therefore granted to the Vercel CDN only, via Vercel-CDN-Cache-Control.
+ */
+export const TRIPS_CACHE = 'public, max-age=0, s-maxage=30';
+export const STOPS_CACHE = 'public, max-age=0, s-maxage=120';
+export const TRIPS_CDN_CACHE = 'max-age=30, stale-while-revalidate=60';
+export const STOPS_CDN_CACHE = 'max-age=120, stale-while-revalidate=300';
+export const cdnCacheFor = (cacheControl: string): string => (cacheControl === STOPS_CACHE ? STOPS_CDN_CACHE : TRIPS_CDN_CACHE);
 const NO_STORE = { 'Cache-Control': 'no-store' } as const;
 
 let client: SupabaseClient | undefined;
@@ -58,7 +66,7 @@ export async function publicRpc<S extends z.ZodType>(
       logger.error(`${event}.bad_shape`, { issues: parsed.error.issues.length });
       return upstreamFailure(502);
     }
-    return NextResponse.json({ data: parsed.data }, { status: 200, headers: { 'Cache-Control': cacheControl } });
+    return NextResponse.json({ data: parsed.data }, { status: 200, headers: { 'Cache-Control': cacheControl, 'Vercel-CDN-Cache-Control': cdnCacheFor(cacheControl) } });
   } catch (e) {
     logger.error(`${event}.exception`, { error: e });
     return upstreamFailure(502);

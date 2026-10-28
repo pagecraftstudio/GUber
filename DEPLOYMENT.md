@@ -1,13 +1,14 @@
 # Deployment runbook (GitHub -> Vercel -> Supabase)
 
-Last updated: Phase 8G. Source of truth is the repository; every command and file below was checked to exist in this tree.
+Last updated: Phase 8 final (see PHASE-8-FINAL-REPORT.md). Source of truth is the repository; every command and file below was checked to exist in this tree.
 
 **Nothing in this document has been executed against a hosted Supabase project or a live Vercel deployment.** Everything was run only against local Postgres + PostgREST + a GoTrue *stub* (see PHASE-8E-REPORT.md, PHASE-8F-REPORT.md). Sections are labelled so you can tell what is finished from what needs your credentials.
 
 ## 0. Status at a glance
 | Area | State |
 |---|---|
-| Code, unit tests, SQL/RLS suites, local browser suites | Done and passing locally (8E: 1433 SQL assertions, 566 unit; 8F: 572 unit) |
+| Code, unit tests, SQL/RLS suites, local browser suites | Done and passing locally (Phase 8 final: 1458 SQL assertions, 636 unit, 7 browser suites). **Re-run after any further code change** |
+| Public marketplace routes `/api/public/*` (Phase 8) | Done locally. Vercel Firewall rule and CDN caching **unverified/manual** (RATE-LIMITING.md 3). Direct Supabase RPC access is **still open** (decision B) |
 | Rate limiting (DB limiter, migration 0020) | Done locally. HTTP 429 mapping on hosted PostgREST **unverified** |
 | Rate limiting (Supabase Auth limits, Vercel Firewall rules) | **Manual, not active until you configure and test** (docs/RATE-LIMITING.md) |
 | Structured logging, `/api/health`, runbook | Done locally. Vercel log output **unverified** |
@@ -15,6 +16,16 @@ Last updated: Phase 8G. Source of truth is the repository; every command and fil
 | External error monitor, uptime check, log drain | **Your decision, nothing installed** |
 | Production deployment | **Not done, not authorised** |
 | Production migration tooling | **Does not exist** (see 4.4) |
+
+### 0.1 Local validation vs hosted validation
+| | Local (done, repeatable) | Hosted (NOT done) |
+|---|---|---|
+| Database | Postgres 16 + PostgREST 12.2.12, migrations via `scripts/db/apply-migrations.sh` with `TARGET_ENV=local` | Supabase staging project via the same script with `TARGET_ENV=staging` |
+| Auth | GoTrue **stub** (`tests/e2e/auth-stub.mjs`) | Real Supabase Auth (e-mail, redirects, `Secure` cookies, real sign-out revocation) |
+| App | `next build` + `next start` on localhost | Vercel build, CDN, Firewall, `Vercel-CDN-Cache-Control` |
+| Commands | `bash tests/run-all-local.sh` (set `E2E_TOOLS`, `CHROME_PATH`, `PSQL`, `POSTGREST` for the browser suites), `bash tests/bundle-scan.sh`, `npm audit --omit=dev` | `deploy-smoke.sh https://<alias>`, `flow-smoke.mjs` with `SMOKE_APP_URL`, `docs/STAGING-CHECKLIST.md` |
+
+**After the last code change, re-run: `npx tsc --noEmit`, `npx vitest run`, `bash tests/run-all-local.sh` (with browser suites), `next build`, `bash tests/bundle-scan.sh` on that exact build, and `npm audit --omit=dev`.** Results in PHASE-8-FINAL-REPORT.md are valid only for the code in that archive.
 
 ## 1. Prerequisites
 - Node.js **22.x** (pinned in `package.json` `engines`; only tested on 22). npm (lockfile is `package-lock.json`, use `npm ci`).
@@ -54,11 +65,11 @@ Human checklist with tick boxes: **docs/STAGING-CHECKLIST.md**. Summary:
 ### 4.1 Create the project and set guards
 New Supabase project. Export in your shell: `DATABASE_URL` (direct or session-pooler URL), `STAGING_PROJECT_REF`, and `PRODUCTION_PROJECT_REF` (so the scripts can refuse it).
 
-### 4.2 Apply migrations (21 files: 0001-0020 including `0013b`)
+### 4.2 Apply migrations (22 files: 0001-0021 including `0013b`)
 ```
-TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run   # expect 21 pending, 0 CHANGED/MISSING
+TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run   # expect 22 pending, 0 CHANGED/MISSING
 # take a backup first (Dashboard -> Database -> Backups)
-TARGET_ENV=staging bash scripts/db/apply-migrations.sh             # expect: done: 21 applied
+TARGET_ENV=staging bash scripts/db/apply-migrations.sh             # expect: done: 22 applied; then `--status` -> `ledger OK; 0 pending` and the 0021 row in `app_private.schema_ledger` has the sha256 of the file in the repo
 TARGET_ENV=staging bash scripts/db/apply-migrations.sh --status    # all applied; a re-run applies 0
 ```
 - **Do not use `supabase db push`.** CLI 2.122 skips `0013b_*` (name is not `<digits>_name.sql`), so booking idempotency would silently be missing. The script uses its own ledger (`app_private.schema_ledger`, filename + sha256), not the CLI history. Never mix the two on one database. CLI fallback for a fresh project only: `scripts/db/export-cli-migrations.sh <outdir>`.
@@ -129,12 +140,13 @@ Manual list (staging): customer sign-up -> e-mail -> `/auth/confirm` -> signed i
 | Tenant isolation, roles, lifecycle, rate limit | `supabase/tests/02..17` via `run-all-local.sh` | locally only; suites refuse real Supabase projects, so on staging use `flow-smoke.mjs` and the manual list |
 | Security headers, CSP (report-only), indexing | `deploy-smoke.sh` | locally; real browsers unverified |
 | Operator-only login/reset throttle | Vercel Firewall rules | **manual, unverified** |
-| Customer login, signup, public search throttle | Supabase Auth limits only (these bypass Vercel) | **manual, unverified** |
+| Customer login and signup throttle | Supabase Auth limits only (these bypass Vercel) | **manual, unverified** |
+| Public trip search/stops via the app (`/api/public/*`) | Vercel Firewall rule (RATE-LIMITING.md 3). Does NOT protect direct calls to Supabase `/rest/v1/rpc/public_*` | **manual, unverified; residual bypass accepted, see RATE-LIMITING.md 3b** |
 
 ## 10. Rollback, recovery, monitoring
 Full procedure: **docs/OPERATIONS.md** (log events, triage, rollback, backup/restore, monitoring recommendation).
 - App: Vercel Deployments -> previous deployment -> Promote/Instant Rollback. Does not revert the database or env vars.
-- DB: forward-only. Migrations 0015-0020 list manual rollback statements in their headers; use only after a data-impact review, first on a staging copy. Confirm a backup before every migration run.
+- DB: forward-only. Migrations 0015-0021 list manual rollback statements in their headers; use only after a data-impact review, first on a staging copy. Confirm a backup before every migration run.
 - Liveness: `GET /api/health`. Logs: Vercel Logs, JSON lines, secrets redacted.
 
 ## 11. Known limitations and manual steps
@@ -143,8 +155,8 @@ Full procedure: **docs/OPERATIONS.md** (log events, triage, rollback, backup/res
 **Unverified (never observed on hosted infrastructure):** real Auth e-mail flow and redirect matching, `Secure` cookies in a browser, `PT429` surfacing as HTTP 429, CSP in real browsers, Vercel behaviour, phone-camera QR scanning, global-vs-local sign-out on real GoTrue.
 
 **Open product decisions (8E findings):**
-1. Expired subscription: booking is refused but the marketplace still lists the trips. Hiding them needs a new migration (0021).
-2. Customer sign-out revokes all devices (browser default); staff sign-out is local-only. Decide which you want.
+1. ~~Expired subscription still listed~~ **Resolved by migration 0021** (search and stop listing hide companies without a live subscription; booking is still refused independently).
+2. ~~Customer sign-out revokes all devices~~ **Resolved**: customer sign-out uses `{ scope: 'local' }` like staff (real-GoTrue behaviour still unverified).
 3. Admin RPC "not found" arrives as HTTP 500 / SQLSTATE `P0002`; the service layer maps it, but error counters will see 5xx.
 
 **Not built:** payment provider, custom domains / wildcard DNS, external error monitoring, uptime checks, CSP enforcement (report-only for now). The DB rate limiter counts only calls that commit, so floods of failing calls are not throttled by it (docs/RATE-LIMITING.md). Browser-to-Supabase failures reach server logs only through the unverified client report.

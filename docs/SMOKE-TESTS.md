@@ -15,7 +15,10 @@ Three environments, three different promises. Never mix them up.
 # LOCAL, everything (SQL, integration, staging scripts, optional browser suites)
 PSQL=psql POSTGREST=/path/to/postgrest E2E_TOOLS=/dir/with/puppeteer CHROME_PATH=/path/to/chromium bash tests/run-all-local.sh
 
-# STAGING 1: routing, access gates, headers (read-only, no accounts)
+# LOCAL browser suites individually (production build + local stack; see tests/e2e/run-e2e.sh for the exact arguments):
+#   flow.mjs 0 | tickets.mjs 1 | portal.mjs 0 (EXTRA_SEED=tests/e2e/seed-portal.sql) | audit.mjs 1 | flow-smoke-local.mjs 1 | deploy-smoke-local.mjs 1 | signout.mjs 1
+
+# STAGING 1: routing, access gates, headers, public routes /api/public/* (read-only, no accounts)
 bash scripts/smoke/deploy-smoke.sh https://<staging-alias>
 
 # STAGING 2: authenticated flow over the public API (writes + cancels bookings in company `staging-demo`)
@@ -26,7 +29,9 @@ export SMOKE_CUSTOMER_EMAIL=... SMOKE_CUSTOMER_PASSWORD=... SMOKE_CUSTOMER2_EMAI
 export SMOKE_DRIVER_EMAIL=... SMOKE_DRIVER_PASSWORD=... SMOKE_BOARD_TRIP_ID=<uuid> SMOKE_OTHER_TRIP_ID=<uuid>
 # optional: platform admin
 export SMOKE_ADMIN_EMAIL=... SMOKE_ADMIN_PASSWORD=...
-node scripts/smoke/flow-smoke.mjs
+# recommended: the staging app origin, so the marketplace search + stops are tested through /api/public/* (the real browser path)
+export SMOKE_APP_URL=https://<staging-alias>
+node scripts/smoke/flow-smoke.mjs   # without SMOKE_APP_URL the search falls back to the direct RPC and the HTTP checks print SKIP
 ```
 Type the passwords into your own shell; do not paste them into chats or tickets. The script never prints tokens, QR payloads or passwords. Bookings on the boarding trips cannot be cancelled (inside the cancellation window); the script says so and leaves them: use a throw-away trip.
 
@@ -51,7 +56,7 @@ Legend: **L** = automated locally (file). **S-auto** = covered by `flow-smoke.mj
 ### Item 11 policy (pinned by `17_lifecycle_policy_tests.sql`)
 | Actor / action | Company **suspended** | Subscription **expired** |
 |---|---|---|
-| Marketplace lists its trips | hidden | **still listed** (known gap, below) |
+| Marketplace lists its trips | hidden | hidden (migration 0021, pinned by `17_lifecycle_policy_tests.sql`) |
 | New customer booking | refused, "trip not found" | refused, `42501 no active subscription` |
 | Customer reads own bookings | hidden (0 rows) | works |
 | Customer QR / cancel | not reachable | works |
@@ -59,9 +64,9 @@ Legend: **L** = automated locally (file). **S-auto** = covered by `flow-smoke.mj
 | Staff context | `company_status = suspended`, 0 permissions | normal; new users/buses/drivers/routes/trips refused |
 | Reactivation / renewal | service resumes at once | booking works again |
 
-## Findings from 8E (not changed: product decisions)
-1. **Expired subscription still lists bookable-looking trips.** `public_search_trips` has no subscription check, so customers see trips that fail at booking with "no active subscription". Options: hide them in the search (new migration 0021), or leave and show a clear message. Recommend hiding.
-2. **Customer sign-out scope is inconsistent.** The browser client calls `auth.signOut()` (default: all devices); staff `logoutAction` uses `scope: 'local'`. Not verifiable with the local stub (it does not revoke). Recommend `{ scope: 'local' }` for customers, unless "sign out everywhere" is intended.
+## Findings from 8E
+1. ~~Expired subscription still lists bookable-looking trips.~~ **Resolved by migration 0021** (search + stops hide companies without a live subscription; booking refusal unchanged).
+2. ~~Customer sign-out scope inconsistent.~~ **Resolved**: customer sign-out uses `{ scope: 'local' }`. Real GoTrue behaviour is still unverified (the local stub does not revoke).
 3. A non-existent id in admin RPCs returns PostgREST HTTP 500 with SQLSTATE P0002 (not 404). The service layer maps it by code, so users see a clean error; log dashboards will count these as 5xx.
 
 ## Manual staging checklist (the parts no script covers)

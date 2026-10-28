@@ -90,6 +90,8 @@ if [ -n "${E2E_TOOLS:-}" ]; then   # real browser (production build + next start
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh audit.mjs 1; rc=$?; echo "e2e(audit) exit $rc"; [ $rc = 0 ] || fail=1
   step "browser e2e: hosted-smoke script (scripts/smoke/flow-smoke.mjs) against the local stack"
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh flow-smoke-local.mjs 1; rc=$?; echo "e2e(flow-smoke) exit $rc"; [ $rc = 0 ] || fail=1
+  step "browser e2e: deploy-smoke.sh (incl. /api/public/*) against the local production build"
+  SKIP_BUILD=1 bash tests/e2e/run-e2e.sh deploy-smoke-local.mjs 1; rc=$?; echo "e2e(deploy-smoke) exit $rc"; [ $rc = 0 ] || fail=1
   step "browser e2e: sign-out + protected routes"
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh signout.mjs 1; rc=$?; echo "e2e(signout) exit $rc"; [ $rc = 0 ] || fail=1
 else echo "(browser e2e skipped: set E2E_TOOLS to run it)"; fi

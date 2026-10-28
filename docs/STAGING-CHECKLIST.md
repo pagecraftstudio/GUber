@@ -12,11 +12,13 @@ Status: NOT executed. Nothing here has been run against a hosted Supabase projec
 - [ ] Settings -> Database -> connection string (use the direct or session-pooler URL, with password). Export in your shell only:
   `export DATABASE_URL='postgres://...'` `export STAGING_PROJECT_REF=<STAGING_REF>` `export PRODUCTION_PROJECT_REF=<PROD_REF>`
 
-## 2. Migrations (21 files, 0001 ... 0020)
-- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run` -> expect 21 pending, 0 CHANGED/MISSING.
+## 2. Migrations (22 files, 0001 ... 0021)
+- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run` -> expect 22 pending, 0 CHANGED/MISSING.
 - [ ] Take a backup (Dashboard -> Database -> Backups).
-- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh` -> expect `done: 21 applied`.
-- [ ] `... --status` -> all `applied`. Re-run -> `0 applied`.
+- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh` -> expect `done: 22 applied`.
+- [ ] `... --status` -> all `applied`, `ledger OK; 0 pending`. Re-run -> `0 applied`.
+- [ ] 0021 present in the ledger: `select filename from app_private.schema_ledger where filename like '0021%';` -> 1 row.
+- [ ] `select to_regprocedure('app_private.has_live_subscription(uuid)');` -> not null (0021).
 - The script refuses: no/other TARGET_ENV, `production`, URL missing `STAGING_PROJECT_REF`, URL containing `PRODUCTION_PROJECT_REF`, non-Supabase DB, edited/removed applied files.
 - WARNING `supabase db push` skips `0013b` (CLI 2.122). Do not use it. CLI fallback: `scripts/db/export-cli-migrations.sh <outdir>` (renames to `00135_`), only on a fresh project, never mixed with the ledger.
 - If staging was ever migrated by the SQL editor or CLI: ledger is empty, so the script would re-run files. Do not re-run on a populated DB; reset the staging project instead.
@@ -59,6 +61,9 @@ Status: NOT executed. Nothing here has been run against a hosted Supabase projec
 Run `scripts/smoke/deploy-smoke.sh` and `scripts/smoke/flow-smoke.mjs`; see docs/SMOKE-TESTS.md for env vars and the full matrix.
 
 ## 8b. Manual verification
+- [ ] Public routes on the staging alias: `curl -s "https://<alias>/api/public/trips?limit=1"` -> 200 `{"data":[...]}`; `Cache-Control` has `max-age=0` and NO `stale-while-revalidate`; `Vercel-CDN-Cache-Control` present (it is stripped by Vercel, so it may not show on the public response: check the second request for `x-vercel-cache: HIT`/`STALE`).
+- [ ] After a booking, the seat count on `/` is correct within ~30 s (CDN `s-maxage=30`), never minutes. Record what you observe.
+- [ ] Vercel Firewall rule for `/api/public/` created (Log mode first), then 429 observed from a terminal (RATE-LIMITING.md 3). Until observed: NOT active.
 - [ ] Customer signup -> confirmation email -> link lands on `/auth/confirm` -> signed in.
 - [ ] Forgot password -> email -> `/auth/confirm` -> reset form -> new password works; "back" link returns to the right page.
 - [ ] Book a seat; repeat quickly >limit times -> HTTP 429 from PostgREST (0020). Note actual limit behaviour.
@@ -71,8 +76,8 @@ Run `scripts/smoke/deploy-smoke.sh` and `scripts/smoke/flow-smoke.mjs`; see docs
 | Migration | Rollback |
 |---|---|
 | 0001-0014 (+0013b) | none; forward-only. Restore backup. |
-| 0015-0020 | statements listed in each file header; apply manually only after data-impact review. |
+| 0015-0021 | statements listed in each file header (0021: restore the two functions from 0013, then drop `app_private.has_live_subscription`); apply manually only after data-impact review. |
 App: Vercel "Promote previous deployment".
 
 ## 10. Not verified by repo tests
-Hosted Supabase behaviour, applying 0020 on a real project, Auth redirect matching with query strings, real email delivery, Vercel Firewall rules (see docs/RATE-LIMITING.md), PT429 -> 429 on hosted PostgREST.
+Hosted Supabase behaviour, applying 0020/0021 on a real project, `/api/public/*` behind the Vercel CDN and Firewall (cache headers, 429), direct-RPC residual risk, Auth redirect matching with query strings, real email delivery, Vercel Firewall rules (see docs/RATE-LIMITING.md), PT429 -> 429 on hosted PostgREST.

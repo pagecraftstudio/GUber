@@ -10,6 +10,9 @@
 //   SMOKE_CUSTOMER_EMAIL / _PASSWORD, SMOKE_CUSTOMER2_EMAIL / _PASSWORD     two different confirmed customer accounts
 // staging also requires: STAGING_PROJECT_REF (must be inside SUPABASE_URL), PRODUCTION_PROJECT_REF (must NOT be, strongly recommended)
 // Optional:
+//   SMOKE_APP_URL  (the deployed Next.js app origin, e.g. https://staging.example.com). When set, the anonymous marketplace search and the stop
+//     listing go through the real HTTP routes /api/public/trips and /api/public/trips/:id/stops, exactly like the browser. When unset, the
+//     search falls back to the direct RPC and the HTTP-route checks are SKIPPED (reported, never silently passed).
 //   SMOKE_DRIVER_EMAIL / _PASSWORD + SMOKE_BOARD_TRIP_ID (a scheduled trip departing in 65..110 min, assigned to that driver; inside the
 //     boarding window and outside the 60 min booking cutoff) [+ SMOKE_OTHER_TRIP_ID: a second trip, to prove wrong-trip rejection]
 //   SMOKE_ADMIN_EMAIL / _PASSWORD (platform super_admin: proves /admin RPC access)
@@ -17,6 +20,7 @@
 const env = (k, d) => (process.env[k] ?? d ?? '').trim();
 const TARGET = env('SMOKE_TARGET'), URLX = env('SUPABASE_URL').replace(/\/$/, ''), KEY = env('SUPABASE_PUBLISHABLE_KEY');
 const SLUG = env('SMOKE_COMPANY_SLUG', 'staging-demo');
+const APP = env('SMOKE_APP_URL').replace(/\/$/, '');
 let fail = 0, ran = 0, skipped = 0;
 const die = (m) => { console.error('REFUSING: ' + m); process.exit(2); };
 const ok = (n) => { ran++; console.log('PASS  ' + n); };
@@ -38,6 +42,11 @@ else {
   if (p && (p === s || URLX.includes(p))) die('SUPABASE_URL matches PRODUCTION_PROJECT_REF');
   if (new URL(URLX).protocol !== 'https:') die('staging must use https');
 }
+if (APP) {
+  let u; try { u = new URL(APP); } catch { die('SMOKE_APP_URL is not a URL'); }
+  if (TARGET === 'staging' && u.protocol !== 'https:') die('staging SMOKE_APP_URL must use https');
+  if (TARGET === 'local' && !['localhost', '127.0.0.1'].includes(u.hostname)) die('SMOKE_TARGET=local but SMOKE_APP_URL host is not localhost');
+}
 const need = (k) => env(k) || die('missing ' + k);
 const C1 = { email: need('SMOKE_CUSTOMER_EMAIL'), password: need('SMOKE_CUSTOMER_PASSWORD') };
 const C2 = { email: need('SMOKE_CUSTOMER2_EMAIL'), password: need('SMOKE_CUSTOMER2_PASSWORD') };
@@ -51,6 +60,12 @@ async function req(path, { token, method = 'GET', body, headers = {} } = {}) {
 }
 const rpc = (fn, args = {}, token) => req('/rest/v1/rpc/' + fn, { token, method: 'POST', body: args });
 const login = async (acct) => { const r = await req('/auth/v1/token?grant_type=password', { method: 'POST', body: acct }); return r.status === 200 ? r.body.access_token : null; };
+/** Anonymous GET against the Next.js app (not Supabase): the public HTTP routes. */
+const appGet = async (path) => {
+  const r = await fetch(APP + path, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(30000) });
+  let j = null; try { j = await r.json(); } catch { /* empty */ }
+  return { status: r.status, body: j, headers: r.headers };
+};
 const code = (r) => r.body?.code ?? String(r.status);
 const denied = (r) => [401, 403].includes(r.status) || ['42501', 'PGRST301', 'PGRST302'].includes(r.body?.code);
 const key = () => 'smoke-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -59,15 +74,26 @@ const created = []; // [token, booking id] cancelled again at the end
 console.log(`target: ${TARGET} ${host}   company: ${SLUG}`);
 
 // 1. public marketplace
-const search = await rpc('public_search_trips', { p_limit: 100 });
-const trips = Array.isArray(search.body) ? search.body.filter((t) => t.company_slug === SLUG) : [];
-check('marketplace: anonymous search answers 200', search.status === 200, String(search.status));
+const search = APP ? await appGet('/api/public/trips?limit=100') : await rpc('public_search_trips', { p_limit: 100 });
+const searchRows = APP ? search.body?.data : search.body;
+const trips = Array.isArray(searchRows) ? searchRows.filter((t) => t.company_slug === SLUG) : [];
+check(APP ? 'marketplace: GET /api/public/trips answers 200 (HTTP route, not direct RPC)' : 'marketplace: anonymous search answers 200 (direct RPC; set SMOKE_APP_URL to test the HTTP route)', search.status === 200, String(search.status));
 check(`marketplace: company ${SLUG} has an open trip`, trips.length > 0, 'seed the staging data first (supabase/staging/seed_staging.sql)');
 check('marketplace: result carries no private fields', trips.length === 0 || !Object.keys(trips[0]).some((k) => /bus|driver|plate|license|phone|token/i.test(k)), Object.keys(trips[0] ?? {}).join(','));
 if (!trips.length) { console.log('\nFLOW SMOKE: FAIL (nothing to book)'); process.exit(1); }
 // the farthest departure: a booking must be cancellable (outside the company's cancellation window) so the smoke leaves nothing behind
 const trip = [...trips].filter((t) => t.seats_available >= 2).sort((a, b) => (a.departure_at < b.departure_at ? 1 : -1))[0] ?? trips[0];
-const seatsOf = async (id) => (await rpc('public_search_trips', { p_company_id: trip.company_id, p_limit: 100 })).body?.find((t) => t.trip_id === id)?.seats_available;
+const seatsOf = async (id) => APP
+  ? (await appGet(`/api/public/trips?companyId=${trip.company_id}&limit=100`)).body?.data?.find((t) => t.trip_id === id)?.seats_available
+  : (await rpc('public_search_trips', { p_company_id: trip.company_id, p_limit: 100 })).body?.find((t) => t.trip_id === id)?.seats_available;
+if (APP) {
+  const c = search.headers.get('cache-control') ?? '';
+  check('marketplace: HTTP route sends a browser-safe Cache-Control (no stale-while-revalidate, max-age=0)', /max-age=0/.test(c) && !/stale-while-revalidate/.test(c), c);
+  const st = await appGet(`/api/public/trips/${trip.trip_id}/stops`);
+  check('marketplace: GET /api/public/trips/:id/stops answers 200 with an array', st.status === 200 && Array.isArray(st.body?.data), String(st.status));
+  const bad = await appGet('/api/public/trips?limit=100000');
+  check('marketplace: HTTP route rejects invalid input with 400', bad.status === 400, String(bad.status));
+} else skip('marketplace: HTTP routes /api/public/*', 'SMOKE_APP_URL not set');
 
 // 2. anonymous cannot do customer things
 const anonBook = await rpc('create_my_booking', { p_trip_id: trip.trip_id, p_seats: 1, p_full_name: 'x', p_phone: '+201000000000', p_idempotency_key: key() });

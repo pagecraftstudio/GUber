@@ -97,6 +97,7 @@ await clickText(p, '2 Seats', { scope: '[role=dialog]' });
 check('booking dialog: total = server price x seats (80 EGP, no phantom discount)', /80 EGP/.test(await dialogText(p)) && !/Discount/i.test(await dialogText(p)), (await dialogText(p)).slice(-250));
 await p.setRequestInterception(true);
 p.on('request', async (r) => { if (r.url().includes('/rpc/create_my_booking')) { await sleep(1500); } r.continue().catch(() => {}); });
+const qrResponses = []; p.on('response', (r) => { if (/my_ticket_qr/.test(r.url())) qrResponses.push(r.status()); }); // diagnostics only: shown when the QR check fails
 await clickText(p, 'Confirm booking', { sel: 'button[type=submit]', scope: '[role=dialog]' });
 await sleep(500);
 const loadingState = await p.evaluate(() => { const b = [...document.querySelectorAll('[role=dialog] button[type=submit]')].pop(); return b ? { disabled: b.disabled, busy: b.getAttribute('aria-busy'), html: b.innerHTML.includes('animate-spin') } : null; });
@@ -108,7 +109,7 @@ const ref = (ticketText.match(/MB-[A-Z0-9]{4,}/) || [])[0];
 check('booking: confirmation shows real reference from PostgreSQL', !!ref && sql(`select count(*) from bookings where reference = '${ref}'`) === '1', ref);
 await p.waitForSelector('[data-testid=ticket-qr]', { timeout: 10000 }).catch(() => {});
 const tix = Number(sql(`select count(*) from tickets t join bookings b on b.id = t.booking_id where b.reference = '${ref}'`));
-check('booking: confirmation shows a server-issued QR (one ticket per seat in the DB), no mock token, raw token not printed', !!(await p.$('[data-testid=ticket-qr]')) && tix === 2 && !/malaky_sec_tk|MALAKY:TICKET|Opaque/i.test(await text(p)), `${tix} :: ${ticketText.slice(0, 160)}`);
+check('booking: confirmation shows a server-issued QR (one ticket per seat in the DB), no mock token, raw token not printed', !!(await p.$('[data-testid=ticket-qr]')) && tix === 2 && !/malaky_sec_tk|MALAKY:TICKET|Opaque/i.test(await text(p)), `tickets=${tix} my_ticket_qr http=${JSON.stringify(qrResponses)} pageErrors=${JSON.stringify(p.errors)} qrImgs=${await p.$$eval('img', (i) => i.length)} skeleton=${await p.$$eval('.animate-pulse', (i) => i.length)} :: ${(await text(p)).slice(0, 200)}`);
 const row = L.sqlRow(`select b.seats_count, b.status, b.source, b.total_amount::int as total, (c.user_id = '${aliceId}') as owned, (b.created_by = '${aliceId}') as created_by_me, t.seats_booked from bookings b join customers c on c.id = b.customer_id join trips t on t.id = b.trip_id where b.reference = '${ref}'`);
 // row_to_json gives real booleans (psql text prints 't'/'f'), so compare booleans as booleans
 check('booking persisted: 2 seats, confirmed, web, 80 EGP, owned by Alice, trip counter = 2', row?.seats_count === 2 && row.status === 'confirmed' && row.source === 'web' && row.total === 80 && row.owned === true && row.created_by_me === true && row.seats_booked === 2, JSON.stringify(row));

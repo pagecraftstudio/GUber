@@ -11,7 +11,7 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: (...a: unknown[]) => cre
 
 const { GET: searchGET } = await import('@/app/api/public/trips/route');
 const { GET: stopsGET } = await import('@/app/api/public/trips/[tripId]/stops/route');
-const { resetAnonClientForTests, TRIPS_CACHE, STOPS_CACHE } = await import('./handler');
+const { resetAnonClientForTests, TRIPS_CACHE, STOPS_CACHE, TRIPS_CDN_CACHE, STOPS_CDN_CACHE } = await import('./handler');
 const { searchQuerySchema, queryObject, MAX_LIMIT } = await import('./schema');
 
 const T = '00000000-0000-4000-8000-000000000a01';
@@ -72,6 +72,10 @@ describe('GET /api/public/trips', () => {
     const res = await get();
     expect(res.headers.get('cache-control')).toBe(TRIPS_CACHE);
     expect(TRIPS_CACHE).toMatch(/^public, .*s-maxage=\d+/);
+    // regression: browsers honour stale-while-revalidate, so it may only appear in the CDN-targeted header
+    expect(res.headers.get('cache-control')).not.toMatch(/stale-while-revalidate/);
+    expect(res.headers.get('cache-control')).toMatch(/max-age=0/);
+    expect(res.headers.get('vercel-cdn-cache-control')).toBe(TRIPS_CDN_CACHE);
     expect(res.headers.get('set-cookie')).toBeNull();
     expect(res.headers.get('vary') ?? '').not.toMatch(/cookie|authorization/i);
   });
@@ -127,6 +131,8 @@ describe('GET /api/public/trips/:tripId/stops', () => {
     const res = await stops(T);
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe(STOPS_CACHE);
+    expect(res.headers.get('cache-control')).not.toMatch(/stale-while-revalidate/);
+    expect(res.headers.get('vercel-cdn-cache-control')).toBe(STOPS_CDN_CACHE);
     expect(JSON.stringify(await res.json())).not.toContain('hide me');
     expect(rpc).toHaveBeenCalledWith('public_trip_stops', { p_trip_id: T });
   });
