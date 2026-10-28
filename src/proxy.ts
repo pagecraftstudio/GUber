@@ -10,7 +10,14 @@ import { loginPathFor } from '@/lib/auth/redirect';
 /** '/' (marketplace), '/login', '/register', '/company/login' and the trip search are deliberately NOT here: public. */
 const SESSION_REQUIRED = ['/dashboard', '/driver', '/admin', '/my-bookings', '/reset-password', '/suspended', '/no-access'];
 
+/**
+ * Anonymous, cacheable public data. It must NOT pass through updateSession(): that can attach Set-Cookie to the response,
+ * and a response carrying a cookie must never be stored by a shared cache or shared between visitors.
+ */
+const PUBLIC_DATA_PREFIX = '/api/public/';
+
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith(PUBLIC_DATA_PREFIX)) return NextResponse.next();
   const { response, user } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
 

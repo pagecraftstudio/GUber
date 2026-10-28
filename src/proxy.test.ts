@@ -40,3 +40,19 @@ describe('proxy: signed-in visitor', () => {
     }
   });
 });
+
+describe('proxy: anonymous public data endpoints', () => {
+  it('/api/public/* never goes through the session refresh (a Set-Cookie there would make it uncacheable and unsafe to share)', async () => {
+    const calls: string[] = [];
+    vi.resetModules();
+    vi.doMock('@/lib/supabase/proxy', () => ({ updateSession: async () => { calls.push('updateSession'); const response = NextResponse.next(); response.cookies.set('sb-x', 'v'); return { response, user: null }; } }));
+    const { proxy: fresh } = await import('./proxy');
+    const res = await fresh(new NextRequest('http://localhost:3000/api/public/trips?limit=5'));
+    expect(calls).toEqual([]);
+    expect(res.headers.get('set-cookie')).toBeNull();
+    // everything else still refreshes the session
+    await fresh(new NextRequest('http://localhost:3000/login'));
+    expect(calls).toEqual(['updateSession']);
+    vi.doUnmock('@/lib/supabase/proxy');
+  });
+});

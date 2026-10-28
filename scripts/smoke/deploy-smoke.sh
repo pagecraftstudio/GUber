@@ -39,6 +39,11 @@ curl -s -m 20 "$BASE/forgot-password?from=operator" | grep -q 'href="/company/lo
 # 4. API surface: POST-only, nothing leaks on GET
 for p in /api/telemetry/failure /api/csp-report; do c=$(code "$p"); [ "$c" = 405 ] && ok "GET $p -> 405" || bad "GET $p -> $c (want 405)"; done
 c=$(curl -s -o /dev/null -m 20 -w '%{http_code}' -X POST -H 'content-type: application/json' -H 'origin: https://evil.example' -d '{}' "$BASE/api/telemetry/failure"); case "$c" in 401|403) ok "cross-origin POST telemetry -> $c";; *) bad "cross-origin POST telemetry -> $c (want 401/403)";; esac
+# 4b. liveness probe: 200, JSON {status:ok}, no-store, nothing else leaks
+hb=$(curl -s -m 20 -D /tmp/.health.h "$BASE/api/health"); hc=$(head -1 /tmp/.health.h | awk '{print $2}')
+[ "$hc" = 200 ] && echo "$hb" | grep -q '"status":"ok"' && ok "GET /api/health -> 200 ok" || bad "GET /api/health -> $hc"
+tr 'A-Z' 'a-z' < /tmp/.health.h | grep -q 'cache-control: no-store' && ok "health is no-store" || bad "health cacheable"
+rm -f /tmp/.health.h
 # 5. security headers on a page and on an error page
 h=$(curl -sI -m 20 "$BASE/login"); hn=$(curl -sI -m 20 "$BASE/definitely-not-a-page")
 for want in 'x-content-type-options: nosniff' 'x-frame-options: deny' 'referrer-policy:' 'permissions-policy:' 'strict-transport-security:' "content-security-policy: base-uri 'self'" 'content-security-policy-report-only:'; do

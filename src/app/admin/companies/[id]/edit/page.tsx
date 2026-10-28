@@ -5,7 +5,7 @@ import { EditCompanyForm } from '@/components/admin/CompanyForms';
 import { AdminErrorState } from '@/components/admin/StateViews';
 import { companyService } from '@/features/companies/service';
 import type { AdminCompanyDetail } from '@/features/companies/admin-output';
-import { AppError, toClientError } from '@/lib/errors';
+import { adminPageOutcome } from '@/features/admin/page-errors';
 import { getPlatformServiceContext } from '@/lib/service/server';
 import { idSchema } from '@/lib/validation/common';
 
@@ -21,7 +21,8 @@ export default async function EditCompanyPage({ params }: { params: Promise<{ id
   try {
     result = { data: await companyService.adminDetail(ctx, id) };
   } catch (e) {
-    result = e instanceof AppError && e.code === 'not_found' ? { missing: true } : { error: toClientError(e).message };
+    const outcome = adminPageOutcome(e);
+    result = outcome.kind === 'missing' ? { missing: true } : { error: outcome.message };
   }
   if ('missing' in result) notFound();
   if ('error' in result) return <AdminErrorState message={result.error} />;

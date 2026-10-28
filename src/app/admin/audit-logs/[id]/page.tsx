@@ -6,7 +6,7 @@ import { actionLabel, ACTOR_LABEL, type AuditActorType } from '@/features/audit/
 import { buildMetadataView } from '@/features/audit/diff';
 import { auditHref, entityHref } from '@/features/audit/links';
 import { auditService } from '@/features/audit/service';
-import { AppError, toClientError } from '@/lib/errors';
+import { adminPageOutcome } from '@/features/admin/page-errors';
 import { getPlatformServiceContext } from '@/lib/service/server';
 
 export const metadata = { title: 'Audit entry · Admin' };
@@ -80,7 +80,8 @@ export default async function AuditEntryPage({ params }: { params: Promise<{ id:
       </div>
     );
   } catch (err) {
-    if (err instanceof AppError && (err.code === 'not_found' || err.code === 'validation')) notFound();
-    return <AdminErrorState message={toClientError(err).message} />;
+    const outcome = adminPageOutcome(err, { invalidInputIsMissing: true });
+    if (outcome.kind === 'missing') notFound();
+    return <AdminErrorState message={outcome.message} />;
   }
 }

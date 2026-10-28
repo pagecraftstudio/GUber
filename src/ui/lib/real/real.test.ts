@@ -4,6 +4,7 @@ import { applyClientFilters, bookingFromDetail, locationIdFromName, locationName
 import { BackendError, classifyError, createCustomerBackend, describeBackendError } from './customerBackend';
 import type { BookingDetailRow, PublicTripRow } from './customerBackend';
 import { RealTransportService } from './transportService.real';
+import { AuthServiceError, RealAuthService } from './authService.real';
 
 const row = (o: Partial<PublicTripRow> = {}): PublicTripRow => ({
   trip_id: 't1', company_id: 'c1', company_name: 'Fayoum Bus', company_slug: 'fayoum', route_id: 'r1',
@@ -114,5 +115,57 @@ describe('rate limiting (0020) surfaces as a friendly, translated error', () => 
     expect(describeBackendError(err, 'en')).toMatch(/too many requests/i);
     expect(describeBackendError(err, 'ar')).toMatch(/[\u0600-\u06FF]/);
     expect(describeBackendError(err, 'en')).not.toMatch(/PT429|rate limit exceeded/);
+  });
+});
+
+describe('customer sign-out scope', () => {
+  const make = (result: { error: unknown }) => {
+    const signOut = vi.fn(async () => result);
+    return { signOut, svc: new RealAuthService({ auth: { signOut } } as never, 'https://app.example.test') };
+  };
+  it("revokes only the current session ('local'), never every device ('global' is the library default)", async () => {
+    const { signOut, svc } = make({ error: null });
+    await svc.signOut();
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+  it('surfaces a failed sign-out as an AuthServiceError', async () => {
+    const { svc } = make({ error: new Error('network') });
+    await expect(svc.signOut()).rejects.toBeInstanceOf(AuthServiceError);
+  });
+});
+
+describe('public catalogue goes through the same-origin server routes', () => {
+  const json = (status: number, body: unknown, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers });
+  const backendWith = (f: (u: string, i?: RequestInit) => Promise<Response>) => createCustomerBackend({ rpc: vi.fn() } as never, f);
+  it('searchTrips: GET /api/public/trips with only the given filters, credentials omitted, no RPC call', async () => {
+    const f = vi.fn(async () => json(200, { data: [row()] }));
+    const rpc = vi.fn();
+    const rows = await createCustomerBackend({ rpc } as never, f).searchTrips({ origin: 'Fayoum', destination: '', date: '2026-12-01' });
+    expect(rows).toHaveLength(1);
+    expect(rpc).not.toHaveBeenCalled();
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('/api/public/trips?origin=Fayoum&date=2026-12-01&limit=100');
+    expect(init).toMatchObject({ method: 'GET', credentials: 'omit' });
+  });
+  it('searchTrips with no filters asks for the catalogue', async () => {
+    const f = vi.fn(async () => json(200, { data: [] }));
+    await backendWith(f).searchTrips({});
+    expect((f.mock.calls[0] as unknown as [string])[0]).toBe('/api/public/trips?limit=100');
+  });
+  it('tripStops: GET /api/public/trips/:id/stops with the id encoded', async () => {
+    const f = vi.fn(async () => json(200, { data: [] }));
+    await backendWith(f).tripStops('a/b');
+    expect((f.mock.calls[0] as unknown as [string])[0]).toBe('/api/public/trips/a%2Fb/stops');
+  });
+  it.each([
+    [429, 'rate_limited'], [400, 'invalid_input'], [502, 'unknown'], [500, 'unknown'],
+  ])('HTTP %s -> BackendError %s', async (status, code) => {
+    await expect(backendWith(async () => json(status, { error: { code: 'x' } })).searchTrips({})).rejects.toMatchObject({ code });
+  });
+  it('a network failure or a malformed body is a generic BackendError', async () => {
+    await expect(backendWith(async () => { throw new TypeError('Failed to fetch'); }).searchTrips({})).rejects.toBeInstanceOf(BackendError);
+    await expect(backendWith(async () => json(200, { nope: 1 })).searchTrips({})).rejects.toBeInstanceOf(BackendError);
+    await expect(backendWith(async () => new Response('<html>', { status: 200 })).searchTrips({})).rejects.toBeInstanceOf(BackendError);
   });
 });

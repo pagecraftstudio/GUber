@@ -76,9 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await authService.signOut();
-    setSession(null);
-    setProfile(null);
+    try {
+      await authService.signOut();
+    } finally {
+      // supabase-js drops the local session even when the revoke call fails, so the UI must not keep showing "signed in".
+      setSession(null);
+      setProfile(null);
+    }
   };
 
   const resetPassword = async (email: string) => {

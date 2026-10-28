@@ -50,7 +50,7 @@ step "integration: customer-web on seeded bus_web"
 DB=bus_web bash tests/integration/reset-db.sh >/dev/null || fail=1
 $PSQL -q -v ON_ERROR_STOP=1 -d bus_web -f tests/integration/seed-customer-web.sql || fail=1
 serve bus_web || fail=1
-itest tests/integration/customer-web.int.test.ts; rc=$?; echo "integration(customer-web) exit $rc"; [ $rc = 0 ] || fail=1
+itest tests/integration/customer-web.int.test.ts tests/integration/public-search.int.test.ts; rc=$?; echo "integration(customer-web) exit $rc"; [ $rc = 0 ] || fail=1
 
 step "integration: customer idempotency + cancellation on seeded bus_idem (real parallel HTTP)"
 DB=bus_idem bash tests/integration/reset-db.sh >/dev/null || fail=1

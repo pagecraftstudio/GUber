@@ -143,3 +143,37 @@ describe.skipIf(!URL_)('Super Admin audit log over HTTP', () => {
     expect((await clientFor(U.superAdmin).from('audit_logs').select('id', { count: 'exact', head: true })).count).toBe(before);
   });
 });
+
+// Phase 8 follow-up: "not found" from the admin RPCs. PostgREST answers SQLSTATE P0002 with a 5xx on the Next -> Supabase hop;
+// the service layer must turn exactly that (and nothing else) into AppError('not_found'), which the admin pages render as HTTP 404.
+describe.skipIf(!URL_)('admin RPC "not found" over HTTP is a 404-class error, real failures are not', () => {
+  const missing = '00000000-0000-4000-8000-0000000fffff';
+  it('missing company: raw RPC answers P0002, service maps it to not_found', async () => {
+    const raw = await clientFor(U.superAdmin).rpc('admin_company_detail', { p_company: missing });
+    expect(raw.error?.code).toBe('P0002');
+    expect(raw.status).toBeGreaterThanOrEqual(400); // PostgREST's own status for P0002 is a 5xx; the boundary below is what matters
+    const { companyService } = await import('@/features/companies/service');
+    const admin = await platformAs(U.superAdmin);
+    const e = await fails(companyService.adminDetail(admin, missing));
+    expect(e.code).toBe('not_found');
+  });
+  it('missing audit entry maps to not_found', async () => {
+    const admin = await platformAs(U.superAdmin);
+    const e = await fails(auditService.get(admin, missing));
+    expect(e.code).toBe('not_found');
+  });
+  it('a malformed id is validation, not not_found', async () => {
+    const raw = await clientFor(U.superAdmin).rpc('admin_company_detail', { p_company: 'not-a-uuid' });
+    expect(raw.error?.code).toBe('22P02');
+    const { mapDbError } = await import('@/lib/db/map-error');
+    expect(mapDbError(raw.error!).code).toBe('validation');
+  });
+  it('a caller without platform access is forbidden, not "not found" (no existence oracle for the real id either)', async () => {
+    const { companyService } = await import('@/features/companies/service');
+    const raw = await clientFor(U.ownerA).rpc('admin_company_detail', { p_company: IDS.companyB });
+    expect(raw.error?.code).toBe('42501');
+    const { mapDbError } = await import('@/lib/db/map-error');
+    expect(mapDbError(raw.error!).code).toBe('forbidden');
+    void companyService;
+  });
+});

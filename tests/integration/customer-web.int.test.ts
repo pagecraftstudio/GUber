@@ -3,11 +3,12 @@ import { createCustomerBackend, BackendError } from '@/ui/lib/real/customerBacke
 import { RealTransportService } from '@/ui/lib/real/transportService.real';
 import { toE164Egypt } from '@/ui/lib/real/adapters';
 import { clientFor, uid, URL_ } from './harness';
+import { publicFetch } from './public-routes';
 
 /** Real Postgres + PostgREST + signed user JWTs. Needs seed-customer-web.sql. Skips without PGRST_URL. */
 const d = URL_ ? describe : describe.skip;
 const TRIP = uid(801);
-const svc = (n: number | null) => new RealTransportService(createCustomerBackend(clientFor(n)), toE164Egypt);
+const svc = (n: number | null) => new RealTransportService(createCustomerBackend(clientFor(n), publicFetch), toE164Egypt);
 const book = (n: number | null, seats: number, phone: string, key: string) =>
   svc(n).createBooking({ tripId: TRIP, passengerName: `User ${n ?? 'anon'}`, passengerPhone: phone, passengerCount: seats, idempotencyKey: key });
 

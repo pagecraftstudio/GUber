@@ -86,8 +86,15 @@ export class RealAuthService {
     return { user: session.user, session };
   }
 
+  /**
+   * Customer sign-out ends ONLY this browser's session. supabase-js defaults to scope 'global', which would also revoke the
+   * customer's sessions on every other device (confirmed in the installed @supabase/auth-js docs); that is not what a
+   * "Sign out" button promises. Limits: the access token (JWT) stays valid until it expires (default 1 h), and 'local'
+   * revokes the session server-side only if the call reaches GoTrue. Password reset (`scope: 'others'`) is the way to
+   * end every other session. Staff sign-out (features/auth/actions.ts) already uses 'local'.
+   */
   async signOut(): Promise<void> {
-    const { error } = await this.client.auth.signOut();
+    const { error } = await this.client.auth.signOut({ scope: 'local' });
     if (error) throw new AuthServiceError('unknown');
   }
 

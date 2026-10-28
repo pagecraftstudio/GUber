@@ -116,18 +116,40 @@ async function rpc<T>(client: SupabaseClient, fn: string, args: Record<string, u
   return data as T;
 }
 
+type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
+
+/** Anonymous catalogue reads go through the same-origin server routes (/api/public/*), not straight to Supabase, so the
+ *  Vercel Firewall rate limit and the CDN cache apply. No credentials are sent: the answer never depends on the visitor. */
+async function publicGet<T>(f: FetchLike, path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v));
+  const url = qs.size > 0 ? `${path}?${qs}` : path;
+  let res: Response;
+  try {
+    res = await f(url, { method: 'GET', credentials: 'omit', headers: { accept: 'application/json' } });
+  } catch {
+    throw new BackendError('unknown', MESSAGES.unknown.en);
+  }
+  if (res.status === 429) throw new BackendError('rate_limited', MESSAGES.rate_limited.en, 'PT429', res.headers.get('retry-after') ?? undefined);
+  if (res.status === 400) throw new BackendError('invalid_input', MESSAGES.invalid_input.en);
+  if (!res.ok) throw new BackendError('unknown', MESSAGES.unknown.en);
+  const body = (await res.json().catch(() => null)) as { data?: T } | null;
+  if (!body || !Array.isArray(body.data)) throw new BackendError('unknown', MESSAGES.unknown.en);
+  return body.data;
+}
+
 /**
  * Thin, typed wrappers over the database RPCs. NOTHING here sends a company id, customer id or user id for
  * authorization: the database derives them from the trip and from auth.uid().
  */
-export function createCustomerBackend(client: SupabaseClient) {
+export function createCustomerBackend(client: SupabaseClient, fetchImpl: FetchLike = (u, i) => fetch(u, i)) {
   return {
     searchTrips: (i: SearchInput = {}) =>
-      rpc<PublicTripRow[]>(client, 'public_search_trips', {
-        p_origin: i.origin ?? null, p_destination: i.destination ?? null, p_date: i.date || null,
-        p_company_id: i.companyId ?? null, p_limit: i.limit ?? 100, p_offset: i.offset ?? 0,
+      publicGet<PublicTripRow[]>(fetchImpl, '/api/public/trips', {
+        origin: i.origin, destination: i.destination, date: i.date || undefined,
+        companyId: i.companyId, limit: i.limit ?? 100, offset: i.offset || undefined,
       }),
-    tripStops: (tripId: string) => rpc<PublicStopRow[]>(client, 'public_trip_stops', { p_trip_id: tripId }),
+    tripStops: (tripId: string) => publicGet<PublicStopRow[]>(fetchImpl, `/api/public/trips/${encodeURIComponent(tripId)}/stops`),
     createBooking: (i: CreateBookingInput) =>
       rpc<CreatedBooking>(client, 'create_my_booking', {
         p_trip_id: i.tripId, p_seats: i.seats, p_full_name: i.fullName, p_phone: i.phoneE164,
