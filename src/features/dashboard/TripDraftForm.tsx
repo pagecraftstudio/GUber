@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { createTripAction } from '@/features/dashboard/actions';
+import { DashboardSubmitButton } from '@/components/dashboard/DashboardSubmitButton';
 
 type BusOption = { id: string; plateNumber: string; capacity: number };
 type Option = { id: string; label: string };
@@ -124,9 +125,9 @@ export function TripDraftForm({
         )}
       </label>
       <div className="flex items-end">
-        <button className="w-full rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold text-white">
+        <DashboardSubmitButton pendingText="Creating draft…" className="w-full rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold text-white">
           Create draft
-        </button>
+        </DashboardSubmitButton>
       </div>
     </form>
   );
