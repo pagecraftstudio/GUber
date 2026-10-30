@@ -86,7 +86,7 @@ export function TripDraftForm({
             setCapacityTouched(true);
             setCapacity(event.target.value);
           }}
-          aria-invalid={submitted && (capacity === '' || Number(capacity) < 1 || Number(capacity) > capacityLimit)}
+          aria-invalid={capacity !== '' && (Number(capacity) < 1 || Number(capacity) > capacityLimit)}
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         />
         <span className="mt-1 block font-normal text-slate-400">
@@ -94,7 +94,7 @@ export function TripDraftForm({
             ? `Up to ${selectedBus.capacity} seats for this bus. You can set a lower trip capacity.`
             : 'Maximum 100 seats until a bus is assigned.'}
         </span>
-        {submitted && (capacity === '' || Number(capacity) < 1 || Number(capacity) > capacityLimit) && (
+        {capacity !== '' && (Number(capacity) < 1 || Number(capacity) > capacityLimit) && (
           <span role="alert" className="mt-1 block text-red-600">
             Enter a capacity between 1 and {capacityLimit}.
           </span>
@@ -116,10 +116,10 @@ export function TripDraftForm({
           min={departureAt || undefined}
           value={arrivalAt}
           onChange={(event) => setArrivalAt(event.target.value)}
-          aria-invalid={submitted && arrivalInvalid}
+          aria-invalid={arrivalInvalid}
           className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         />
-        {submitted && arrivalInvalid && (
+        {arrivalInvalid && (
           <span role="alert" className="mt-1 block text-red-600">
             Arrival must be later than departure.
           </span>
