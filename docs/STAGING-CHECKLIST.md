@@ -13,6 +13,7 @@ Status: NOT executed. Nothing here has been run against a hosted Supabase projec
   `export DATABASE_URL='postgres://...'` `export STAGING_PROJECT_REF=<STAGING_REF>` `export PRODUCTION_PROJECT_REF=<PROD_REF>`
 
 ## 2. Migrations (22 files, 0001 ... 0021)
+- **WARNING:** the runner (even `--dry-run` / `--status`) executes `create schema/table if not exists app_private.schema_ledger`; it is not read-only. Never point it at a database that is or may be production, and never at a project migrated by hand (empty ledger = all 22 shown pending). To inspect such a project use `scripts/db/verify-hosted-readonly.sql` (see docs/STAGING-PREP-8C.md). Always export `PRODUCTION_PROJECT_REF`: it is the only production guard besides the staging-ref match.
 - [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run` -> expect 22 pending, 0 CHANGED/MISSING.
 - [ ] Take a backup (Dashboard -> Database -> Backups).
 - [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh` -> expect `done: 22 applied`.
