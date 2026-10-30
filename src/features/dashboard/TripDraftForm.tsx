@@ -20,7 +20,6 @@ export function TripDraftForm({
   const [capacityTouched, setCapacityTouched] = useState(false);
   const [departureAt, setDepartureAt] = useState('');
   const [arrivalAt, setArrivalAt] = useState('');
-  const [submitted, setSubmitted] = useState(false);
 
   const selectedBus = useMemo(() => buses.find((bus) => bus.id === busId), [buses, busId]);
   const capacityLimit = selectedBus?.capacity ?? 100;
@@ -39,7 +38,6 @@ export function TripDraftForm({
     <form
       action={createTripAction}
       onSubmit={(event) => {
-        setSubmitted(true);
         if (arrivalInvalid || (capacity !== '' && Number(capacity) > capacityLimit)) {
           event.preventDefault();
         }
