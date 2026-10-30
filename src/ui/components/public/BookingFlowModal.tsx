@@ -56,6 +56,16 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   const [loading, setLoading] = useState(false);
   // One key per booking attempt: a double-click or network retry replays the SAME booking instead of creating a second one.
   const idempotencyKey = useRef<string>(crypto.randomUUID());
+  const idempotencyTripId = useRef<string | null>(null);
+
+  // A key belongs to one trip attempt. Keep it across retries for that trip, but never reuse it for another trip.
+  useEffect(() => {
+    if (!isOpen || !trip) return;
+    if (idempotencyTripId.current !== trip.id) {
+      idempotencyTripId.current = trip.id;
+      idempotencyKey.current = crypto.randomUUID();
+    }
+  }, [isOpen, trip?.id]);
 
   // Autofill when modal opens or user profile changes
   useEffect(() => {
@@ -333,44 +343,18 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
           </div>
           {errors.count && <p className="text-xs text-red-600 font-medium">{errors.count}</p>}
 
-          {/* Multi-Passenger manifest fields for duplicate prevention (Rule #4) */}
-          {passengerCount > 1 && (
+          {/* Real backend issues one ticket per seat, but the current schema stores only the booking contact name. */}
+          {passengerCount > 1 && (isMockMode() ? (
             <div className="mt-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#3563E9]" />
-                  <span>{t('passengersDetailsTitle')} ({passengerCount} {t('seats')})</span>
-                </span>
-                <span className="text-[10px] text-slate-500">
-                  {locale === 'ar' ? 'تذاكر منفصلة لكل راكب' : 'Individual Boarding Passes'}
-                </span>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <Users className="w-3.5 h-3.5 text-[#3563E9]" />
+                <span>{t('passengersDetailsTitle')} ({passengerCount} {t('seats')})</span>
               </div>
-
               {Array.from({ length: passengerCount - 1 }).map((_, idx) => (
                 <div key={`extra_p_${idx}`} className="space-y-1.5 pt-2 border-t border-slate-200/80">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-slate-700">
-                      {t('passengerNumber')} {idx + 2} {t('fullNameLabel')}
-                    </label>
-                    {/* Quick fill from Saved Companions if user is authenticated */}
-                    {profile?.savedCompanions && profile.savedCompanions.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-slate-400">
-                          {locale === 'ar' ? 'اختر مرافق:' : 'Select saved:'}
-                        </span>
-                        {profile.savedCompanions.map((comp) => (
-                          <button
-                            key={comp.id}
-                            type="button"
-                            onClick={() => handleApplyCompanion(idx, comp.name)}
-                            className="text-[10px] bg-white border border-slate-300 hover:border-blue-400 px-1.5 py-0.5 rounded font-medium text-slate-700 hover:text-blue-700 cursor-pointer"
-                          >
-                            {comp.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <label className="text-[11px] font-semibold text-slate-700">
+                    {t('passengerNumber')} {idx + 2} {t('fullNameLabel')}
+                  </label>
                   <Input
                     placeholder={`e.g. Passenger ${idx + 2} Full Name`}
                     value={extraPassengerNames[idx] || ''}
@@ -386,7 +370,13 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                 </div>
               ))}
             </div>
-          )}
+          ) : (
+            <p className="mt-3 text-[11px] text-slate-500" role="note">
+              {locale === 'ar'
+                ? 'سيتم إصدار تذكرة منفصلة لكل مقعد. حاليًا تُسجَّل بيانات صاحب الحجز فقط لجميع التذاكر.'
+                : 'A separate ticket is issued for each seat. Currently, the booking holder’s details are recorded for all tickets.'}
+            </p>
+          ))}
         </div>
 
         {/* Step 3: Fare Summary & Payment Notice */}
