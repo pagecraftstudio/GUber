@@ -12,11 +12,11 @@ Status: NOT executed. Nothing here has been run against a hosted Supabase projec
 - [ ] Settings -> Database -> connection string (use the direct or session-pooler URL, with password). Export in your shell only:
   `export DATABASE_URL='postgres://...'` `export STAGING_PROJECT_REF=<STAGING_REF>` `export PRODUCTION_PROJECT_REF=<PROD_REF>`
 
-## 2. Migrations (22 files, 0001 ... 0021)
+## 2. Migrations (24 files, 0001 ... 0023)
 - **WARNING:** the runner (even `--dry-run` / `--status`) executes `create schema/table if not exists app_private.schema_ledger`; it is not read-only. Never point it at a database that is or may be production, and never at a project migrated by hand (empty ledger = all 22 shown pending). To inspect such a project use `scripts/db/verify-hosted-readonly.sql` (see docs/STAGING-PREP-8C.md). Always export `PRODUCTION_PROJECT_REF`: it is the only production guard besides the staging-ref match.
-- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run` -> expect 22 pending, 0 CHANGED/MISSING.
+- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run` -> expect 24 pending, 0 CHANGED/MISSING.
 - [ ] Take a backup (Dashboard -> Database -> Backups).
-- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh` -> expect `done: 22 applied`.
+- [ ] `TARGET_ENV=staging bash scripts/db/apply-migrations.sh` -> expect `done: 24 applied`.
 - [ ] `... --status` -> all `applied`, `ledger OK; 0 pending`. Re-run -> `0 applied`.
 - [ ] 0021 present in the ledger: `select filename from app_private.schema_ledger where filename like '0021%';` -> 1 row.
 - [ ] `select to_regprocedure('app_private.has_live_subscription(uuid)');` -> not null (0021).

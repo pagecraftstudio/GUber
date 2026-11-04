@@ -65,11 +65,11 @@ Human checklist with tick boxes: **docs/STAGING-CHECKLIST.md**. Summary:
 ### 4.1 Create the project and set guards
 New Supabase project. Export in your shell: `DATABASE_URL` (direct or session-pooler URL), `STAGING_PROJECT_REF`, and `PRODUCTION_PROJECT_REF` (so the scripts can refuse it).
 
-### 4.2 Apply migrations (22 files: 0001-0021 including `0013b`)
+### 4.2 Apply migrations (24 files: 0001-0023 including `0013b`)
 ```
-TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run   # expect 22 pending, 0 CHANGED/MISSING
+TARGET_ENV=staging bash scripts/db/apply-migrations.sh --dry-run   # expect 24 pending, 0 CHANGED/MISSING
 # take a backup first (Dashboard -> Database -> Backups)
-TARGET_ENV=staging bash scripts/db/apply-migrations.sh             # expect: done: 22 applied; then `--status` -> `ledger OK; 0 pending` and the 0021 row in `app_private.schema_ledger` has the sha256 of the file in the repo
+TARGET_ENV=staging bash scripts/db/apply-migrations.sh             # expect: done: 24 applied; then `--status` -> `ledger OK; 0 pending` and the 0021 row in `app_private.schema_ledger` has the sha256 of the file in the repo
 TARGET_ENV=staging bash scripts/db/apply-migrations.sh --status    # all applied; a re-run applies 0
 ```
 - **Do not use `supabase db push`.** CLI 2.122 skips `0013b_*` (name is not `<digits>_name.sql`), so booking idempotency would silently be missing. The script uses its own ledger (`app_private.schema_ledger`, filename + sha256), not the CLI history. Never mix the two on one database. CLI fallback for a fresh project only: `scripts/db/export-cli-migrations.sh <outdir>`.

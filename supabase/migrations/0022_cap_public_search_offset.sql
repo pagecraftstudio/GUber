@@ -1,14 +1,13 @@
--- 0022 (PROPOSAL, NOT APPLIED, NOT IN supabase/migrations/): cap the public-search offset in the database.
+-- 0022: cap the public-search offset in the database.
 --
--- PROBLEM: public_search_trips clamps p_limit to 100 but not p_offset. The Next.js route validates offset, the RPC does not,
+-- PROBLEM: public_search_trips clamped p_limit to 100 but not p_offset. The Next.js route validates offset, the RPC did not,
 --   and the RPC is callable directly with the publishable key (docs/RATE-LIMITING.md 3b). A huge offset makes Postgres
 --   walk and discard that many rows per call.
 -- CHANGE: offset is clamped to 0..1000. Signature, return columns, filters, grants and security settings are identical to 0021.
 --   Paging beyond 1100 results is not a supported use of a marketplace listing (limit 100 x offset 1000).
--- WHAT THIS DOES NOT FIX: anonymous direct access itself (still allowed, decision B).
+-- NOT FIXED HERE: anonymous direct access itself (still allowed, decision B, finding F2).
 -- ROLLBACK: re-run the public_search_trips statement from 0021.
--- RUNNER NOTE: apply with scripts/db/apply-migrations.sh on STAGING first. Never supabase db push. Needs the owner's approval
---   before it is moved into supabase/migrations/ (immutable once applied).
+-- RUNNER NOTE: apply only with scripts/db/apply-migrations.sh (staging first). Never supabase db push. Immutable once applied.
 
 create or replace function public.public_search_trips(
   p_origin text default null, p_destination text default null, p_date date default null,

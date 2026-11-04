@@ -34,6 +34,10 @@ select 'object' as check, '0020 table app_private.rate_limit_policies' as item, 
 -- 3. Behavioural markers (function bodies, not data)
 select 'marker' as check, '0021 public_search_trips filters on live subscription' as item,
   case when exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'public_search_trips' and pg_get_functiondef(p.oid) ilike '%has_live_subscription%') then 'yes' else 'NO' end as result;
+select 'marker' as check, '0022 public_search_trips caps the offset' as item,
+  case when exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'public_search_trips' and pg_get_functiondef(p.oid) ilike '%least(greatest(coalesce(p_offset, 0), 0), 1000)%') then 'present' else 'MISSING' end as result;
+select 'marker' as check, '0023 my_company is read-only for authenticated' as item,
+  case when has_table_privilege('authenticated', 'public.my_company', 'update') or has_table_privilege('authenticated', 'public.my_company', 'insert') or has_table_privilege('authenticated', 'public.my_company', 'delete') then 'MISSING (tenant can write companies)' else 'present' end as result;
 select 'marker' as check, '0020 public.my_ticket_qr is the limiter wrapper' as item,
   case when exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'my_ticket_qr' and pg_get_functiondef(p.oid) ilike '%rate_limit%') then 'yes' else 'NO' end as result;
 select 'marker' as check, '0013b create_my_booking uses idempotency replay' as item,

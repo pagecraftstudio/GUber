@@ -1,4 +1,4 @@
--- 18 (PROPOSAL): tests for 0022. Requires 01..17 and 0022 on the same throw-away DB; see docs/STAGING-PREP-8C.md.
+-- 18: tests for migration 0022 (public-search offset cap). Runs after 01..17 on the same throw-away DB.
 select t.as_anon();
 select t.eq('18: public_search_trips caps the offset in its definition',
   (select pg_get_functiondef(p.oid) ilike '%least(greatest(coalesce(p_offset, 0), 0), 1000)%' from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'public_search_trips'), true);

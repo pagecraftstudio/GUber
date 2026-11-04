@@ -24,7 +24,10 @@ async function fails(p: Promise<unknown>): Promise<AppError> {
   }
   throw new Error('expected the call to fail');
 }
-const day = () => 20_000 + Math.floor(Math.random() * 20_000); // random far-future day => re-runnable
+// Random day number (days since 1970) in [today + 30, today + 30 + 20_000): always in the future (the trip state machine refuses
+// past departures) and still random enough to be re-runnable. The old fixed base 20_000 is 2024-10-04, so ~4% of draws were past.
+const TODAY = Math.floor(Date.now() / 86_400_000);
+const day = () => TODAY + 30 + Math.floor(Math.random() * 20_000);
 const at = (d: number, h: number) => new Date(Date.UTC(1970, 0, 1 + d, h)).toISOString();
 
 describe.skipIf(!URL_)('Phase 4 services against real Postgres + PostgREST + RLS', () => {

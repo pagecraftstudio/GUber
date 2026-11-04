@@ -20,12 +20,15 @@ async function signIn(p, u) {
 
 const p = await L.newPage(browser);
 await openApp(p);
+const expected = sql(`select count(*) from public_search_trips()`);
+// openApp returns on the first "Showing N Departures"; on a slow runner N is briefly stale, so wait for the DB count and the company name
+await waitText(p, new RegExp(`Showing ${expected} Departures`), 45000).catch(() => {});
+await waitText(p, /Company A/, 45000).catch(() => {});
 const landing = await text(p);
 check('landing: real company shown', /Company A/.test(landing));
 check('landing: unpublished company B not shown', !/Company B/.test(landing));
 check('landing: no demo company/date/accounts', !/Galala Connect|Pass1234|karim|Quick Demo|Oct 14|2026-10-14|Demonstration Data|Demo\)/i.test(landing), landing.slice(0, 200));
 check('landing: no dev preview switcher', (await p.$('aside[aria-label*="Preview"]')) === null);
-const expected = sql(`select count(*) from public_search_trips()`);
 check('search: UI trip count equals DB eligible count', new RegExp(`Showing ${expected} Departures`).test(landing), `expected ${expected}`);
 await snap(p, 'landing');
 
@@ -107,7 +110,8 @@ await p.setRequestInterception(false);
 const ticketText = await text(p);
 const ref = (ticketText.match(/MB-[A-Z0-9]{4,}/) || [])[0];
 check('booking: confirmation shows real reference from PostgreSQL', !!ref && sql(`select count(*) from bookings where reference = '${ref}'`) === '1', ref);
-await p.waitForSelector('[data-testid=ticket-qr]', { timeout: 10000 }).catch(() => {});
+// the QR image is generated from a lazily loaded chunk; on a 1-vCPU runner the page stalled ~55 s here (M0, finding F1), so wait generously
+  await p.waitForSelector('[data-testid=ticket-qr]', { timeout: 90000 }).catch(() => {});
 const tix = Number(sql(`select count(*) from tickets t join bookings b on b.id = t.booking_id where b.reference = '${ref}'`));
 check('booking: confirmation shows a server-issued QR (one ticket per seat in the DB), no mock token, raw token not printed', !!(await p.$('[data-testid=ticket-qr]')) && tix === 2 && !/malaky_sec_tk|MALAKY:TICKET|Opaque/i.test(await text(p)), `tickets=${tix} my_ticket_qr http=${JSON.stringify(qrResponses)} pageErrors=${JSON.stringify(p.errors)} qrImgs=${await p.$$eval('img', (i) => i.length)} skeleton=${await p.$$eval('.animate-pulse', (i) => i.length)} :: ${(await text(p)).slice(0, 200)}`);
 const row = L.sqlRow(`select b.seats_count, b.status, b.source, b.total_amount::int as total, (c.user_id = '${aliceId}') as owned, (b.created_by = '${aliceId}') as created_by_me, t.seats_booked from bookings b join customers c on c.id = b.customer_id join trips t on t.id = b.trip_id where b.reference = '${ref}'`);
