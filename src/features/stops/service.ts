@@ -4,10 +4,10 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { stopRepository, type StopRepository } from './repository';
-import { stopCreateSchema, stopUpdateSchema } from './schema';
+import { stopCreateSchema, stopListSaveSchema, stopUpdateSchema } from './schema';
 import type { Stop } from './types';
 
-/** Stops inherit the `routes.*` permissions (RLS does the same). Delete and reorder arrive in Phase 5. */
+/** Stops inherit the `routes.*` permissions (RLS does the same). Add, edit, remove and reorder go through saveAll (one atomic RPC). */
 export function makeStopService(repo: StopRepository) {
   return {
     async listByRoute(ctx: TenantServiceContext, rawRouteId: unknown): Promise<Stop[]> {
@@ -27,6 +27,11 @@ export function makeStopService(repo: StopRepository) {
     async update(ctx: TenantServiceContext, rawId: unknown, input: unknown): Promise<Stop> {
       requirePermission(ctx, PERMISSIONS.routesWrite);
       return repo.update(ctx, parseInput(idSchema, rawId), parseInput(stopUpdateSchema, input));
+    },
+    /** Replaces the whole ordered stop list of one route atomically (add / edit / remove / reorder). */
+    async saveAll(ctx: TenantServiceContext, rawRouteId: unknown, input: unknown) {
+      requirePermission(ctx, PERMISSIONS.routesWrite);
+      return repo.saveAll(ctx, parseInput(idSchema, rawRouteId), parseInput(stopListSaveSchema, input));
     },
   };
 }

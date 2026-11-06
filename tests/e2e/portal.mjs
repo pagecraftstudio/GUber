@@ -39,7 +39,14 @@ async function newSession(email, ctx = browser) { // a separate browser context 
   await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000); // login now lands on /my-bookings
   return p;
 }
-async function openPortal(p, who) {
+async function openPortal(p, who, attempt = 0) {
+  try { return await openPortalOnce(p, who); }
+  catch (e) { // a reload/hydration navigation can destroy the execution context mid-step: settle and retry (max 3x), never mask other errors
+    if (attempt < 3 && /Execution context was destroyed|detached|Target closed/i.test(String(e.message))) { await sleep(1500); return openPortal(p, who, attempt + 1); }
+    throw e;
+  }
+}
+async function openPortalOnce(p, who) {
   const h = await p.evaluateHandle((n) => [...document.querySelectorAll('button')].find((e) => e.offsetParent && e.innerText.includes(n)), who);
   await h.asElement().click(); await sleep(300);
   await clickText(p, 'My Trips'); await waitText(p, /My Trips & Bookings/, 8000); await sleep(1200);

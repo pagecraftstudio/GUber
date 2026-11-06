@@ -4,7 +4,7 @@ Status: UI mounted at `/` (client-only; real backend, mock only in dev). Backend
 
 ## Layout
 - `src/ui/` Vite SPA, mock `localStorage` (`lib/transportService.ts`, `lib/authService.ts`)
-- `src/app/(marketplace)` mounts it at `/`, `/login`, `/register`, `/my-bookings`. `/app/*` redirects to `/`. `ENABLE_UI_PREVIEW` is no longer used: in real mode the dashboard/super-admin views render NotAvailableYet and mock data is refused at build time.
+- `src/app/(marketplace)` mounts it at `/`, `/login`, `/register`, `/my-bookings`. `/app/*` redirects to `/`. `ENABLE_UI_PREVIEW` is no longer used: in real mode the super-admin view renders NotAvailableYet and mock data is refused at build time. The company dashboard exists only as the Next.js area `src/app/dashboard` (real services + RLS); the old mock-era client dashboard (`src/ui/components/dashboard/*`) was deleted in M2 and the client app's `dashboard` view now just links to `/dashboard`.
 - Backend: `supabase/migrations`, `src/lib`, `src/app` (company/login, dashboard, admin, driver)
 
 ## Model mismatches (fix when wiring)
@@ -39,7 +39,10 @@ Legend: **L** = SQL + HTTP tested locally (real PostgreSQL/PostgREST). **B** = a
 | staff manual boarding, offline sync, GPS | none | NOT IMPLEMENTED |
 | operator-reviewed cancellation request | none | NOT IMPLEMENTED (would need new status + staff RPCs) |
 | website drafts / publish | none | NOT IMPLEMENTED |
-| dashboard, super admin, other pages | none | real mode throws `NotIntegratedError` (never mock data) |
+| company dashboard: routes + stops, buses, drivers, trips | `save_route_stops`, `my_plan_usage` (0024) + existing RLS/CRUD, pages under `src/app/dashboard` | L + B (`e2e/dashboard-m2.mjs`, SQL suite 20) |
+| plan-limit messages in dashboard forms | `my_plan_usage` (read) + DB triggers (enforcement) | L + B |
+| company users / staff invitations page | none | NOT IMPLEMENTED (no page, so no limit message yet) |
+| super admin, other pages | none | real mode throws `NotIntegratedError` (never mock data) |
 
 Blocked by external config: live Supabase project/keys, Auth email + redirect URLs, SMS provider for phone claim, custom domains, Vercel.
 

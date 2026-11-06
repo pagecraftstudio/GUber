@@ -11,7 +11,6 @@ import { AuthProvider, useAuth, type AuthModalMode } from './context/AuthContext
 import { PreviewBar } from './components/dev/PreviewBar';
 import { MasterMarketplace } from './components/marketplace/MasterMarketplace';
 import { PublicWebsite } from './components/public/PublicWebsite';
-import { CompanyDashboard } from './components/dashboard/CompanyDashboard';
 import { SuperAdminPortal } from './components/superadmin/SuperAdminPortal';
 import { CustomerPortal } from './components/customer/CustomerPortal';
 import { AuthModal } from './components/auth/AuthModal';
@@ -31,6 +30,28 @@ const NotAvailableYet: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <button type="button" onClick={onBack} className="px-4 py-2 rounded-lg bg-[#14243A] text-white text-sm font-medium">
         {ar ? 'العودة إلى الحجز' : 'Back to trip search'}
       </button>
+    </main>
+  );
+};
+
+/** The company dashboard is a server-rendered Next.js area (`/dashboard`, real services + RLS). This client app no longer embeds a second copy. */
+const DashboardMoved: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const { locale } = useLocale();
+  const ar = locale === 'ar';
+  return (
+    <main role="status" className="max-w-xl mx-auto px-4 py-24 text-center space-y-4">
+      <h1 className="text-xl font-bold">{ar ? 'لوحة الشركة في صفحة مستقلة' : 'The company dashboard has its own page'}</h1>
+      <p className="text-sm text-slate-500">
+        {ar ? 'سجّل الدخول من صفحة الشركة لفتح لوحة التحكم.' : 'Sign in from the company page to open the dashboard.'}
+      </p>
+      <div className="flex justify-center gap-3">
+        <a href="/dashboard" className="px-4 py-2 rounded-lg bg-[#14243A] text-white text-sm font-medium">
+          {ar ? 'فتح لوحة التحكم' : 'Open the dashboard'}
+        </a>
+        <button type="button" onClick={onBack} className="px-4 py-2 rounded-lg border border-slate-300 text-sm font-medium">
+          {ar ? 'العودة إلى الحجز' : 'Back to trip search'}
+        </button>
+      </div>
     </main>
   );
 };
@@ -79,7 +100,7 @@ const AppContent: React.FC<AppEntry> = ({ authPage, nextAfterAuth }) => {
       {activeView === 'marketplace' && <MasterMarketplace />}
       {activeView === 'public' && <PublicWebsite />}
       {activeView === 'customer' && <CustomerPortal />}
-      {activeView === 'dashboard' && (isMockMode() ? <CompanyDashboard /> : <NotAvailableYet onBack={() => setActiveView('marketplace')} />)}
+      {activeView === 'dashboard' && <DashboardMoved onBack={() => setActiveView('marketplace')} />}
       {activeView === 'superadmin' && (isMockMode() ? <SuperAdminPortal /> : <NotAvailableYet onBack={() => setActiveView('marketplace')} />)}
 
       {/* Global Customer Auth Modal */}

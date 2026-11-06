@@ -81,7 +81,7 @@ select t.eq('create: keep 211, add two new', (public.save_route_stops(t.u(201), 
     jsonb_build_object('id', t.u(211), 'name', 'Fayoum Terminal', 'offsetMinutes', 0, 'stopType', 'pickup', 'address', '  Main st  ', 'latitude', 29.3, 'longitude', 30.84),
     jsonb_build_object('name', 'Beni Suef Exit', 'offsetMinutes', 40),
     jsonb_build_object('name', 'Cairo Univ', 'offsetMinutes', 120, 'stopType', 'dropoff'))))::text,
-  '{"count": 3, "added": 2, "removed": 0, "updated": 1, "route_id": "' || t.u(201) || '"}');
+  ('{"count": 3, "added": 2, "removed": 0, "updated": 1, "route_id": "' || t.u(201) || '"}')::jsonb::text);
 select t.as_admin();
 select t.eq('order persisted 1..3', t.stop_orders(t.u(201)), '1,2,3');
 select t.eq('names in order', t.stop_names(t.u(201)), 'Fayoum Terminal,Beni Suef Exit,Cairo Univ');
@@ -147,6 +147,10 @@ select t.eq('usage: current month equals the limits entry', (public.my_plan_usag
 select t.as_user(t.u(5));   -- booking staff may read the numbers (no billing data in the answer)
 select t.eq('usage readable by any active member', public.my_plan_usage(t.u(101))->>'status', 'ok');
 select t.eq('usage carries no plan name or price', (public.my_plan_usage(t.u(101)) ? 'plan')::text || (public.my_plan_usage(t.u(101)) ? 'price')::text, 'falsefalse');
+select t.as_admin();   -- earlier cumulative suites may have re-assigned B's plan: pin it to starter for these assertions
+update subscriptions set plan_id = (select id from plans where code = 'starter'), status = 'active',
+       current_period_start = now(), current_period_end = now() + interval '30 days' where company_id = t.u(102);
+delete from buses where company_id = t.u(102) and plate_number like 'B-FILL-%';
 select t.as_user(t.u(7));
 select t.eq('B is starter: max_buses 5', (public.my_plan_usage(t.u(102))->'limits'->'max_buses'->>'limit')::int, 5);
 select t.eq('Company B cannot read Company A usage', t.err_of($$select public.my_plan_usage(t.u(101))$$), 'P0002|company not found');
@@ -182,9 +186,10 @@ select t.eq('renewed subscription => ok again', public.my_plan_usage(t.u(102))->
 -- the numbers match what the triggers enforce: fill B's buses to the limit and watch both agree
 select t.as_admin();
 insert into buses (company_id, plate_number, capacity, status)
-  select t.u(102), 'B-FILL-' || g, 30, 'active' from generate_series(1, 4) g;
+  select t.u(102), 'B-FILL-' || g, 30, 'active' from generate_series(1, 5 - (select count(*) from buses where company_id = t.u(102))::int) g;   -- fill exactly to the starter limit of 5
 select t.as_user(t.u(7));
-select t.eq('B usage shows 5 of 5', (public.my_plan_usage(t.u(102))->'limits'->'max_buses'->>'used')::int, 5);
+select t.eq('B usage equals the real bus count (earlier suites left B at or above the limit)', (public.my_plan_usage(t.u(102))->'limits'->'max_buses'->>'used')::int, (select count(*) from public.buses where company_id = t.u(102))::int);
+select t.eq('B is at or over its limit of 5', (public.my_plan_usage(t.u(102))->'limits'->'max_buses'->>'used')::int >= 5, true);
 select t.eq('trigger refuses the 6th bus with the plan_limit code', left(t.err_of($$insert into buses (company_id, plate_number, capacity) values (t.u(102), 'B-OVER', 30)$$), 5), '53400');
 select t.as_admin();
 delete from buses where plate_number like 'B-FILL-%' and company_id = t.u(102);

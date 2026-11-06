@@ -55,6 +55,8 @@ const RULES: Rule[] = [
   // audit read RPCs (0019)
   { match: /invalid filter|invalid range|invalid cursor|invalid limit/, code: 'validation', detail: 'invalid_filter' },
   { match: /audit entry not found/, code: 'not_found', detail: 'audit_not_found' },
+  // route stops (0024)
+  { match: /route stop has bookings/, code: 'business_rule', detail: 'stop_has_bookings' },
   // booking RPCs (0010)
   { match: /invalid phone number/, code: 'validation', detail: 'invalid_phone', fields: { phone: 'invalid_phone' } },
   { match: /idempotency key reused/, code: 'conflict', detail: 'idempotency_conflict' },
@@ -79,6 +81,8 @@ const RULES: Rule[] = [
  */
 export function mapDbError(error: DbErrorLike): AppError {
   const text = `${error.message ?? ''} ${error.details ?? ''}`;
+  const stopsIssue = /route stops invalid: (\w+)/.exec(text)?.[1]; // save_route_stops (0024): the code after the colon is stable
+  if (stopsIssue) return new AppError('validation', { detail: stopsIssue, cause: error });
   const ruled = RULES.find((r) => r.match.test(text));
   const withRule = (r: Rule) =>
     new AppError(r.code, { detail: r.detail, ...(r.fields ? { fields: r.fields } : {}), cause: error });

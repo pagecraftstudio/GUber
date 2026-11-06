@@ -3,3 +3,8 @@
 :root { color-scheme: light; }
 :root.dark { color-scheme: dark; }
 body { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+/* Dashboard accessibility (WCAG 2.2 AA): a focus ring that does not depend on colour of border alone, applied over
+   components that set `outline-none`; and no motion for people who ask for none. */
+.dashboard-root :focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+.dark .dashboard-root :focus-visible { outline-color: #93c5fd; }
+@media (prefers-reduced-motion: reduce) { .dashboard-root *, .dashboard-root *::before, .dashboard-root *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; } }

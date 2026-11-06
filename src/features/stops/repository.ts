@@ -2,7 +2,7 @@ import { mapColumns } from '@/lib/db/columns';
 import { mapDbError } from '@/lib/db/map-error';
 import { expectFound, expectList, expectMaybe, expectOne } from '@/lib/db/query';
 import type { TenantServiceContext } from '@/lib/service/context';
-import type { StopCreate, StopUpdate } from './schema';
+import type { StopCreate, StopListSave, StopUpdate } from './schema';
 import { STOP_SELECT, toStop, type Stop, type StopRow } from './types';
 
 export type StopRepository = {
@@ -10,7 +10,10 @@ export type StopRepository = {
   get(ctx: TenantServiceContext, id: string): Promise<Stop | null>;
   create(ctx: TenantServiceContext, routeId: string, input: StopCreate): Promise<Stop>;
   update(ctx: TenantServiceContext, id: string, patch: StopUpdate): Promise<Stop>;
+  saveAll(ctx: TenantServiceContext, routeId: string, stops: StopListSave): Promise<StopSaveResult>;
 };
+
+export type StopSaveResult = { count: number; added: number; updated: number; removed: number };
 
 const UPDATE_COLUMNS = {
   name: 'name',
@@ -77,5 +80,14 @@ export const stopRepository: StopRepository = {
         .maybeSingle(),
       toStop,
     );
+  },
+
+  /** One transaction in Postgres (save_route_stops, 0024): the company comes from the route row, never from here. */
+  async saveAll(ctx, routeId, stops) {
+    const { data, error } = await ctx.db.rpc('save_route_stops', { p_route_id: routeId, p_stops: stops });
+    if (error) throw mapDbError(error);
+    const r = data as { count: number; added: number; updated: number; removed: number } | null;
+    if (!r) throw mapDbError({ message: 'empty save_route_stops result' });
+    return { count: r.count, added: r.added, updated: r.updated, removed: r.removed };
   },
 };
