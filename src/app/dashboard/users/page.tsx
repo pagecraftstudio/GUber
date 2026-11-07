@@ -1,3 +1,5 @@
+import { T, Dt } from '@/components/dashboard/T';
+import { Ltr } from '@/components/dashboard/Ltr';
 import { createClient } from '@/lib/supabase/server';
 import { requireTenant } from '@/lib/auth/guards';
 import { createTenantServiceContext } from '@/lib/service/context';
@@ -21,25 +23,25 @@ export default async function UsersPage() {
   return (
     <>
       <PageHeader eyebrow="Workspace" title="Team members" description="People who can sign in to this company, their roles, and pending invitations." />
-      {!canWrite && <p role="status" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-100">You can see the team, but only the company owner can change it.</p>}
+      {!canWrite && <p role="status" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-100"><T>You can see the team, but only the company owner can change it.</T></p>}
       <div className={`grid gap-6 ${canWrite ? 'xl:grid-cols-[1fr_360px]' : ''}`}>
         <div className="space-y-6">
           <section aria-labelledby="members-h">
-            <h2 id="members-h" className="mb-3 font-bold">Members</h2>
+            <h2 id="members-h" className="mb-3 font-bold"><T>Members</T></h2>
             <DataTable rows={members.items} columns={[
-              { key: 'name', label: 'Name', render: (m) => <div><p className="font-bold">{m.fullName ?? m.email}{m.userId === auth.userId && <span className="ms-2 text-xs font-semibold text-slate-600 dark:text-slate-400">(you)</span>}</p><p className="text-xs text-slate-600 dark:text-slate-400">{m.email}</p></div> },
+              { key: 'name', label: 'Name', render: (m) => <div><p className="font-bold">{m.fullName ?? m.email}{m.userId === auth.userId && <span className="ms-2 text-xs font-semibold text-slate-600 dark:text-slate-400"><T>(you)</T></span>}</p><p className="text-xs text-slate-600 dark:text-slate-400">{m.email && <Ltr>{m.email}</Ltr>}</p></div> },
               { key: 'role', label: 'Role', render: (m) => m.roleName ?? '—' },
               { key: 'status', label: 'Status', render: (m) => <StatusPill value={m.status === 'active' ? 'active' : 'inactive'} /> },
               ...(canWrite ? [{ key: 'manage', label: 'Manage', render: (m: (typeof members.items)[number]) => <MemberControls memberId={m.id} name={m.fullName ?? m.email ?? 'member'} roleKey={m.roleKey} status={m.status} roles={roleOptions} isSelf={m.userId === auth.userId} canWrite /> }] : []),
             ]} />
           </section>
           <section aria-labelledby="invites-h">
-            <h2 id="invites-h" className="mb-3 font-bold">Pending invitations</h2>
-            {invites.items.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-400">No pending invitations.</p> : (
+            <h2 id="invites-h" className="mb-3 font-bold"><T>Pending invitations</T></h2>
+            {invites.items.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-400"><T>No pending invitations.</T></p> : (
               <DataTable rows={invites.items} columns={[
-                { key: 'email', label: 'Email', render: (i) => i.email },
+                { key: 'email', label: 'Email', render: (i) => <Ltr>{i.email}</Ltr> },
                 { key: 'role', label: 'Role', render: (i) => i.roleName ?? '—' },
-                { key: 'expires', label: 'Expires', render: (i) => new Date(i.expiresAt).toLocaleDateString() },
+                { key: 'expires', label: 'Expires', render: (i) => <Dt value={i.expiresAt} /> },
                 ...(canWrite ? [{ key: 'manage', label: 'Manage', render: (i: (typeof invites.items)[number]) => <RevokeInvite inviteId={i.id} email={i.email} /> }] : []),
               ]} />
             )}

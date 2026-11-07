@@ -45,7 +45,7 @@ export function BusCreateForm({ usage }: { usage: PlanUsage | null }) {
   return (
     <CreateForm resource="max_buses" usage={usage} title={L.addBus} action={createBusFormAction} submitLabel={L.addBusBtn}>
       {(err) => (<>
-        <FormField name="plateNumber" label={L.plate} required error={err('plateNumber')} />
+        <FormField dir="ltr" name="plateNumber" label={L.plate} required error={err('plateNumber')} />
         <FormField name="name" label={L.busName} error={err('name')} />
         <FormField name="capacity" label={L.seats} type="number" min={1} step="1" inputMode="numeric" required error={err('capacity')} />
         <div className="grid grid-cols-2 gap-2"><FormField name="make" label={L.make} error={err('make')} /><FormField name="model" label={L.model} error={err('model')} /></div>
@@ -61,8 +61,8 @@ export function DriverCreateForm({ usage }: { usage: PlanUsage | null }) {
     <CreateForm resource="max_drivers" usage={usage} title={L.addDriver} action={createDriverFormAction} submitLabel={L.addDriverBtn}>
       {(err) => (<>
         <FormField name="fullName" label={L.fullName} required error={err('fullName')} />
-        <FormField name="phone" label={L.phone} type="tel" autoComplete="off" required error={err('phone')} />
-        <FormField name="licenseNumber" label={L.license} error={err('licenseNumber')} />
+        <FormField dir="ltr" name="phone" label={L.phone} type="tel" autoComplete="off" required error={err('phone')} />
+        <FormField dir="ltr" name="licenseNumber" label={L.license} error={err('licenseNumber')} />
         <FormField name="licenseExpiry" label={L.licenseExpiry} type="date" error={err('licenseExpiry')} />
       </>)}
     </CreateForm>

@@ -118,12 +118,12 @@ export function StopsEditor({ rows, setRows, errors, listErrors, showErrors, rea
                 </div>
                 <div>
                   <label htmlFor={id('lat')} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{T.lat}</label>
-                  <input id={id('lat')} inputMode="decimal" value={r.latitude} readOnly={readOnly} onChange={(ev) => patch(r.uid, { latitude: ev.target.value })} aria-invalid={e.coords ? true : undefined} aria-describedby={dsc('lat', !!e.coords, T.coordsHint)} className={inputClass(!!e.coords)} />
+                  <input id={id('lat')} dir="ltr" inputMode="decimal" value={r.latitude} readOnly={readOnly} onChange={(ev) => patch(r.uid, { latitude: ev.target.value })} aria-invalid={e.coords ? true : undefined} aria-describedby={dsc('lat', !!e.coords, T.coordsHint)} className={inputClass(!!e.coords)} />
                   <p id={id('lat-h')} className="mt-1 text-xs text-slate-600 dark:text-slate-400">{T.coordsHint}</p>
                 </div>
                 <div>
                   <label htmlFor={id('lng')} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{T.lng}</label>
-                  <input id={id('lng')} inputMode="decimal" value={r.longitude} readOnly={readOnly} onChange={(ev) => patch(r.uid, { longitude: ev.target.value })} aria-invalid={e.coords ? true : undefined} aria-describedby={dsc('lat', !!e.coords)} className={inputClass(!!e.coords)} />
+                  <input id={id('lng')} dir="ltr" inputMode="decimal" value={r.longitude} readOnly={readOnly} onChange={(ev) => patch(r.uid, { longitude: ev.target.value })} aria-invalid={e.coords ? true : undefined} aria-describedby={dsc('lat', !!e.coords)} className={inputClass(!!e.coords)} />
                 </div>
                 {e.coords && <p id={id('lat-e')} className="text-xs font-semibold text-red-700 dark:text-red-300 sm:col-span-2">{e.coords}</p>}
                 <label className="flex min-h-11 items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 sm:col-span-2">

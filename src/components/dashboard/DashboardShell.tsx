@@ -6,31 +6,19 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { DashboardLangProvider } from '@/features/dashboard/lang';
 import { FlashNotice } from './FlashNotice';
 import {
-  LayoutDashboard, UserCog, UserRound, Route, BusFront, Users, CalendarDays, Ticket, Globe2,
-  Menu, X, Sun, Moon, Languages, LogOut, ChevronLeft, ChevronRight, Search,
-  Bell, Settings2, PanelLeftClose, PanelLeftOpen
+  Menu, X, Sun, Moon, Languages, LogOut, ChevronLeft, ChevronRight, Search, PanelLeftClose
 } from 'lucide-react';
+import { isNavActive, visibleNav } from './nav';
 
-type Props = { companyName: string; fullName: string; role: string; permissions: string[]; children: React.ReactNode; logoutAction: () => void };
-const nav = [
-  { href:'/dashboard', key:'overview', icon:LayoutDashboard, permission:null },
-  { href:'/dashboard/routes', key:'routes', icon:Route, permission:'routes.read' },
-  { href:'/dashboard/buses', key:'buses', icon:BusFront, permission:'buses.read' },
-  { href:'/dashboard/drivers', key:'drivers', icon:Users, permission:'drivers.read' },
-  { href:'/dashboard/users', key:'users', icon:UserCog, permission:'users.read' },
-  { href:'/dashboard/trips', key:'trips', icon:CalendarDays, permission:'trips.read' },
-  { href:'/dashboard/bookings', key:'bookings', icon:Ticket, permission:'bookings.read' },
-  { href:'/dashboard/customers', key:'customers', icon:UserRound, permission:'customers.read' },
-  { href:'/dashboard/website', key:'website', icon:Globe2, permission:'website.read' },
-  { href:'/dashboard/settings', key:'settings', icon:Settings2, permission:'settings.read' },
-] as const;
+type Props = { initialLang?: 'en' | 'ar'; companyName: string; fullName: string; role: string; permissions: string[]; children: React.ReactNode; logoutAction: () => void };
+const ROLES:Record<string,{en:string;ar:string}>={company_owner:{en:'Company owner',ar:'مالك الشركة'},company_manager:{en:'Company manager',ar:'مدير الشركة'},operations_staff:{en:'Operations staff',ar:'موظف العمليات'},booking_staff:{en:'Booking staff',ar:'موظف الحجوزات'},driver:{en:'Driver',ar:'سائق'}};
 const labels:any = {
   en:{customers:'Customers',settings:'Settings',overview:'Overview',routes:'Routes',buses:'Fleet',drivers:'Drivers',users:'Team',trips:'Trips',bookings:'Bookings',website:'Website',workspace:'WORKSPACE',manage:'Manage your operations',search:'Search anything...',signout:'Sign out',collapse:'Collapse sidebar',expand:'Expand sidebar',language:'العربية',welcome:'Good to see you',operator:'OPERATOR CONSOLE'},
   ar:{customers:'العملاء',settings:'الإعدادات',overview:'نظرة عامة',routes:'المسارات',buses:'أسطول الحافلات',drivers:'السائقون',users:'الفريق',trips:'الرحلات',bookings:'الحجوزات',website:'الموقع الإلكتروني',workspace:'مساحة العمل',manage:'إدارة عمليات شركتك',search:'ابحث هنا...',signout:'تسجيل الخروج',collapse:'تصغير القائمة',expand:'توسيع القائمة',language:'English',welcome:'أهلاً بعودتك',operator:'لوحة تحكم المشغل'}
 };
-export function DashboardShell({companyName,fullName,role,permissions,children,logoutAction}:Props) {
+export function DashboardShell({initialLang='en',companyName,fullName,role,permissions,children,logoutAction}:Props) {
   const pathname=usePathname();
-  const [lang,setLang]=useState<'en'|'ar'>('en');
+  const [lang,setLang]=useState<'en'|'ar'>(initialLang);
   const [theme,setTheme]=useState<'light'|'dark'>('light');
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
@@ -45,42 +33,44 @@ export function DashboardShell({companyName,fullName,role,permissions,children,l
     document.documentElement.dir=lang==='ar'?'rtl':'ltr';
     document.documentElement.classList.toggle('dark',theme==='dark');
     localStorage.setItem('malaky-dashboard-language',lang);
+    document.cookie=`malaky-dashboard-language=${lang};path=/;max-age=31536000;samesite=lax`; // server renders the right direction on the next load (no flash)
     localStorage.setItem('malaky-dashboard-theme',theme);
   },[lang,theme]);
   const t=labels[lang];
-  const visible=useMemo(()=>nav.filter(n=>!n.permission||permissions.includes(n.permission)),[permissions]);
+  const roleLabel=ROLES[role]?.[lang]??role.replaceAll('_',' ');
+  const visible=useMemo(()=>visibleNav(permissions),[permissions]);
   const sidebarWidth=collapsed?'w-[88px]':'w-[264px]';
   return <div className="dashboard-root min-h-screen bg-[#f6f8fb] text-slate-900 transition-colors dark:bg-[#0b1120] dark:text-slate-100" dir={lang==='ar'?'rtl':'ltr'}>
     <a href="#main-content" className="sr-only rounded-lg bg-white px-4 py-2 text-sm font-bold text-blue-800 focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-[100]">{lang==='ar'?'تخطي إلى المحتوى الرئيسي':'Skip to main content'}</a>
-    {mobileOpen&&<button aria-label="Close navigation" onClick={()=>setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden"/>}
-    <aside className={`fixed inset-y-0 z-50 flex ${sidebarWidth} flex-col border-slate-200 bg-white transition-all duration-200 dark:border-slate-800 dark:bg-[#101827] ${lang==='ar'?'right-0 border-l':'left-0 border-r'} ${mobileOpen?'translate-x-0':'max-lg:invisible '+(lang==='ar'?'translate-x-full lg:translate-x-0':'-translate-x-full lg:translate-x-0')}`}>
+    {mobileOpen&&<button aria-label={lang==='ar'?'إغلاق التنقل':'Close navigation'} onClick={()=>setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/40 lg:hidden"/>}
+    <aside className={`fixed inset-y-0 z-50 flex ${sidebarWidth} flex-col border-slate-200 bg-white transition-all duration-200 dark:border-slate-800 dark:bg-[#101827] start-0 border-e ${mobileOpen?'translate-x-0':'max-lg:invisible '+(lang==='ar'?'translate-x-full lg:translate-x-0':'-translate-x-full lg:translate-x-0')}`}>
       <div className="flex h-[76px] items-center gap-3 border-b border-slate-100 px-5 dark:border-slate-800">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 text-lg font-black text-white shadow-lg shadow-blue-600/20">M</div>
         {!collapsed&&<div className="min-w-0"><div className="text-[17px] font-extrabold tracking-tight">MALAKY<span className="text-blue-600">.</span></div><div className="text-[9px] font-bold tracking-[.22em] text-slate-600 dark:text-slate-400">BUS MANAGEMENT</div></div>}
-        <button aria-label="Close navigation" onClick={()=>setMobileOpen(false)} className="ms-auto rounded-lg p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 lg:hidden"><X size={18}/></button>
+        <button aria-label={lang==='ar'?'إغلاق التنقل':'Close navigation'} onClick={()=>setMobileOpen(false)} className="ms-auto rounded-lg p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 lg:hidden"><X size={18}/></button>
       </div>
       <div className="px-3 pt-5">
         {!collapsed&&<p className="px-3 pb-3 text-[10px] font-bold tracking-[.18em] text-slate-600 dark:text-slate-400">{t.workspace}</p>}
-        <nav aria-label={lang==='ar'?'التنقل الرئيسي':'Main navigation'} className="space-y-1">{visible.map(item=>{const active=item.href==='/dashboard'?pathname==='/dashboard':pathname.startsWith(item.href);const Icon=item.icon;return <Link key={item.key} href={item.href} aria-current={active?'page':undefined} onClick={()=>setMobileOpen(false)} title={collapsed?t[item.key]:undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-[13px] font-semibold transition ${active?'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'}`}><Icon size={19} strokeWidth={1.9}/>{!collapsed&&<span>{t[item.key]}</span>}{active&&!collapsed&&<span className="ms-auto h-1.5 w-1.5 rounded-full bg-blue-600"/>}</Link>})}</nav>
+        <nav aria-label={lang==='ar'?'التنقل الرئيسي':'Main navigation'} className="space-y-1">{visible.map(item=>{const active=isNavActive(item.href,pathname);const Icon=item.icon;return <Link key={item.key} href={item.href} aria-current={active?'page':undefined} onClick={()=>setMobileOpen(false)} title={collapsed?t[item.key]:undefined} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-[13px] font-semibold transition ${active?'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300':'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'}`}><Icon size={19} strokeWidth={1.9}/>{!collapsed&&<span>{t[item.key]}</span>}{active&&!collapsed&&<span className="ms-auto h-1.5 w-1.5 rounded-full bg-blue-600"/>}</Link>})}</nav>
       </div>
       <div className="mt-auto p-3">
-        {!collapsed&&<div className="mb-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/70"><p className="truncate text-xs font-bold">{companyName}</p><p className="mt-1 truncate text-[10px] capitalize text-slate-600 dark:text-slate-400">{role.replaceAll('_',' ')}</p></div>}
-        <button onClick={()=>setCollapsed(!collapsed)} className="hidden w-full items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 lg:flex">{collapsed?(lang==='ar'?<ChevronLeft size={18}/>:<ChevronRight size={18}/>):<><PanelLeftClose size={18}/>{t.collapse}</>}</button>
+        {!collapsed&&<div className="mb-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/70"><p className="truncate text-xs font-bold">{companyName}</p><p className="mt-1 truncate text-[10px] capitalize text-slate-600 dark:text-slate-400">{roleLabel}</p></div>}
+        <button aria-label={collapsed?t.expand:t.collapse} onClick={()=>setCollapsed(!collapsed)} className="hidden w-full items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 lg:flex">{collapsed?(lang==='ar'?<ChevronLeft size={18}/>:<ChevronRight size={18}/>):<><PanelLeftClose size={18} className="rtl:-scale-x-100"/>{t.collapse}</>}</button>
         <form action={logoutAction}><button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10"><LogOut size={18}/>{!collapsed&&t.signout}</button></form>
       </div>
     </aside>
-    <div className={`min-h-screen transition-all duration-200 ${lang==='ar'?(collapsed?'lg:mr-[88px]':'lg:mr-[264px]'):(collapsed?'lg:ml-[88px]':'lg:ml-[264px]')}`}>
+    <div className={`min-h-screen transition-all duration-200 ${collapsed?'lg:ms-[88px]':'lg:ms-[264px]'}`}>
       <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl dark:border-slate-800 dark:bg-[#0d1524]/90 sm:px-7">
         <div className="flex min-w-0 items-center gap-3">
           <button aria-label={lang==='ar'?'فتح التنقل':'Open navigation'} aria-expanded={mobileOpen} onClick={()=>setMobileOpen(true)} className="min-h-11 min-w-11 rounded-xl p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"><Menu size={20}/></button>
           <div className="hidden min-w-0 sm:block"><p className="text-[10px] font-bold tracking-[.18em] text-slate-600 dark:text-slate-400">{t.operator}</p><p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{companyName}</p></div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:bg-slate-800/70 md:flex"><Search size={15}/><span>{t.search}</span><kbd className="ms-8 rounded border border-slate-200 px-1.5 py-0.5 text-[9px] dark:border-slate-700">⌘ K</kbd></div>
+          <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:bg-slate-800/70 md:flex"><Search size={15}/><span>{t.search}</span><kbd dir="ltr" className="ms-8 rounded border border-slate-200 px-1.5 py-0.5 text-[9px] dark:border-slate-700">⌘ K</kbd></div>
           <button onClick={()=>setLang(lang==='en'?'ar':'en')} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"><Languages size={15}/><span>{t.language}</span></button>
-          <button aria-label="Toggle theme" onClick={()=>setTheme(theme==='light'?'dark':'light')} className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">{theme==='light'?<Moon size={17}/>:<Sun size={17}/>}</button>
+          <button aria-label={lang==='ar'?'تبديل المظهر':'Toggle theme'} onClick={()=>setTheme(theme==='light'?'dark':'light')} className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">{theme==='light'?<Moon size={17}/>:<Sun size={17}/>}</button>
           <div className="ms-1 hidden h-9 w-9 place-items-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 sm:grid">{fullName.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
-          <div className="hidden sm:block"><p className="max-w-32 truncate text-xs font-bold">{fullName}</p><p className="text-[10px] text-slate-600 dark:text-slate-400">{role.replaceAll('_',' ')}</p></div>
+          <div className="hidden sm:block"><p className="max-w-32 truncate text-xs font-bold">{fullName}</p><p className="text-[10px] text-slate-600 dark:text-slate-400">{roleLabel}</p></div>
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1600px] px-4 py-7 outline-none sm:px-7 lg:px-9"><DashboardLangProvider value={lang}><Suspense fallback={null}><FlashNotice/></Suspense>{children}</DashboardLangProvider></main>

@@ -50,7 +50,7 @@ export function FormResult({ state, resource }: { state: FormState; resource?: U
 const input = 'mt-1.5 w-full rounded-xl border bg-slate-50 px-3 py-2.5 text-sm text-slate-900 dark:bg-slate-800 dark:text-white';
 export const inputClass = (invalid: boolean) => `${input} ${invalid ? 'border-red-500' : 'border-slate-300 dark:border-slate-600'}`;
 
-export function FormField(p: { name: string; label: string; hint?: string; error?: string | null; required?: boolean; type?: string; min?: number; max?: number; step?: string; inputMode?: 'numeric' | 'decimal' | 'text'; defaultValue?: string; autoComplete?: string }) {
+export function FormField(p: { name: string; label: string; hint?: string; error?: string | null; required?: boolean; type?: string; min?: number; max?: number; step?: string; inputMode?: 'numeric' | 'decimal' | 'text'; defaultValue?: string; autoComplete?: string; dir?: 'ltr' | 'rtl' }) {
   const id = useId();
   const described = [p.hint ? `${id}-h` : '', p.error ? `${id}-e` : ''].filter(Boolean).join(' ') || undefined;
   return (
@@ -58,7 +58,7 @@ export function FormField(p: { name: string; label: string; hint?: string; error
       <label htmlFor={id} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
         {p.label}{p.required && <span aria-hidden="true" className="text-red-600"> *</span>}
       </label>
-      <input id={id} name={p.name} type={p.type ?? 'text'} required={p.required} min={p.min} max={p.max} step={p.step} inputMode={p.inputMode} defaultValue={p.defaultValue} autoComplete={p.autoComplete}
+      <input id={id} name={p.name} type={p.type ?? 'text'} required={p.required} min={p.min} max={p.max} step={p.step} inputMode={p.inputMode} defaultValue={p.defaultValue} autoComplete={p.autoComplete} dir={p.dir}
         aria-invalid={p.error ? true : undefined} aria-describedby={described} className={inputClass(!!p.error)} />
       {p.hint && <p id={`${id}-h`} className="mt-1 text-xs text-slate-600 dark:text-slate-400">{p.hint}</p>}
       {p.error && <p id={`${id}-e`} className="mt-1 text-xs font-semibold text-red-700 dark:text-red-300">{p.error}</p>}

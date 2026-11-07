@@ -21,7 +21,7 @@ export function InviteForm({ roles, usage }: { roles: RoleOption[]; usage: PlanU
     <form ref={ref} onSubmit={onSubmit} aria-labelledby={`${uid}-t`} className="h-fit space-y-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <h2 id={`${uid}-t`} className="font-bold">{T.invite}</h2>
       <PlanLimitNotice usage={current} resource="max_users" id={`${uid}-limit`} />
-      <FormField name="email" label={T.email} type="email" autoComplete="off" required error={fieldErr(state, lang, 'email')} />
+      <FormField name="email" label={T.email} dir="ltr" type="email" autoComplete="off" required error={fieldErr(state, lang, 'email')} />
       <div>
         <label htmlFor={`${uid}-role`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{T.role}<span aria-hidden="true" className="text-red-600"> *</span></label>
         <select id={`${uid}-role`} name="roleKey" required defaultValue="" className={inputClass(!!fieldErr(state, lang, 'roleKey'))}>
@@ -35,8 +35,8 @@ export function InviteForm({ roles, usage }: { roles: RoleOption[]; usage: PlanU
       {state.status === 'success' && state.invite && (
         <div className="space-y-1 rounded-xl border border-slate-300 p-3 dark:border-slate-600">
           <label htmlFor={`${uid}-link`} className="block text-xs font-semibold">{T.link}</label>
-          <input id={`${uid}-link`} readOnly value={state.invite.url} onFocus={(e) => e.currentTarget.select()} className={inputClass(false)} />
-          <p className="text-xs text-slate-600 dark:text-slate-400">{T.expires}: {new Date(state.invite.expiresAt).toLocaleString()}</p>
+          <input id={`${uid}-link`} readOnly value={state.invite.url} onFocus={(e) => e.currentTarget.select()} dir="ltr" className={inputClass(false)} />
+          <p className="text-xs text-slate-600 dark:text-slate-400">{T.expires}: <time dateTime={state.invite.expiresAt} dir="ltr">{new Date(state.invite.expiresAt).toLocaleString(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB')}</time></p>
         </div>
       )}
     </form>

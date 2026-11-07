@@ -1,3 +1,4 @@
+import { T } from '@/components/dashboard/T';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireTenant } from '@/lib/auth/guards';
@@ -19,17 +20,17 @@ export default async function RoutesPage() {
   return (
     <>
       <PageHeader eyebrow="Network management" title="Routes & destinations" description="Create and maintain your company's travel corridors and their stops."
-        action={canWrite ? <Link href="/dashboard/routes/new" className={link}>Add a route</Link> : undefined} />
+        action={canWrite ? <Link href="/dashboard/routes/new" className={link}><T>Add a route</T></Link> : undefined} />
       {canWrite && <div className="mb-5"><PlanLimitNotice usage={usage} resource="max_routes" /></div>}
       <DataTable rows={page.items} columns={[
-        { key: 'name', label: 'Route', render: (r) => <div><Link href={`/dashboard/routes/${r.id}`} className="font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">{r.name}</Link><p className="text-xs text-slate-600 dark:text-slate-400">{r.code || 'No route code'}</p></div> },
+        { key: 'name', label: 'Route', render: (r) => <div><Link href={`/dashboard/routes/${r.id}`} className="font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">{r.name}</Link><p className="text-xs text-slate-600 dark:text-slate-400">{r.code || <T>No route code</T>}</p></div> },
         { key: 'origin', label: 'Origin', render: (r) => r.originName },
         { key: 'destination', label: 'Destination', render: (r) => r.destinationName },
         { key: 'status', label: 'Status', render: (r) => <StatusPill value={r.isActive ? 'active' : 'inactive'} /> },
         { key: 'manage', label: 'Manage', render: (r) => (
           <div className="flex items-center gap-3">
-            <Link href={`/dashboard/routes/${r.id}`} className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300" aria-label={`${canWrite ? 'Edit' : 'View'} ${r.name}`}>{canWrite ? 'Edit' : 'View'}</Link>
-            {canWrite && <form action={updateRouteAction}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="isActive" value={String(!r.isActive)} /><button aria-label={`${r.isActive ? 'Deactivate' : 'Activate'} ${r.name}`} className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">{r.isActive ? 'Deactivate' : 'Activate'}</button></form>}
+            <Link href={`/dashboard/routes/${r.id}`} className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300" aria-label={`${canWrite ? 'Edit' : 'View'} ${r.name}`}>{canWrite ? <T>Edit</T> : <T>View</T>}</Link>
+            {canWrite && <form action={updateRouteAction}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="isActive" value={String(!r.isActive)} /><button aria-label={`${r.isActive ? 'Deactivate' : 'Activate'} ${r.name}`} className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">{r.isActive ? <T>Deactivate</T> : <T>Activate</T>}</button></form>}
           </div>) },
       ]} />
     </>

@@ -1,3 +1,4 @@
+import { T } from '@/components/dashboard/T';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireTenant } from '@/lib/auth/guards';
@@ -22,7 +23,7 @@ export default async function NewTripPage() {
   return (
     <>
       <PageHeader eyebrow="Scheduling & dispatch" title="Add a trip" description="Create a trip draft and assign an available bus and driver."
-        action={<Link href="/dashboard/trips" className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">Back to trips</Link>} />
+        action={<Link href="/dashboard/trips" className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"><T>Back to trips</T></Link>} />
       <div className="max-w-4xl">
         <TripDraftForm usage={usage}
           routes={routes.items.map((r) => ({ id: r.id, label: r.name }))}
