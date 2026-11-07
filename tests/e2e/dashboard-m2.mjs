@@ -226,10 +226,10 @@ setLimit('max_routes', 20);
 
 // ---- trips per month ----
 setLimit('max_trips_per_month', 0);
-await go(owner, '/dashboard/trips'); t = await text(owner);
+await go(owner, '/dashboard/trips/new'); t = await text(owner);
 check('trips: limit reached for the month is explained and submit is blocked', /Plan limit reached: \d+ of 0 trips this month used/.test(t) && /Adding is paused/.test(t), t.slice(0, 300));
 setLimit('max_trips_per_month', 1000);
-await go(owner, '/dashboard/trips'); t = await text(owner);
+await go(owner, '/dashboard/trips/new'); t = await text(owner);
 check('trips: with room left the allowance is shown', /\d+ of 1000 trips this month used/.test(t));
 
 // ---- no subscription: no invented plan numbers ----
@@ -260,7 +260,7 @@ async function axeScan(p, name) {
   if (bad.length) console.log('AXE-DETAIL', name, JSON.stringify(bad));
 }
 setLimit('max_buses', used.max_buses());
-for (const [path, name] of [['/dashboard/routes', 'routes list'], ['/dashboard/buses', 'buses (limit reached)'], ['/dashboard/drivers', 'drivers'], ['/dashboard/trips', 'trips'], [`/dashboard/routes/${routeId}`, 'route edit'], ['/dashboard/routes/new', 'route new']]) { await go(owner, path); await axeScan(owner, name); }
+for (const [path, name] of [['/dashboard/routes', 'routes list'], ['/dashboard/buses', 'buses (limit reached)'], ['/dashboard/drivers', 'drivers'], ['/dashboard/trips', 'trips list'], ['/dashboard/trips/new', 'trips new'], ['/dashboard/customers', 'customers'], ['/dashboard/settings', 'settings'], [`/dashboard/routes/${routeId}`, 'route edit'], ['/dashboard/routes/new', 'route new']]) { await go(owner, path); await axeScan(owner, name); }
 // route form in its error state (validation messages visible)
 await go(owner, '/dashboard/routes/new'); await addStop(owner, 'X1', 0); await submitRoute(owner, 'Create route'); await axeScan(owner, 'route new, validation errors shown');
 setLimit('max_buses', 20);
@@ -281,7 +281,7 @@ check('target size (WCAG 2.2 SC 2.5.8): move/remove/add buttons are at least 24x
 
 // mobile reflow (SC 1.4.10): 320 CSS px wide = 400% zoom of a 1280px window; no horizontal scrolling of the page
 const mob = await login('m2-owner-a@e2e.test', { width: 320, height: 800 });
-for (const path of ['/dashboard/routes', `/dashboard/routes/${routeId}`, '/dashboard/routes/new', '/dashboard/buses', '/dashboard/drivers', '/dashboard/trips']) {
+for (const path of ['/dashboard/routes', `/dashboard/routes/${routeId}`, '/dashboard/routes/new', '/dashboard/buses', '/dashboard/drivers', '/dashboard/trips', '/dashboard/trips/new', '/dashboard/customers', '/dashboard/settings']) {
   await go(mob, path);
   const ov = await mob.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth }));
   check(`mobile 320px: ${path.replace(routeId, ':id')} has no page-level horizontal scroll`, ov.sw <= ov.iw + 1, JSON.stringify(ov));

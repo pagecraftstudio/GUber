@@ -26,6 +26,8 @@ export type UserRepository = {
   listRoles(ctx: TenantServiceContext): Promise<Role[]>;
   createInvite(ctx: TenantServiceContext, input: InviteCreate): Promise<CreatedInvite>;
   revokeInvite(ctx: TenantServiceContext, inviteId: string): Promise<void>;
+  setMemberRole(ctx: TenantServiceContext, memberId: string, roleKey: string): Promise<{ changed: boolean }>;
+  setMemberStatus(ctx: TenantServiceContext, memberId: string, status: 'active' | 'suspended'): Promise<{ changed: boolean }>;
 };
 
 /**
@@ -85,5 +87,18 @@ export const userRepository: UserRepository = {
   async revokeInvite(ctx, inviteId) {
     const { error } = await ctx.db.rpc('revoke_invite', { p_invite_id: inviteId });
     if (error) throw mapDbError(error);
+  },
+
+  /** set_member_role (0025): caller needs users.write in the member's company; cannot target self; last-owner trigger still applies. */
+  async setMemberRole(ctx, memberId, roleKey) {
+    const { data, error } = await ctx.db.rpc('set_member_role', { p_member_id: memberId, p_role_key: roleKey });
+    if (error) throw mapDbError(error);
+    return { changed: (data as { changed?: unknown } | null)?.changed === true };
+  },
+
+  async setMemberStatus(ctx, memberId, status) {
+    const { data, error } = await ctx.db.rpc('set_member_status', { p_member_id: memberId, p_status: status });
+    if (error) throw mapDbError(error);
+    return { changed: (data as { changed?: unknown } | null)?.changed === true };
   },
 };

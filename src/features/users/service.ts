@@ -5,12 +5,12 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { userRepository, type UserRepository } from './repository';
-import { inviteCreateSchema, inviteListSchema } from './schema';
+import { inviteCreateSchema, inviteListSchema, memberRoleSchema, memberStatusSchema } from './schema';
 import type { CreatedInvite, Invite, Member, Role } from './types';
 
 /**
- * Company users = members + invitations. Not yet possible (needs new RPCs, Phase 5/9): change a member's role,
- * suspend or remove a member, link a login to a driver record. The database has no client path for them today.
+ * Company users = members + invitations. Role change and suspend / reactivate go through set_member_role /
+ * set_member_status (0025). Still not possible: removing a member, linking a login to a driver record.
  */
 export function makeUserService(repo: UserRepository) {
   return {
@@ -30,6 +30,14 @@ export function makeUserService(repo: UserRepository) {
     async createInvite(ctx: TenantServiceContext, input: unknown): Promise<CreatedInvite> {
       requirePermission(ctx, PERMISSIONS.usersWrite);
       return repo.createInvite(ctx, parseInput(inviteCreateSchema, input));
+    },
+    async setMemberRole(ctx: TenantServiceContext, rawMemberId: unknown, input: unknown): Promise<{ changed: boolean }> {
+      requirePermission(ctx, PERMISSIONS.usersWrite);
+      return repo.setMemberRole(ctx, parseInput(idSchema, rawMemberId), parseInput(memberRoleSchema, input).roleKey);
+    },
+    async setMemberStatus(ctx: TenantServiceContext, rawMemberId: unknown, rawStatus: unknown): Promise<{ changed: boolean }> {
+      requirePermission(ctx, PERMISSIONS.usersWrite);
+      return repo.setMemberStatus(ctx, parseInput(idSchema, rawMemberId), parseInput(memberStatusSchema, rawStatus));
     },
     async revokeInvite(ctx: TenantServiceContext, rawInviteId: unknown): Promise<void> {
       requirePermission(ctx, PERMISSIONS.usersWrite);

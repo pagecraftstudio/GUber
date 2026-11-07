@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { DashboardLangProvider } from '@/features/dashboard/lang';
 import { FlashNotice } from './FlashNotice';
 import {
-  LayoutDashboard, Route, BusFront, Users, CalendarDays, Ticket, Globe2,
+  LayoutDashboard, UserCog, UserRound, Route, BusFront, Users, CalendarDays, Ticket, Globe2,
   Menu, X, Sun, Moon, Languages, LogOut, ChevronLeft, ChevronRight, Search,
   Bell, Settings2, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
@@ -17,13 +17,16 @@ const nav = [
   { href:'/dashboard/routes', key:'routes', icon:Route, permission:'routes.read' },
   { href:'/dashboard/buses', key:'buses', icon:BusFront, permission:'buses.read' },
   { href:'/dashboard/drivers', key:'drivers', icon:Users, permission:'drivers.read' },
+  { href:'/dashboard/users', key:'users', icon:UserCog, permission:'users.read' },
   { href:'/dashboard/trips', key:'trips', icon:CalendarDays, permission:'trips.read' },
   { href:'/dashboard/bookings', key:'bookings', icon:Ticket, permission:'bookings.read' },
+  { href:'/dashboard/customers', key:'customers', icon:UserRound, permission:'customers.read' },
   { href:'/dashboard/website', key:'website', icon:Globe2, permission:'website.read' },
+  { href:'/dashboard/settings', key:'settings', icon:Settings2, permission:'settings.read' },
 ] as const;
 const labels:any = {
-  en:{overview:'Overview',routes:'Routes',buses:'Fleet',drivers:'Drivers',trips:'Trips',bookings:'Bookings',website:'Website',workspace:'WORKSPACE',manage:'Manage your operations',search:'Search anything...',signout:'Sign out',collapse:'Collapse sidebar',expand:'Expand sidebar',language:'العربية',welcome:'Good to see you',operator:'OPERATOR CONSOLE'},
-  ar:{overview:'نظرة عامة',routes:'المسارات',buses:'أسطول الحافلات',drivers:'السائقون',trips:'الرحلات',bookings:'الحجوزات',website:'الموقع الإلكتروني',workspace:'مساحة العمل',manage:'إدارة عمليات شركتك',search:'ابحث هنا...',signout:'تسجيل الخروج',collapse:'تصغير القائمة',expand:'توسيع القائمة',language:'English',welcome:'أهلاً بعودتك',operator:'لوحة تحكم المشغل'}
+  en:{customers:'Customers',settings:'Settings',overview:'Overview',routes:'Routes',buses:'Fleet',drivers:'Drivers',users:'Team',trips:'Trips',bookings:'Bookings',website:'Website',workspace:'WORKSPACE',manage:'Manage your operations',search:'Search anything...',signout:'Sign out',collapse:'Collapse sidebar',expand:'Expand sidebar',language:'العربية',welcome:'Good to see you',operator:'OPERATOR CONSOLE'},
+  ar:{customers:'العملاء',settings:'الإعدادات',overview:'نظرة عامة',routes:'المسارات',buses:'أسطول الحافلات',drivers:'السائقون',users:'الفريق',trips:'الرحلات',bookings:'الحجوزات',website:'الموقع الإلكتروني',workspace:'مساحة العمل',manage:'إدارة عمليات شركتك',search:'ابحث هنا...',signout:'تسجيل الخروج',collapse:'تصغير القائمة',expand:'توسيع القائمة',language:'English',welcome:'أهلاً بعودتك',operator:'لوحة تحكم المشغل'}
 };
 export function DashboardShell({companyName,fullName,role,permissions,children,logoutAction}:Props) {
   const pathname=usePathname();

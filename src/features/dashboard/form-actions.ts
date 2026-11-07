@@ -9,6 +9,9 @@ import { routeService } from '@/features/routes/service';
 import { busService } from '@/features/buses/service';
 import { driverService } from '@/features/drivers/service';
 import { tripService } from '@/features/trips/service';
+import { userService } from '@/features/users/service';
+import { companyService } from '@/features/companies/service';
+import { buildInviteUrl } from '@/features/users/invite-link';
 import { planUsageService } from '@/features/subscriptions/usage-service';
 import { errorState, successState, type FormState } from './form-state';
 
@@ -78,7 +81,6 @@ export async function saveRouteFormAction(_prev: FormState, f: FormData): Promis
   const id = str(f, 'id');
   let c: TenantServiceContext | null = null;
   let createdId: string | null = null;
-  let stopsFailed = false;
   try {
     c = await ctx();
     if (id) {
@@ -86,13 +88,85 @@ export async function saveRouteFormAction(_prev: FormState, f: FormData): Promis
     } else {
       const r = await routeService.createWithStops(c, routeFields(f), parseStops(f));
       createdId = r.route.id;
-      stopsFailed = r.stopsError !== null;
     }
   } catch (e) {
     return failure(c, e);
   }
   revalidatePath('/dashboard/routes');
-  if (createdId) redirect(`/dashboard/routes/${createdId}?${stopsFailed ? 'error=stops_not_saved' : 'notice=created'}`);
+  if (createdId) redirect(`/dashboard/routes/${createdId}?notice=created`);
   revalidatePath(`/dashboard/routes/${id}`);
   return successState('saved');
+}
+
+/** Invite a teammate. The raw token is returned to THIS request only (shown once); it is never stored or logged here. */
+export async function createInviteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    const created = await userService.createInvite(c, { email: str(f, 'email'), roleKey: str(f, 'roleKey') });
+    revalidatePath('/dashboard/users');
+    return successState('created', { url: buildInviteUrl(created.token), expiresAt: created.expiresAt });
+  } catch (e) {
+    return failure(c, e);
+  }
+}
+
+export async function setMemberRoleFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await userService.setMemberRole(c, str(f, 'memberId'), { roleKey: str(f, 'roleKey') });
+  } catch (e) {
+    return failure(c, e);
+  }
+  revalidatePath('/dashboard/users');
+  return successState('saved');
+}
+
+export async function setMemberStatusFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await userService.setMemberStatus(c, str(f, 'memberId'), str(f, 'status'));
+  } catch (e) {
+    return failure(c, e);
+  }
+  revalidatePath('/dashboard/users');
+  return successState('saved');
+}
+
+export async function revokeInviteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await userService.revokeInvite(c, str(f, 'inviteId'));
+  } catch (e) {
+    return failure(c, e);
+  }
+  revalidatePath('/dashboard/users');
+  return successState('saved');
+}
+
+/** Company settings (settings.write; RLS also enforces it). The company comes from the session, never from the form. */
+export async function updateSettingsFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await companyService.updateSettings(c, {
+      timezone: str(f, 'timezone'),
+      currency: str(f, 'currency').toUpperCase(),
+      defaultLocale: str(f, 'defaultLocale'),
+      supportedLocales: f.getAll('supportedLocales').map(String),
+      bookingEnabled: f.get('bookingEnabled') === 'on',
+      allowGuestBooking: f.get('allowGuestBooking') === 'on',
+      bookingCutoffMinutes: num(f, 'bookingCutoffMinutes'),
+      cancellationWindowHours: num(f, 'cancellationWindowHours'),
+      maxSeatsPerBooking: num(f, 'maxSeatsPerBooking'),
+      tripBufferMinutes: num(f, 'tripBufferMinutes'),
+    });
+    revalidatePath('/dashboard/settings');
+    return successState('saved');
+  } catch (e) {
+    return failure(c, e);
+  }
 }

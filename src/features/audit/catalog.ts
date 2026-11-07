@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -13,6 +13,7 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   trip: 'Trip',
   ticket: 'Ticket',
   route: 'Route',
+  member: 'Team member',
 };
 
 export const ACTOR_TYPES = ['platform_user', 'company_user', 'customer', 'system'] as const;
@@ -46,6 +47,8 @@ const ACTION_LABEL: Record<string, string> = {
   'booking.payment_status': 'Booking payment status changed',
   'ticket.boarded': 'Ticket boarded',
   'route.stops_saved': 'Route stops saved',
+  'member.role_changed': 'Member role changed',
+  'member.status_changed': 'Member status changed',
 };
 
 /** Human label, or the raw action when the catalogue does not know it (never hides an entry). */

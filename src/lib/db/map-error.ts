@@ -55,6 +55,8 @@ const RULES: Rule[] = [
   // audit read RPCs (0019)
   { match: /invalid filter|invalid range|invalid cursor|invalid limit/, code: 'validation', detail: 'invalid_filter' },
   { match: /audit entry not found/, code: 'not_found', detail: 'audit_not_found' },
+  // member management (0025)
+  { match: /cannot change your own (role|status)/, code: 'business_rule', detail: 'cannot_change_self' },
   // route stops (0024)
   { match: /route stop has bookings/, code: 'business_rule', detail: 'stop_has_bookings' },
   // booking RPCs (0010)

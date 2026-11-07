@@ -16,7 +16,7 @@ Three environments, three different promises. Never mix them up.
 PSQL=psql POSTGREST=/path/to/postgrest E2E_TOOLS=/dir/with/puppeteer CHROME_PATH=/path/to/chromium bash tests/run-all-local.sh
 
 # LOCAL browser suites individually (production build + local stack; see tests/e2e/run-e2e.sh for the exact arguments):
-#   flow.mjs 0 | tickets.mjs 1 | portal.mjs 0 (EXTRA_SEED=tests/e2e/seed-portal.sql) | audit.mjs 1 | dashboard-m2.mjs 1 | flow-smoke-local.mjs 1 | deploy-smoke-local.mjs 1 | signout.mjs 1
+#   flow.mjs 0 | tickets.mjs 1 | portal.mjs 0 (EXTRA_SEED=tests/e2e/seed-portal.sql) | audit.mjs 1 | dashboard-m2.mjs 1 | dashboard-pages.mjs 1 | dashboard-users.mjs 1 | flow-smoke-local.mjs 1 | deploy-smoke-local.mjs 1 | signout.mjs 1
 
 # STAGING 1: routing, access gates, headers, public routes /api/public/* (read-only, no accounts)
 bash scripts/smoke/deploy-smoke.sh https://<staging-alias>

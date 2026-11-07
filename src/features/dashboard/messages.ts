@@ -76,6 +76,10 @@ const GENERIC: Record<string, Record<Lang, string>> = {
   conflict: { en: 'This conflicts with existing data.', ar: 'هذا يتعارض مع بيانات موجودة.' },
   plate_number_taken: { en: 'A bus with this plate number already exists.', ar: 'توجد حافلة بنفس رقم اللوحة.' },
   route_code_taken: { en: 'Another route already uses this code.', ar: 'مسار آخر يستخدم هذا الرمز.' },
+  cannot_change_self: { en: 'You cannot change your own role or status.', ar: 'لا يمكنك تغيير دورك أو حالتك بنفسك.' },
+  last_owner: { en: 'A company must keep at least one active owner.', ar: 'يجب أن تحتفظ الشركة بمالك نشط واحد على الأقل.' },
+  user_already_member: { en: 'This person already belongs to a company.', ar: 'هذا الشخص ينتمي بالفعل إلى شركة.' },
+  invite_pending: { en: 'There is already a pending invitation for this email.', ar: 'توجد دعوة معلقة لهذا البريد بالفعل.' },
   rate_limited: { en: 'Too many requests. Wait a moment and try again.', ar: 'طلبات كثيرة. انتظر قليلاً ثم حاول مجدداً.' },
   business_rule: { en: 'This action is not allowed.', ar: 'هذا الإجراء غير مسموح.' },
   internal: { en: 'Something went wrong on our side. Nothing was lost; try again.', ar: 'حدث خطأ من جانبنا. لم يضع شيء، حاول مجدداً.' },
@@ -83,6 +87,9 @@ const GENERIC: Record<string, Record<Lang, string>> = {
   driver_conflict: { en: 'This driver is already assigned to an overlapping trip.', ar: 'هذا السائق مخصص لرحلة متداخلة.' },
   bus_inactive: { en: 'This bus is not active.', ar: 'هذه الحافلة غير نشطة.' },
   driver_inactive: { en: 'This driver is not active.', ar: 'هذا السائق غير نشط.' },
+  seats_exceed_capacity: { en: 'The seats booked are more than the trip capacity.', ar: 'عدد المقاعد المحجوزة أكبر من سعة الرحلة.' },
+  bus_and_driver_required: { en: 'Assign a bus and a driver before scheduling this trip.', ar: 'عيّن حافلة وسائقًا قبل جدولة هذه الرحلة.' },
+  trip_failed: { en: 'The trip status could not be changed. Check the trip and try again.', ar: 'تعذر تغيير حالة الرحلة. راجع الرحلة وحاول مرة أخرى.' },
   capacity_exceeds_bus: { en: 'Trip capacity is larger than the bus capacity.', ar: 'سعة الرحلة أكبر من سعة الحافلة.' },
 };
 export const genericErrorText = (lang: Lang, code: string, detail?: string): string =>
@@ -131,6 +138,20 @@ export const STOP_UI = {
 } as const;
 
 export const ROUTE_UI = {
-  en: { addRoute: 'Add a route', editRoute: 'Edit route', name: 'Route name', code: 'Route code', origin: 'Origin', destination: 'Destination', description: 'Description', create: 'Create route', save: 'Save changes', back: 'Back to routes', readOnly: 'You can view this route but not change it.', stopsNotSaved: 'The route was created but its stops could not be saved. Add them here and save.' },
-  ar: { addRoute: 'إضافة مسار', editRoute: 'تعديل المسار', name: 'اسم المسار', code: 'رمز المسار', origin: 'نقطة الانطلاق', destination: 'الوجهة', description: 'الوصف', create: 'إنشاء المسار', save: 'حفظ التغييرات', back: 'العودة إلى المسارات', readOnly: 'يمكنك عرض هذا المسار لكن لا يمكنك تغييره.', stopsNotSaved: 'أُنشئ المسار لكن تعذّر حفظ محطاته. أضفها هنا ثم احفظ.' },
+  en: { addRoute: 'Add a route', editRoute: 'Edit route', name: 'Route name', code: 'Route code', origin: 'Origin', destination: 'Destination', description: 'Description', create: 'Create route', save: 'Save changes', back: 'Back to routes', readOnly: 'You can view this route but not change it.' },
+  ar: { addRoute: 'إضافة مسار', editRoute: 'تعديل المسار', name: 'اسم المسار', code: 'رمز المسار', origin: 'نقطة الانطلاق', destination: 'الوجهة', description: 'الوصف', create: 'إنشاء المسار', save: 'حفظ التغييرات', back: 'العودة إلى المسارات', readOnly: 'يمكنك عرض هذا المسار لكن لا يمكنك تغييره.' },
+} as const;
+
+export const USER_UI = {
+  en: { title: 'Team members', invite: 'Invite a teammate', email: 'Email address', role: 'Role', send: 'Create invitation', members: 'Members', invites: 'Pending invitations', name: 'Name', status: 'Status', actions: 'Actions', save: 'Save role', suspend: 'Suspend', reactivate: 'Reactivate', revoke: 'Revoke', you: 'You', self: 'You cannot change your own role or status.', noInvites: 'No pending invitations.', link: 'Invitation link (shown once, copy it now)', expires: 'Expires', readOnly: 'You can see the team but only the company owner can change it.', active: 'Active', suspended: 'Suspended', roleFor: (n: string) => `Role for ${n}`, saveFor: (n: string) => `Save role for ${n}`, suspendFor: (n: string) => `Suspend ${n}`, reactivateFor: (n: string) => `Reactivate ${n}`, revokeFor: (e: string) => `Revoke invitation for ${e}` },
+  ar: { title: 'أعضاء الفريق', invite: 'دعوة زميل', email: 'البريد الإلكتروني', role: 'الدور', send: 'إنشاء دعوة', members: 'الأعضاء', invites: 'الدعوات المعلقة', name: 'الاسم', status: 'الحالة', actions: 'إجراءات', save: 'حفظ الدور', suspend: 'إيقاف', reactivate: 'إعادة تفعيل', revoke: 'إلغاء', you: 'أنت', self: 'لا يمكنك تغيير دورك أو حالتك بنفسك.', noInvites: 'لا توجد دعوات معلقة.', link: 'رابط الدعوة (يظهر مرة واحدة، انسخه الآن)', expires: 'ينتهي', readOnly: 'يمكنك رؤية الفريق لكن مالك الشركة فقط يستطيع تغييره.', active: 'نشط', suspended: 'موقوف', roleFor: (n: string) => `دور ${n}`, saveFor: (n: string) => `حفظ دور ${n}`, suspendFor: (n: string) => `إيقاف ${n}`, reactivateFor: (n: string) => `إعادة تفعيل ${n}`, revokeFor: (e: string) => `إلغاء دعوة ${e}` },
+} as const;
+
+export const SETTINGS_UI = {
+  en: { company: 'Company profile', companyNote: 'Name, legal details and contact data are managed by the platform team. Ask MALAKY support to change them.', name: 'Name', slug: 'Address name', legalName: 'Legal name', taxNumber: 'Tax number', contactEmail: 'Contact email', contactPhone: 'Contact phone', country: 'Country', status: 'Status',
+    booking: 'Booking and operations', readOnly: 'You can view these settings but not change them.', timezone: 'Time zone', timezoneHint: 'An IANA name, for example Africa/Cairo.', currency: 'Currency', currencyHint: 'Three capital letters, for example EGP.', defaultLocale: 'Default language', supportedLocales: 'Supported languages', ar: 'Arabic', en: 'English',
+    bookingEnabled: 'Accept online bookings', allowGuestBooking: 'Allow booking without an account', cutoff: 'Booking cut-off (minutes before departure)', cancelWindow: 'Cancellation window (hours before departure)', maxSeats: 'Seats per booking (max)', buffer: 'Turnaround time between trips (minutes)', bufferHint: 'Applies to new trips only.', save: 'Save settings', yes: 'Yes', no: 'No' },
+  ar: { company: 'ملف الشركة', companyNote: 'الاسم والبيانات القانونية وبيانات التواصل يديرها فريق المنصة. تواصل مع دعم MALAKY لتغييرها.', name: 'الاسم', slug: 'اسم العنوان', legalName: 'الاسم القانوني', taxNumber: 'الرقم الضريبي', contactEmail: 'البريد الإلكتروني', contactPhone: 'هاتف التواصل', country: 'الدولة', status: 'الحالة',
+    booking: 'الحجز والتشغيل', readOnly: 'يمكنك عرض هذه الإعدادات لكن لا يمكنك تغييرها.', timezone: 'المنطقة الزمنية', timezoneHint: 'اسم IANA، مثل Africa/Cairo.', currency: 'العملة', currencyHint: 'ثلاثة أحرف كبيرة، مثل EGP.', defaultLocale: 'اللغة الافتراضية', supportedLocales: 'اللغات المدعومة', ar: 'العربية', en: 'الإنجليزية',
+    bookingEnabled: 'قبول الحجز عبر الإنترنت', allowGuestBooking: 'السماح بالحجز بدون حساب', cutoff: 'إغلاق الحجز (دقائق قبل الانطلاق)', cancelWindow: 'مهلة الإلغاء (ساعات قبل الانطلاق)', maxSeats: 'الحد الأقصى للمقاعد في الحجز', buffer: 'الوقت بين الرحلات (دقائق)', bufferHint: 'يسري على الرحلات الجديدة فقط.', save: 'حفظ الإعدادات', yes: 'نعم', no: 'لا' },
 } as const;

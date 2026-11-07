@@ -21,3 +21,7 @@ export type InviteListQuery = z.output<typeof inviteListSchema>;
 
 /** Shape returned by create_invite(). Parsed at the trust boundary. */
 export const createInviteResultSchema = z.array(z.object({ invite_id: z.guid(), token: z.string().min(20), expires_at: z.string() })).min(1);
+
+/** The member id is a TARGET (company_users.id); the RPC checks it belongs to the caller's company. */
+export const memberRoleSchema = z.strictObject({ roleKey: z.string().regex(/^[a-z][a-z_]{1,39}$/, 'invalid_role') });
+export const memberStatusSchema = z.enum(['active', 'suspended']);

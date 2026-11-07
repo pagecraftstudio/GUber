@@ -41,7 +41,10 @@ Legend: **L** = SQL + HTTP tested locally (real PostgreSQL/PostgREST). **B** = a
 | website drafts / publish | none | NOT IMPLEMENTED |
 | company dashboard: routes + stops, buses, drivers, trips | `save_route_stops`, `my_plan_usage` (0024) + existing RLS/CRUD, pages under `src/app/dashboard` | L + B (`e2e/dashboard-m2.mjs`, SQL suite 20) |
 | plan-limit messages in dashboard forms | `my_plan_usage` (read) + DB triggers (enforcement) | L + B |
-| company users / staff invitations page | none | NOT IMPLEMENTED (no page, so no limit message yet) |
+| company users page: members, role change, suspend / reactivate, invitations | `set_member_role`, `set_member_status` (0025), `create_invite`, `revoke_invite` (0007), RLS reads; page `/dashboard/users` | L + B (`e2e/dashboard-users.mjs`, SQL suite 21). Invite link is shown once; email delivery is not exercised. |
+| route create with stops | `create_route_with_stops` (0025): route + stops in one transaction | L + B (SQL suite 21, `e2e/dashboard-users.mjs`) |
+| customers (list/search/detail), company settings, trips/new | existing RLS on `customers` / `company_settings` / `trips`, `transition_trip` (rule messages on status change) | L + B (`e2e/dashboard-pages.mjs`, SQL suite 22) |
+| team-size limit message | `my_plan_usage` (read); `max_users` is enforced when an invite is ACCEPTED (insert into `company_users`), not when it is created | L + B |
 | super admin, other pages | none | real mode throws `NotIntegratedError` (never mock data) |
 
 Blocked by external config: live Supabase project/keys, Auth email + redirect URLs, SMS provider for phone claim, custom domains, Vercel.
