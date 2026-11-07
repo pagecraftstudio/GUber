@@ -208,7 +208,7 @@ describe('pure helpers', () => {
     expect(isFeatureEnabled(ent, 'nope')).toBe(false);
   });
   it('lapsed pending invites report as expired', () => {
-    const row = { id: ID, email: 'a@b.c', status: 'pending' as const, expires_at: '2020-01-01T00:00:00Z', created_at: '2019-01-01T00:00:00Z', role: null };
+    const row = { id: ID, email: 'a@b.c', status: 'pending' as const, expires_at: '2020-01-01T00:00:00Z', created_at: '2019-01-01T00:00:00Z', role: null, driver_id: null };
     expect(toInvite(new Date('2026-01-01'))(row).status).toBe('expired');
     expect(toInvite(new Date('2019-06-01'))(row).status).toBe('pending');
   });

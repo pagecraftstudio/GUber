@@ -98,13 +98,23 @@ export async function saveRouteFormAction(_prev: FormState, f: FormData): Promis
   return successState('saved');
 }
 
+/** Team and Drivers show the same people: every change to one must refresh the other. */
+function revalidateTeam() {
+  revalidatePath('/dashboard/users');
+  revalidatePath('/dashboard/drivers');
+}
+
 /** Invite a teammate. The raw token is returned to THIS request only (shown once); it is never stored or logged here. */
 export async function createInviteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   let c: TenantServiceContext | null = null;
   try {
     c = await ctx();
-    const created = await userService.createInvite(c, { email: str(f, 'email'), roleKey: str(f, 'roleKey') });
-    revalidatePath('/dashboard/users');
+    const roleKey = str(f, 'roleKey');
+    // a driver login must belong to a driver record (0026): that path has its own RPC
+    const created = roleKey === 'driver'
+      ? await userService.inviteDriver(c, { driverId: str(f, 'driverId'), email: str(f, 'email') })
+      : await userService.createInvite(c, { email: str(f, 'email'), roleKey });
+    revalidateTeam();
     return successState('created', { url: buildInviteUrl(created.token), expiresAt: created.expiresAt });
   } catch (e) {
     return failure(c, e);
@@ -119,7 +129,7 @@ export async function setMemberRoleFormAction(_prev: FormState, f: FormData): Pr
   } catch (e) {
     return failure(c, e);
   }
-  revalidatePath('/dashboard/users');
+  revalidateTeam();
   return successState('saved');
 }
 
@@ -131,7 +141,7 @@ export async function setMemberStatusFormAction(_prev: FormState, f: FormData): 
   } catch (e) {
     return failure(c, e);
   }
-  revalidatePath('/dashboard/users');
+  revalidateTeam();
   return successState('saved');
 }
 
@@ -143,7 +153,7 @@ export async function revokeInviteFormAction(_prev: FormState, f: FormData): Pro
   } catch (e) {
     return failure(c, e);
   }
-  revalidatePath('/dashboard/users');
+  revalidateTeam();
   return successState('saved');
 }
 
@@ -169,4 +179,30 @@ export async function updateSettingsFormAction(_prev: FormState, f: FormData): P
   } catch (e) {
     return failure(c, e);
   }
+}
+
+/** From the Drivers page: invite a login for ONE driver record. */
+export async function inviteDriverFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    const created = await userService.inviteDriver(c, { driverId: str(f, 'driverId'), email: str(f, 'email') });
+    revalidateTeam();
+    return successState('created', { url: buildInviteUrl(created.token), expiresAt: created.expiresAt });
+  } catch (e) {
+    return failure(c, e);
+  }
+}
+
+/** From the Drivers page: attach an existing team member to a driver record (repairs pre-0026 data). */
+export async function linkDriverFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await userService.linkDriverLogin(c, { driverId: str(f, 'driverId'), memberId: str(f, 'memberId') });
+  } catch (e) {
+    return failure(c, e);
+  }
+  revalidateTeam();
+  return successState('saved');
 }

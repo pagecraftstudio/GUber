@@ -54,7 +54,7 @@ on conflict (id) do update set email = excluded.email, email_confirmed_at = excl
 -- ===== create_invite: authorization =====
 select t.as_user(t.u(2));   -- owner A
 select t.passes('auth: owner creates invite (manager)', $$insert into t.tokens select 'inv1', token, invite_id from create_invite('Invitee1@Auth03.test ', 'manager')$$);
-select t.passes('auth: owner creates 2nd invite (unconfirmed email user)', $$insert into t.tokens select 'inv2', token, invite_id from create_invite('invitee2@auth03.test', 'driver')$$);
+select t.passes('auth: owner creates 2nd invite (unconfirmed email user)', $$insert into t.tokens select 'inv2', token, invite_id from create_invite('invitee2@auth03.test', 'booking')$$);
 select t.passes('auth: owner creates 3rd invite (to be revoked)', $$insert into t.tokens select 'inv3', token, invite_id from create_invite('revoked@auth03.test', 'booking')$$);
 select t.eq('auth: raw token has 64 hex chars', (select length(token) from t.tokens where label = 'inv1'), 64);
 select t.raises('auth: duplicate pending invite rejected', $$select * from create_invite('invitee1@auth03.test', 'manager')$$, '23505');
@@ -130,7 +130,7 @@ update company_invites set expires_at = now() - interval '1 hour' where id = (se
 select t.as_user(t.u(22));
 select t.raises('auth: expired invite rejected', $$select * from accept_invite((select token from t.tokens where label = 'inv2'))$$, 'P0001');
 select t.as_user(t.u(2));
-select t.passes('auth: expired pending invite can be re-issued', $$select * from create_invite('invitee2@auth03.test', 'driver')$$);
+select t.passes('auth: expired pending invite can be re-issued', $$select * from create_invite('invitee2@auth03.test', 'booking')$$);
 
 -- ===== my_context =====
 select t.as_user(t.u(2));

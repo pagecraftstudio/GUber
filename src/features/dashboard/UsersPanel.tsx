@@ -1,18 +1,22 @@
 'use client';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { FormField, FormResult, inputClass, PlanLimitNotice, SubmitButton } from '@/components/dashboard/FormParts';
 import { allowanceFor, blocksSubmit, type PlanUsage } from '@/features/subscriptions/usage';
 import { liveUsage, fieldErr } from './CreateForms';
 import { createInviteFormAction, revokeInviteFormAction, setMemberRoleFormAction, setMemberStatusFormAction } from './form-actions';
 import { useDashLang } from './lang';
-import { FORM_TEXT, USER_UI } from './messages';
+import { DRIVER_UI, FORM_TEXT, USER_UI } from './messages';
 import { useActionForm } from './useActionForm';
 
 export type RoleOption = { key: string; name: string };
 
-export function InviteForm({ roles, usage }: { roles: RoleOption[]; usage: PlanUsage | null }) {
+export type DriverOption = { id: string; label: string };
+
+export function InviteForm({ roles, usage, drivers }: { roles: RoleOption[]; usage: PlanUsage | null; drivers: DriverOption[] }) {
   const lang = useDashLang();
   const T = USER_UI[lang];
+  const D = DRIVER_UI[lang];
+  const [role, setRole] = useState('');
   const uid = useId();
   const { state, pending, ref, onSubmit } = useActionForm(createInviteFormAction, { resetOnSuccess: true, isBlocked: (s) => blocksSubmit(allowanceFor(liveUsage(usage, s), 'max_users')) });
   const current = liveUsage(usage, state);
@@ -24,12 +28,22 @@ export function InviteForm({ roles, usage }: { roles: RoleOption[]; usage: PlanU
       <FormField name="email" label={T.email} dir="ltr" type="email" autoComplete="off" required error={fieldErr(state, lang, 'email')} />
       <div>
         <label htmlFor={`${uid}-role`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{T.role}<span aria-hidden="true" className="text-red-600"> *</span></label>
-        <select id={`${uid}-role`} name="roleKey" required defaultValue="" className={inputClass(!!fieldErr(state, lang, 'roleKey'))}>
+        <select id={`${uid}-role`} name="roleKey" required value={role} onChange={(e) => setRole(e.target.value)} className={inputClass(!!fieldErr(state, lang, 'roleKey'))}>
           <option value="" disabled>—</option>
           {roles.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
         </select>
       </div>
-      <SubmitButton pending={pending} blocked={blocked} describedBy={`${uid}-limit`}>{T.send}</SubmitButton>
+      {role === 'driver' && (
+        <div>
+          <label htmlFor={`${uid}-drv`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{D.needRecord}<span aria-hidden="true" className="text-red-600"> *</span></label>
+          <select id={`${uid}-drv`} name="driverId" required defaultValue="" aria-describedby={`${uid}-drv-h`} className={inputClass(!!fieldErr(state, lang, 'driverId'))}>
+            <option value="" disabled>—</option>
+            {drivers.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+          </select>
+          <p id={`${uid}-drv-h`} className="mt-1 text-xs text-slate-600 dark:text-slate-400">{drivers.length === 0 ? D.noRecords : D.driverHint}</p>
+        </div>
+      )}
+      <SubmitButton pending={pending} blocked={blocked || (role === 'driver' && drivers.length === 0)} describedBy={`${uid}-limit`}>{T.send}</SubmitButton>
       {blocked && <p className="text-xs font-semibold text-red-700 dark:text-red-300">{FORM_TEXT[lang].limitBlocked}</p>}
       <FormResult state={state} resource="max_users" />
       {state.status === 'success' && state.invite && (
@@ -58,14 +72,14 @@ export function MemberControls({ memberId, name, roleKey, status, roles, isSelf,
         <form ref={role.ref} onSubmit={role.onSubmit} className="flex items-center gap-2">
           <input type="hidden" name="memberId" value={memberId} />
           <select name="roleKey" aria-label={T.roleFor(name)} defaultValue={roleKey ?? ''} className="rounded-lg border border-slate-300 bg-transparent p-1.5 text-xs dark:border-slate-600">
-            {roles.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
+            {roles.filter((r) => r.key !== 'driver' || roleKey === 'driver').map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
           </select>
-          <button type="submit" aria-label={T.saveFor(name)} aria-disabled={role.pending} className={small}>{T.save}</button>
+          <button type="submit" aria-disabled={role.pending} className={small}>{T.save}<span className="sr-only"> {name}</span></button>
         </form>
         <form ref={stat.ref} onSubmit={stat.onSubmit}>
           <input type="hidden" name="memberId" value={memberId} />
           <input type="hidden" name="status" value={status === 'active' ? 'suspended' : 'active'} />
-          <button type="submit" aria-label={status === 'active' ? T.suspendFor(name) : T.reactivateFor(name)} aria-disabled={stat.pending} className={small}>{status === 'active' ? T.suspend : T.reactivate}</button>
+          <button type="submit" aria-disabled={stat.pending} className={small}>{status === 'active' ? T.suspend : T.reactivate}<span className="sr-only"> {name}</span></button>
         </form>
       </div>
       <FormResult state={role.state} />
@@ -81,7 +95,7 @@ export function RevokeInvite({ inviteId, email }: { inviteId: string; email: str
   return (
     <form onSubmit={onSubmit}>
       <input type="hidden" name="inviteId" value={inviteId} />
-      <button type="submit" aria-label={T.revokeFor(email)} aria-disabled={pending} className={small}>{T.revoke}</button>
+      <button type="submit" aria-disabled={pending} className={small}>{T.revoke}<span className="sr-only"> {email}</span></button>
       <FormResult state={state} />
     </form>
   );

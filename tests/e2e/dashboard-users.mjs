@@ -41,7 +41,8 @@ async function login(email, viewport) {
 const go = async (p, path) => { await p.goto(base + path, { waitUntil: 'domcontentloaded', timeout: 60000 }); await sleep(900); };
 // the invite form's role select shares its name with the per-member selects: scope it by the form that holds the email field
 const pickInviteRole = (p, v) => p.evaluate((v) => { const sel = document.querySelector('input[name=email]').closest('form').querySelector('select[name=roleKey]'); sel.value = v; sel.dispatchEvent(new Event('change', { bubbles: true })); }, v);
-const clickByLabel = (p, label) => p.evaluate((l) => { const b = [...document.querySelectorAll('button')].find((x) => x.getAttribute('aria-label') === l); if (b) b.click(); return !!b; }, label);
+// a button's accessible name is its visible text (+ screen-reader-only context): match on that, or on an aria-label
+const clickByLabel = (p, label) => p.evaluate((l) => { const b = [...document.querySelectorAll('button')].find((x) => x.getAttribute('aria-label') === l || x.textContent.replace(/\s+/g, ' ').trim() === l); if (b) b.click(); return !!b; }, label);
 const axePath = [`${process.env.NODE_PATH || ''}/axe-core/axe.min.js`].find((f) => existsSync(f));
 async function axeScan(p, name) {
   if (!axePath) { console.log(`SKIP  axe ${name}: axe-core not installed in E2E_TOOLS`); return; }
@@ -73,20 +74,20 @@ await L.clickText(owner, 'Create invitation', { sel: 'button[type=submit]' });
 check('invite: a second invitation for the same email is refused with a clear message', await waitText(owner, /pending invitation for this email/), (await text(owner)).slice(0, 200));
 check('invite: no duplicate row was created', sql(`select count(*) from company_invites where company_id = '${A}' and email = 'new-hire@e2e.test'`) === '1');
 await go(owner, '/dashboard/users');
-check('invite: revoke button has an accessible name naming the email', await clickByLabel(owner, 'Revoke invitation for new-hire@e2e.test'));
+check('invite: revoke button has an accessible name naming the email', await clickByLabel(owner, 'Revoke new-hire@e2e.test'));
 await sleep(1500);
 check('invite: revoked in the database', sql(`select status from company_invites where company_id = '${A}' and email = 'new-hire@e2e.test'`) === 'revoked');
 
 // ---------------- role change + suspend ----------------
 await go(owner, '/dashboard/users');
 await owner.evaluate(() => { const s = [...document.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'Role for U Booking A'); s.value = 'operations'; s.dispatchEvent(new Event('change', { bubbles: true })); });
-check('role: change saved from the UI', await clickByLabel(owner, 'Save role for U Booking A') && await waitText(owner, /Saved\./) && mrole(bookingA) === 'operations');
+check('role: change saved from the UI', await clickByLabel(owner, 'Save role U Booking A') && await waitText(owner, /Saved\./) && mrole(bookingA) === 'operations');
 check('role: the change is audited', Number(sql(`select count(*) from audit_logs where action = 'member.role_changed' and company_id = '${A}'`)) >= 1);
 await owner.evaluate(() => { const s = [...document.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'Role for U Booking A'); s.value = 'booking'; s.dispatchEvent(new Event('change', { bubbles: true })); });
-await clickByLabel(owner, 'Save role for U Booking A'); await sleep(1500);
+await clickByLabel(owner, 'Save role U Booking A'); await sleep(1500);
 check('suspend: member suspended from the UI', await clickByLabel(owner, 'Suspend U Booking A') && (await sleep(1500), mstatus(bookingA) === 'suspended'));
 await go(owner, '/dashboard/users');
-check('suspend: the page now offers Reactivate for that member', await owner.evaluate(() => !![...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === 'Reactivate U Booking A')));
+check('suspend: the page now offers Reactivate for that member', await owner.evaluate(() => !![...document.querySelectorAll('button')].find((b) => b.textContent.replace(/\s+/g, ' ').trim() === 'Reactivate U Booking A')));
 await clickByLabel(owner, 'Reactivate U Booking A'); await sleep(1500);
 check('suspend: reactivated from the UI', mstatus(bookingA) === 'active');
 
@@ -104,7 +105,7 @@ setUsersLimit(20);
 // ---------------- permission + isolation ----------------
 const manager = await login('u-manager-a@e2e.test');
 await go(manager, '/dashboard/users'); t = await text(manager);
-check('manager: can see the team but gets the read-only notice and no controls', /only the company owner can change it/.test(t) && !/Invite a teammate/.test(t) && !(await manager.evaluate(() => !![...document.querySelectorAll('button')].find((b) => /^(Save role|Suspend|Revoke)/.test(b.getAttribute('aria-label') || '')))));
+check('manager: can see the team but gets the read-only notice and no controls', /only the company owner can change it/.test(t) && !/Invite a teammate/.test(t) && !(await manager.evaluate(() => !![...document.querySelectorAll('button')].find((b) => /^(Save role|Suspend|Revoke)/.test(b.textContent.trim())))));
 const target = mid(bookingA);
 let r = await L.rpc(tokManagerA, 'set_member_role', { p_member_id: target, p_role_key: 'owner' });
 check('manager: direct RPC to promote is refused and nothing changes', r.status >= 400 && mrole(bookingA) === 'booking', JSON.stringify(r));

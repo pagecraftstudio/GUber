@@ -76,6 +76,11 @@ const GENERIC: Record<string, Record<Lang, string>> = {
   conflict: { en: 'This conflicts with existing data.', ar: 'هذا يتعارض مع بيانات موجودة.' },
   plate_number_taken: { en: 'A bus with this plate number already exists.', ar: 'توجد حافلة بنفس رقم اللوحة.' },
   route_code_taken: { en: 'Another route already uses this code.', ar: 'مسار آخر يستخدم هذا الرمز.' },
+  driver_has_login: { en: 'This driver already has a login.', ar: 'هذا السائق لديه حساب دخول بالفعل.' },
+  member_has_driver: { en: 'This team member is already linked to a driver record.', ar: 'عضو الفريق هذا مرتبط بسجل سائق بالفعل.' },
+  owner_not_driver: { en: 'The company owner cannot be a driver login.', ar: 'لا يمكن أن يكون مالك الشركة حساب سائق.' },
+  driver_needs_record: { en: 'A driver login must belong to a driver record. Pick the driver record first.', ar: 'يجب أن يرتبط حساب السائق بسجل سائق. اختر سجل السائق أولاً.' },
+  driver_unavailable: { en: 'That driver record is no longer available. Reload the page.', ar: 'سجل السائق لم يعد متاحاً. أعد تحميل الصفحة.' },
   cannot_change_self: { en: 'You cannot change your own role or status.', ar: 'لا يمكنك تغيير دورك أو حالتك بنفسك.' },
   last_owner: { en: 'A company must keep at least one active owner.', ar: 'يجب أن تحتفظ الشركة بمالك نشط واحد على الأقل.' },
   user_already_member: { en: 'This person already belongs to a company.', ar: 'هذا الشخص ينتمي بالفعل إلى شركة.' },
@@ -142,6 +147,11 @@ export const ROUTE_UI = {
   ar: { addRoute: 'إضافة مسار', editRoute: 'تعديل المسار', name: 'اسم المسار', code: 'رمز المسار', origin: 'نقطة الانطلاق', destination: 'الوجهة', description: 'الوصف', create: 'إنشاء المسار', save: 'حفظ التغييرات', back: 'العودة إلى المسارات', readOnly: 'يمكنك عرض هذا المسار لكن لا يمكنك تغييره.' },
 } as const;
 
+export const DRIVER_UI = {
+  en: { login: 'Login', none: 'No login yet', linked: (n: string) => `Linked to ${n}`, pending: (d: string) => `Invitation pending (expires ${d})`, invite: 'Invite login', link: 'Link existing member', email: 'Login email', member: 'Team member', pick: 'Select…', send: 'Create invitation', linkBtn: 'Link', inviteFor: (n: string) => `Invite login for ${n}`, linkFor: (n: string) => `Link a team member to ${n}`, suspendedNote: 'login suspended', needRecord: 'Driver record', noRecords: 'Every active driver already has a login or a pending invitation. Add the driver on the Drivers page first.', driverHint: 'Drivers always belong to a driver record, so pick which one this login is for.', linkLink: 'Invitation link (shown once, copy it now)', expires: 'Expires', syncNote: 'Drivers and team members are kept in step: suspending a driver login deactivates the driver record, and changing the role away from Driver unlinks it.' },
+  ar: { login: 'حساب الدخول', none: 'لا يوجد حساب بعد', linked: (n: string) => `مرتبط بـ ${n}`, pending: (d: string) => `دعوة معلقة (تنتهي ${d})`, invite: 'دعوة لحساب', link: 'ربط عضو موجود', email: 'بريد الدخول', member: 'عضو الفريق', pick: 'اختر…', send: 'إنشاء دعوة', linkBtn: 'ربط', inviteFor: (n: string) => `دعوة حساب للسائق ${n}`, linkFor: (n: string) => `ربط عضو فريق بالسائق ${n}`, suspendedNote: 'الحساب موقوف', needRecord: 'سجل السائق', noRecords: 'كل سائق نشط لديه حساب أو دعوة معلقة. أضف السائق من صفحة السائقين أولاً.', driverHint: 'الحساب يتبع سجل سائق دائماً، لذا اختر السجل الذي يخصه هذا الحساب.', linkLink: 'رابط الدعوة (يظهر مرة واحدة، انسخه الآن)', expires: 'ينتهي', syncNote: 'السائقون وأعضاء الفريق متزامنون: إيقاف حساب سائق يعطّل سجله، وتغيير الدور بعيداً عن سائق يفك الارتباط.' },
+} as const;
+
 export const USER_UI = {
   en: { title: 'Team members', invite: 'Invite a teammate', email: 'Email address', role: 'Role', send: 'Create invitation', members: 'Members', invites: 'Pending invitations', name: 'Name', status: 'Status', actions: 'Actions', save: 'Save role', suspend: 'Suspend', reactivate: 'Reactivate', revoke: 'Revoke', you: 'You', self: 'You cannot change your own role or status.', noInvites: 'No pending invitations.', link: 'Invitation link (shown once, copy it now)', expires: 'Expires', readOnly: 'You can see the team but only the company owner can change it.', active: 'Active', suspended: 'Suspended', roleFor: (n: string) => `Role for ${n}`, saveFor: (n: string) => `Save role for ${n}`, suspendFor: (n: string) => `Suspend ${n}`, reactivateFor: (n: string) => `Reactivate ${n}`, revokeFor: (e: string) => `Revoke invitation for ${e}` },
   ar: { title: 'أعضاء الفريق', invite: 'دعوة زميل', email: 'البريد الإلكتروني', role: 'الدور', send: 'إنشاء دعوة', members: 'الأعضاء', invites: 'الدعوات المعلقة', name: 'الاسم', status: 'الحالة', actions: 'إجراءات', save: 'حفظ الدور', suspend: 'إيقاف', reactivate: 'إعادة تفعيل', revoke: 'إلغاء', you: 'أنت', self: 'لا يمكنك تغيير دورك أو حالتك بنفسك.', noInvites: 'لا توجد دعوات معلقة.', link: 'رابط الدعوة (يظهر مرة واحدة، انسخه الآن)', expires: 'ينتهي', readOnly: 'يمكنك رؤية الفريق لكن مالك الشركة فقط يستطيع تغييره.', active: 'نشط', suspended: 'موقوف', roleFor: (n: string) => `دور ${n}`, saveFor: (n: string) => `حفظ دور ${n}`, suspendFor: (n: string) => `إيقاف ${n}`, reactivateFor: (n: string) => `إعادة تفعيل ${n}`, revokeFor: (e: string) => `إلغاء دعوة ${e}` },
@@ -158,6 +168,7 @@ export const SETTINGS_UI = {
 
 /** Arabic for page chrome written in English inside server pages (shown by <T>). Anything missing falls back to the English text; a unit test checks the pages' literals are all covered. */
 export const PAGE_AR: Record<string, string> = {
+  "Login": "حساب الدخول",
   "Fleet operations": "عمليات الأسطول",
   "Fleet management": "إدارة الأسطول",
   "Manage your vehicles, registration details and seating capacity.": "أدر مركباتك وبيانات تسجيلها وسعة المقاعد.",

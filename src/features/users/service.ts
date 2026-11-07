@@ -5,7 +5,7 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { userRepository, type UserRepository } from './repository';
-import { inviteCreateSchema, inviteListSchema, memberRoleSchema, memberStatusSchema } from './schema';
+import { driverInviteSchema, driverLinkSchema, inviteCreateSchema, inviteListSchema, memberRoleSchema, memberStatusSchema } from './schema';
 import type { CreatedInvite, Invite, Member, Role } from './types';
 
 /**
@@ -30,6 +30,19 @@ export function makeUserService(repo: UserRepository) {
     async createInvite(ctx: TenantServiceContext, input: unknown): Promise<CreatedInvite> {
       requirePermission(ctx, PERMISSIONS.usersWrite);
       return repo.createInvite(ctx, parseInput(inviteCreateSchema, input));
+    },
+    /** Invite a login for an existing driver record. users.write (owner) AND drivers.read, like the RPC. */
+    async inviteDriver(ctx: TenantServiceContext, input: unknown): Promise<CreatedInvite> {
+      requirePermission(ctx, PERMISSIONS.usersWrite);
+      requirePermission(ctx, PERMISSIONS.driversRead);
+      const i = parseInput(driverInviteSchema, input);
+      return repo.inviteDriver(ctx, i.driverId, i.email);
+    },
+    async linkDriverLogin(ctx: TenantServiceContext, input: unknown): Promise<void> {
+      requirePermission(ctx, PERMISSIONS.usersWrite);
+      requirePermission(ctx, PERMISSIONS.driversWrite);
+      const i = parseInput(driverLinkSchema, input);
+      return repo.linkDriverLogin(ctx, i.driverId, i.memberId);
     },
     async setMemberRole(ctx: TenantServiceContext, rawMemberId: unknown, input: unknown): Promise<{ changed: boolean }> {
       requirePermission(ctx, PERMISSIONS.usersWrite);

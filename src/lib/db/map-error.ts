@@ -55,6 +55,13 @@ const RULES: Rule[] = [
   // audit read RPCs (0019)
   { match: /invalid filter|invalid range|invalid cursor|invalid limit/, code: 'validation', detail: 'invalid_filter' },
   { match: /audit entry not found/, code: 'not_found', detail: 'audit_not_found' },
+  // driver <-> team link (0026)
+  { match: /driver already has a login/, code: 'business_rule', detail: 'driver_has_login' },
+  { match: /member already linked to a driver/, code: 'business_rule', detail: 'member_has_driver' },
+  { match: /owner cannot be a driver login/, code: 'business_rule', detail: 'owner_not_driver' },
+  { match: /driver (invite|role) needs a driver record/, code: 'business_rule', detail: 'driver_needs_record' },
+  { match: /driver record unavailable/, code: 'conflict', detail: 'driver_unavailable' },
+  { match: /driver is inactive/, code: 'business_rule', detail: 'driver_inactive', fields: { driverId: 'inactive' } },
   // member management (0025)
   { match: /cannot change your own (role|status)/, code: 'business_rule', detail: 'cannot_change_self' },
   // route stops (0024)

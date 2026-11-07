@@ -26,6 +26,8 @@ export type UserRepository = {
   listRoles(ctx: TenantServiceContext): Promise<Role[]>;
   createInvite(ctx: TenantServiceContext, input: InviteCreate): Promise<CreatedInvite>;
   revokeInvite(ctx: TenantServiceContext, inviteId: string): Promise<void>;
+  inviteDriver(ctx: TenantServiceContext, driverId: string, email: string): Promise<CreatedInvite>;
+  linkDriverLogin(ctx: TenantServiceContext, driverId: string, memberId: string): Promise<void>;
   setMemberRole(ctx: TenantServiceContext, memberId: string, roleKey: string): Promise<{ changed: boolean }>;
   setMemberStatus(ctx: TenantServiceContext, memberId: string, status: 'active' | 'suspended'): Promise<{ changed: boolean }>;
 };
@@ -82,6 +84,22 @@ export const userRepository: UserRepository = {
     if (!parsed.success) throw new AppError('internal', { cause: parsed.error });
     const row = parsed.data[0]!;
     return { inviteId: row.invite_id, token: row.token, expiresAt: row.expires_at };
+  },
+
+  /** invite_driver (0026): the only way to invite someone with role 'driver'. Company derived in SQL; returns the one-time token. */
+  async inviteDriver(ctx, driverId, email) {
+    const { data, error } = await ctx.db.rpc('invite_driver', { p_driver_id: driverId, p_email: email });
+    if (error) throw mapDbError(error);
+    const parsed = createInviteResultSchema.safeParse(data);
+    if (!parsed.success) throw new AppError('internal', { cause: parsed.error });
+    const row = parsed.data[0]!;
+    return { inviteId: row.invite_id, token: row.token, expiresAt: row.expires_at };
+  },
+
+  /** link_driver_login (0026): attach an EXISTING member to an EXISTING driver record (repair path). */
+  async linkDriverLogin(ctx, driverId, memberId) {
+    const { error } = await ctx.db.rpc('link_driver_login', { p_driver_id: driverId, p_member_id: memberId });
+    if (error) throw mapDbError(error);
   },
 
   async revokeInvite(ctx, inviteId) {

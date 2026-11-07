@@ -25,3 +25,7 @@ export const createInviteResultSchema = z.array(z.object({ invite_id: z.guid(), 
 /** The member id is a TARGET (company_users.id); the RPC checks it belongs to the caller's company. */
 export const memberRoleSchema = z.strictObject({ roleKey: z.string().regex(/^[a-z][a-z_]{1,39}$/, 'invalid_role') });
 export const memberStatusSchema = z.enum(['active', 'suspended']);
+
+/** Driver login (0026). Both ids are TARGETS; the database checks they belong to the caller's company. */
+export const driverInviteSchema = z.strictObject({ driverId: z.guid(), email: emailSchema });
+export const driverLinkSchema = z.strictObject({ driverId: z.guid(), memberId: z.guid() });

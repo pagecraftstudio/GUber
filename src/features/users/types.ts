@@ -43,6 +43,7 @@ export type InviteRow = {
   expires_at: string;
   created_at: string;
   role: RoleEmbed;
+  driver_id: string | null;
 };
 export type Invite = {
   id: string;
@@ -51,10 +52,12 @@ export type Invite = {
   status: InviteStatus;
   roleKey: string | null;
   roleName: string | null;
+  /** Set on a driver invitation: the drivers row the new login will be linked to (0026). */
+  driverId: string | null;
   expiresAt: string;
   createdAt: string;
 };
-export const INVITE_SELECT = 'id,email,status,expires_at,created_at,role:roles(key,name)';
+export const INVITE_SELECT = 'id,email,status,expires_at,created_at,driver_id,role:roles(key,name)';
 export const toInvite =
   (now: Date) =>
   (r: InviteRow): Invite => ({
@@ -63,6 +66,7 @@ export const toInvite =
     status: r.status === 'pending' && Date.parse(r.expires_at) <= now.getTime() ? 'expired' : r.status,
     roleKey: r.role?.key ?? null,
     roleName: r.role?.name ?? null,
+    driverId: r.driver_id,
     expiresAt: r.expires_at,
     createdAt: r.created_at,
   });
