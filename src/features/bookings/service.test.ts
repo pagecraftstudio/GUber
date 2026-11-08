@@ -9,7 +9,7 @@ const TRIP = '00000000-0000-4000-8000-000000000501';
 const BOOKING = '00000000-0000-4000-8000-000000000261';
 const valid = { tripId: TRIP, customerName: 'Sara', customerPhone: '010 1234 5678', seats: 2 };
 const repo = () =>
-  ({ list: vi.fn(), get: vi.fn(), create: vi.fn().mockResolvedValue({}), cancel: vi.fn().mockResolvedValue({}), setStatus: vi.fn(), setPaymentStatus: vi.fn() }) as unknown as BookingRepository;
+  ({ list: vi.fn(), get: vi.fn(), create: vi.fn().mockResolvedValue({}), cancel: vi.fn().mockResolvedValue({}), setStatus: vi.fn(), setPaymentStatus: vi.fn(), setAmountPaid: vi.fn().mockResolvedValue({}) }) as unknown as BookingRepository;
 
 describe('booking service: authorize -> validate -> repository', () => {
   it('readers cannot write: forbidden before validation, nothing reaches the repository', async () => {
@@ -18,7 +18,16 @@ describe('booking service: authorize -> validate -> repository', () => {
     await expect(svc.cancel(ctx, { bookingId: BOOKING })).rejects.toMatchObject({ code: 'forbidden' });
     await expect(svc.setStatus(ctx, { bookingId: BOOKING, status: 'confirmed' })).rejects.toMatchObject({ code: 'forbidden' });
     await expect(svc.setPaymentStatus(ctx, { bookingId: BOOKING, paymentStatus: 'paid' })).rejects.toMatchObject({ code: 'forbidden' });
-    expect(r.create).not.toHaveBeenCalled(); expect(r.cancel).not.toHaveBeenCalled();
+    await expect(svc.setAmountPaid(ctx, { bookingId: BOOKING, amount: 5 })).rejects.toMatchObject({ code: 'forbidden' });
+    expect(r.create).not.toHaveBeenCalled(); expect(r.cancel).not.toHaveBeenCalled(); expect(r.setAmountPaid).not.toHaveBeenCalled();
+  });
+  it('setAmountPaid: validated before the repository, writers reach it', async () => {
+    const r = repo(); const svc = makeBookingService(r); const ctx = tenantCtx(['bookings.write']);
+    await expect(svc.setAmountPaid(ctx, { bookingId: BOOKING, amount: -3 })).rejects.toMatchObject({ code: 'validation' });
+    await expect(svc.setAmountPaid(ctx, { bookingId: 'nope', amount: 3 })).rejects.toMatchObject({ code: 'validation' });
+    expect(r.setAmountPaid).not.toHaveBeenCalled();
+    await svc.setAmountPaid(ctx, { bookingId: BOOKING, amount: 12.5 });
+    expect(r.setAmountPaid).toHaveBeenCalledWith(ctx, { bookingId: BOOKING, amount: 12.5 });
   });
   it('invalid input never reaches the repository', async () => {
     const r = repo(); const svc = makeBookingService(r); const ctx = tenantCtx(['bookings.write']);

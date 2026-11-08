@@ -73,6 +73,8 @@ const RULES: Rule[] = [
   { match: /trip already departed/, code: 'business_rule', detail: 'trip_departed' },
   { match: /seats per booking exceeded/, code: 'business_rule', detail: 'seats_per_booking_exceeded', fields: { seats: 'too_many' } },
   { match: /not enough seats available/, code: 'business_rule', detail: 'trip_full', fields: { seats: 'not_enough_seats' } },
+  { match: /amount exceeds booking total/, code: 'business_rule', detail: 'amount_exceeds_total', fields: { amount: 'exceeds_total' } },
+  { match: /invalid amount/, code: 'validation', detail: 'invalid_amount', fields: { amount: 'invalid' } },
   { match: /booking cannot be cancelled in its current state/, code: 'business_rule', detail: 'booking_not_cancellable' },
   { match: /trip is closed/, code: 'business_rule', detail: 'trip_closed' },
   { match: /trip has not started/, code: 'business_rule', detail: 'trip_not_started' },

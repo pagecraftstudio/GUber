@@ -34,7 +34,7 @@ npx vitest run src; rc=$?; echo "vitest exit $rc"; [ $rc = 0 ] || fail=1
 
 step "SQL suites on bus_sql"
 DB=bus_sql bash tests/integration/reset-db.sh >/dev/null || fail=1
-for f in 02_tests 03_auth_tests 04_tenant_guard_tests 05_booking_tests 06_trip_machine_tests 07_customer_identity_tests 08_customer_booking_web_tests 09_idempotency_cancel_tests 10_tickets_boarding_tests 11_platform_foundation_tests 12_platform_overview_tests 13_company_management_tests 14_subscription_management_tests 15_audit_logs_tests 16_rate_limit_tests 17_lifecycle_policy_tests 18_offset_cap_tests 19_my_company_readonly_tests 20_route_stops_plan_usage_tests 21_member_management_route_create_tests 22_dashboard_customers_settings_roles_tests 23_driver_team_link_tests; do
+for f in 02_tests 03_auth_tests 04_tenant_guard_tests 05_booking_tests 06_trip_machine_tests 07_customer_identity_tests 08_customer_booking_web_tests 09_idempotency_cancel_tests 10_tickets_boarding_tests 11_platform_foundation_tests 12_platform_overview_tests 13_company_management_tests 14_subscription_management_tests 15_audit_logs_tests 16_rate_limit_tests 17_lifecycle_policy_tests 18_offset_cap_tests 19_my_company_readonly_tests 20_route_stops_plan_usage_tests 21_member_management_route_create_tests 22_dashboard_customers_settings_roles_tests 23_driver_team_link_tests 24_regular_trips_tests 25_round_trips_tests 26_round_trip_booking_tests 27_company_timezone_tests 28_booking_amount_list_tests; do
   $PSQL -q -d bus_sql -f "supabase/tests/$f.sql" > "/tmp/$f.log" 2>&1 || true
   p=$($PSQL -tA -d bus_sql -c "select count(*) filter (where ok) from t.results"); n=$($PSQL -tA -d bus_sql -c "select count(*) filter (where not ok) from t.results")
   echo "$f: cumulative passed=$p failed=$n"; [ "$n" = "0" ] || fail=1
@@ -51,6 +51,11 @@ DB=bus_web bash tests/integration/reset-db.sh >/dev/null || fail=1
 $PSQL -q -v ON_ERROR_STOP=1 -d bus_web -f tests/integration/seed-customer-web.sql || fail=1
 serve bus_web || fail=1
 itest tests/integration/customer-web.int.test.ts tests/integration/public-search.int.test.ts; rc=$?; echo "integration(customer-web) exit $rc"; [ $rc = 0 ] || fail=1
+
+step "integration: bookings list (search, filters, sort, paid amount) on pristine bus_list"
+DB=bus_list bash tests/integration/reset-db.sh >/dev/null || fail=1
+serve bus_list || fail=1
+itest tests/integration/bookings-list.int.test.ts; rc=$?; echo "integration(bookings-list) exit $rc"; [ $rc = 0 ] || fail=1
 
 step "integration: customer idempotency + cancellation on seeded bus_idem (real parallel HTTP)"
 DB=bus_idem bash tests/integration/reset-db.sh >/dev/null || fail=1

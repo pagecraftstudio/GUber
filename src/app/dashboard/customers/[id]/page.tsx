@@ -29,7 +29,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   }
   const tz = await companyTimeZone(ctx);
   const canSeeBookings = auth.membership.permissions.includes('bookings.read');
-  const bookings = canSeeBookings ? await bookingService.list(ctx, { customerId: customer.id, page: 1, pageSize: 50 }) : null;
+  const bookings = canSeeBookings ? await bookingService.list(ctx, { customerId: customer.id, sort: 'newest', page: 1, pageSize: 50 }) : null;
   return (
     <>
       <PageHeader eyebrow="Passenger operations" title={customer.fullName} description="Customer details and booking history."

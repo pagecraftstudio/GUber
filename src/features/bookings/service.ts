@@ -6,8 +6,8 @@ import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { withFailureLog } from '@/lib/log/service-failure';
 import { bookingRepository, type BookingRepository } from './repository';
-import { bookingListSchema, cancelBookingSchema, createBookingSchema, setBookingStatusSchema, setPaymentStatusSchema } from './schema';
-import type { Booking, BookingCancelled, BookingCreated, BookingPaymentChanged, BookingStatusChanged } from './types';
+import { bookingListSchema, cancelBookingSchema, createBookingSchema, setAmountPaidSchema, setBookingStatusSchema, setPaymentStatusSchema } from './schema';
+import type { Booking, BookingAmountPaidChanged, BookingCancelled, BookingCreated, BookingPaymentChanged, BookingStatusChanged } from './types';
 
 export function makeBookingService(repo: BookingRepository) {
   return {
@@ -40,6 +40,12 @@ export function makeBookingService(repo: BookingRepository) {
     async setPaymentStatus(ctx: TenantServiceContext, raw: unknown): Promise<BookingPaymentChanged> {
       requirePermission(ctx, PERMISSIONS.bookingsWrite);
       return repo.setPaymentStatus(ctx, parseInput(setPaymentStatusSchema, raw));
+    },
+    // The amount is staff input by design (cash handling). The RPC bounds it by the booking's own immutable total and
+    // derives payment_status from it, so the two can never disagree.
+    async setAmountPaid(ctx: TenantServiceContext, raw: unknown): Promise<BookingAmountPaidChanged> {
+      requirePermission(ctx, PERMISSIONS.bookingsWrite);
+      return repo.setAmountPaid(ctx, parseInput(setAmountPaidSchema, raw));
     },
   };
 }

@@ -194,6 +194,7 @@ export const SETTINGS_UI = {
 
 /** Arabic for page chrome written in English inside server pages (shown by <T>). Anything missing falls back to the English text; a unit test checks the pages' literals are all covered. */
 export const PAGE_AR: Record<string, string> = {
+  "Search reservations, track what each passenger has paid and who has boarded.": "ابحث في الحجوزات وتتبّع ما دفعه كل راكب ومن صعد إلى الحافلة.",
   "Login": "حساب الدخول",
   "Actions": "الإجراءات",
   "Fleet operations": "عمليات الأسطول",
