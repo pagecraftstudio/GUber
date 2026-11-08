@@ -7,6 +7,8 @@ import { createInviteFormAction, revokeInviteFormAction, setMemberRoleFormAction
 import { useDashLang } from './lang';
 import { DRIVER_UI, FORM_TEXT, USER_UI } from './messages';
 import { useActionForm } from './useActionForm';
+import { useAutosaveForm } from './useAutosave';
+import { SaveStatus, viewOfForm } from '@/components/dashboard/SaveStatus';
 
 export type RoleOption = { key: string; name: string };
 
@@ -62,19 +64,19 @@ const small = 'min-h-8 text-xs font-bold text-blue-700 underline-offset-2 hover:
 export function MemberControls({ memberId, name, roleKey, status, roles, isSelf, canWrite }: { memberId: string; name: string; roleKey: string | null; status: 'active' | 'suspended'; roles: RoleOption[]; isSelf: boolean; canWrite: boolean }) {
   const lang = useDashLang();
   const T = USER_UI[lang];
-  const role = useActionForm(setMemberRoleFormAction);
+  const role = useAutosaveForm(setMemberRoleFormAction, 0);
   const stat = useActionForm(setMemberStatusFormAction);
   if (!canWrite) return null;
   if (isSelf) return <p className="text-xs text-slate-600 dark:text-slate-400">{T.self}</p>;
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap items-center gap-3">
-        <form ref={role.ref} onSubmit={role.onSubmit} className="flex items-center gap-2">
+        <form {...role.formProps} className="flex items-center gap-2">
           <input type="hidden" name="memberId" value={memberId} />
           <select name="roleKey" aria-label={T.roleFor(name)} defaultValue={roleKey ?? ''} className="rounded-lg border border-slate-300 bg-transparent p-1.5 text-xs dark:border-slate-600">
             {roles.filter((r) => r.key !== 'driver' || roleKey === 'driver').map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
           </select>
-          <button type="submit" aria-disabled={role.pending} className={small}>{T.save}<span className="sr-only"> {name}</span></button>
+          <SaveStatus view={viewOfForm(role.state, role.pending)} />
         </form>
         <form ref={stat.ref} onSubmit={stat.onSubmit}>
           <input type="hidden" name="memberId" value={memberId} />
@@ -82,7 +84,6 @@ export function MemberControls({ memberId, name, roleKey, status, roles, isSelf,
           <button type="submit" aria-disabled={stat.pending} className={small}>{status === 'active' ? T.suspend : T.reactivate}<span className="sr-only"> {name}</span></button>
         </form>
       </div>
-      <FormResult state={role.state} />
       <FormResult state={stat.state} />
     </div>
   );

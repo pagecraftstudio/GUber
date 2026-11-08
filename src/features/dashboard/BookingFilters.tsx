@@ -12,22 +12,20 @@ const TXT = {
     title: 'Search and filter bookings', search: 'Search', placeholder: 'Reference / ticket no., name, phone, student ID, university…', sort: 'Sort by',
     sorts: { trip_asc: 'Trip time: earliest first', trip_desc: 'Trip time: latest first', newest: 'Booked: newest first', oldest: 'Booked: oldest first', name: 'Passenger name A–Z' },
     views: { upcoming: 'Upcoming trips', past: 'Past trips', all: 'All trips' },
-    payment: 'Payment', boarding: 'Boarding', status: 'Booking status', any: 'Any', apply: 'Apply', clear: 'Clear all', more: 'More filters',
+    payment: 'Payment', boarding: 'Boarding', any: 'Any', apply: 'Apply', clear: 'Clear all', more: 'More filters',
     route: 'Route', source: 'Booked via', from: 'Trip from', to: 'Trip to', active: 'Active filters', web: 'Website', staff: 'Staff', tripOnly: 'One trip only',
     pays: { unpaid: 'Unpaid', partial: 'Partly paid', paid: 'Paid in full', refunded: 'Refunded' },
     boards: { not_boarded: 'Not boarded', partial: 'Partly boarded', boarded: 'Boarded' },
-    sts: { pending: 'Pending', confirmed: 'Confirmed', cancelled: 'Cancelled', completed: 'Completed', no_show: 'No show' },
     searchHint: 'Searching covers all trips unless you pick a view.',
   },
   ar: {
     title: 'بحث وتصفية الحجوزات', search: 'بحث', placeholder: 'رقم الحجز / التذكرة، الاسم، الهاتف، الرقم الجامعي، الجامعة…', sort: 'ترتيب حسب',
     sorts: { trip_asc: 'وقت الرحلة: الأقرب أولاً', trip_desc: 'وقت الرحلة: الأبعد أولاً', newest: 'تاريخ الحجز: الأحدث', oldest: 'تاريخ الحجز: الأقدم', name: 'اسم الراكب أ–ي' },
     views: { upcoming: 'الرحلات القادمة', past: 'الرحلات السابقة', all: 'كل الرحلات' },
-    payment: 'الدفع', boarding: 'الصعود', status: 'حالة الحجز', any: 'الكل', apply: 'تطبيق', clear: 'مسح الكل', more: 'مزيد من عوامل التصفية',
+    payment: 'الدفع', boarding: 'الصعود', any: 'الكل', apply: 'تطبيق', clear: 'مسح الكل', more: 'مزيد من عوامل التصفية',
     route: 'المسار', source: 'طريقة الحجز', from: 'الرحلة من', to: 'الرحلة إلى', active: 'عوامل التصفية', web: 'الموقع', staff: 'الموظفون', tripOnly: 'رحلة واحدة فقط',
     pays: { unpaid: 'غير مدفوع', partial: 'مدفوع جزئياً', paid: 'مدفوع بالكامل', refunded: 'مسترد' },
     boards: { not_boarded: 'لم يصعد', partial: 'صعد جزء منهم', boarded: 'صعد' },
-    sts: { pending: 'قيد الانتظار', confirmed: 'مؤكد', cancelled: 'ملغي', completed: 'مكتمل', no_show: 'لم يحضر' },
     searchHint: 'البحث يشمل كل الرحلات ما لم تختر عرضاً محدداً.',
   },
 } as const;
@@ -44,7 +42,6 @@ export function BookingFilters({ values, routes, tripLabel, total }: { values: B
   );
   const chips: { k: keyof BookingFilterValues; text: string }[] = [];
   if (values.q) chips.push({ k: 'q', text: `${T.search}: ${values.q}` });
-  if (values.status) chips.push({ k: 'status', text: `${T.status}: ${T.sts[values.status as keyof typeof T.sts] ?? values.status}` });
   if (values.pay) chips.push({ k: 'pay', text: `${T.payment}: ${T.pays[values.pay as keyof typeof T.pays] ?? values.pay}` });
   if (values.boarding) chips.push({ k: 'boarding', text: `${T.boarding}: ${T.boards[values.boarding as keyof typeof T.boards] ?? values.boarding}` });
   if (values.route) chips.push({ k: 'route', text: `${T.route}: ${routes.find((r) => r.id === values.route)?.label ?? '…'}` });
@@ -73,10 +70,9 @@ export function BookingFilters({ values, routes, tripLabel, total }: { values: B
           </label>
           <button type="submit" className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#14243A] px-5 text-sm font-bold text-white">{T.search}</button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div><label className={lbl}>{T.payment}{sel('pay', values.pay, Object.entries(T.pays))}</label></div>
           <div><label className={lbl}>{T.boarding}{sel('boarding', values.boarding, Object.entries(T.boards))}</label></div>
-          <div><label className={lbl}>{T.status}{sel('status', values.status, Object.entries(T.sts))}</label></div>
           <div><label className={lbl}>{T.sort}
             <select name="sort" defaultValue={values.sort} className={inputClass(false)}>{Object.entries(T.sorts).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label></div>
         </div>

@@ -15,7 +15,7 @@ import { bookingsHref, type BookingFilterValues } from '@/features/bookings/filt
 import { BOOKING_SORTS } from '@/features/bookings/schema';
 import type { Booking } from '@/features/bookings/types';
 import { BookingFilters } from '@/features/dashboard/BookingFilters';
-import { BoardingBadge, PaymentCell, StatusForm } from '@/features/dashboard/BookingParts';
+import { BoardingBadge, CancelCell, PaymentCell } from '@/features/dashboard/BookingParts';
 
 const PAGE_SIZE = 50;
 const PAST_CUTOFF_MS = 6 * 3600_000; // "upcoming" lasts until 6 h after departure, so a trip on the road is not buried
@@ -39,7 +39,6 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   const f: BookingFilterValues = {
     q, view,
     sort: pick('sort', BOOKING_SORTS) || (view === 'past' ? 'trip_desc' : 'trip_asc'),
-    status: pick('status', ['pending', 'confirmed', 'cancelled', 'completed', 'no_show']),
     pay: pick('pay', ['unpaid', 'partial', 'paid', 'refunded']),
     boarding: pick('boarding', ['not_boarded', 'partial', 'boarded']),
     source: pick('source', ['web', 'staff']),
@@ -56,14 +55,13 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   const [result, routes] = await Promise.all([
     bookingService.list(ctx, {
       page, pageSize: PAGE_SIZE, sort: f.sort, ...tripWindow,
-      ...(f.q ? { q: f.q } : {}), ...(f.status ? { status: f.status } : {}), ...(f.pay ? { paymentStatus: f.pay } : {}),
+      ...(f.q ? { q: f.q } : {}), ...(f.pay ? { paymentStatus: f.pay } : {}),
       ...(f.boarding ? { boarding: f.boarding } : {}), ...(f.source ? { source: f.source } : {}),
       ...(f.route ? { routeId: f.route } : {}), ...(f.trip ? { tripId: f.trip } : {}),
     }),
     has('routes.read') ? routeService.list(ctx, { page: 1, pageSize: 100 }) : Promise.resolve({ items: [] }),
   ]);
 
-  const returnTo = bookingsHref({ ...f, ...(page > 1 ? { page } : {}) });
   const pageHref = (p: number) => bookingsHref({ ...f, page: p });
   const byTrip = f.sort === 'trip_asc' || f.sort === 'trip_desc';
   // Rows arrive sorted by departure then trip, so consecutive rows of one trip form one group.
@@ -106,7 +104,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                       <th scope="col" className={th}><T>Reference</T></th><th scope="col" className={th}><T>Passenger</T></th>
                       {!byTrip && <th scope="col" className={th}><T>Trip</T></th>}
                       <th scope="col" className={th}><T>Seats</T></th><th scope="col" className={th}><T>Payment</T></th>
-                      <th scope="col" className={th}><Bi en="Boarding" ar="الصعود" /></th><th scope="col" className={th}><T>Booking status</T></th>
+                      <th scope="col" className={th}><Bi en="Boarding" ar="الصعود" /></th><th scope="col" className={th}><Bi en="Action" ar="الإجراء" /></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -120,9 +118,9 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                         </td>
                         {!byTrip && <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">{b.trip?.routeName ?? '—'}<p className="text-xs text-slate-600 dark:text-slate-400">{b.trip ? <Dt value={b.trip.departureAt} time timeZone={tz} /> : '—'}</p></td>}
                         <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{b.seatsCount}</td>
-                        <td className="px-4 py-3"><PaymentCell b={b} canWrite={canWrite} returnTo={returnTo} /></td>
+                        <td className="px-4 py-3"><PaymentCell b={b} canWrite={canWrite} /></td>
                         <td className="whitespace-nowrap px-4 py-3"><BoardingBadge b={b} /></td>
-                        <td className="px-4 py-3"><div className="flex flex-col gap-2"><StatusPill value={b.status} />{canWrite && b.status !== 'cancelled' && <StatusForm b={b} returnTo={returnTo} />}</div></td>
+                        <td className="px-4 py-3"><CancelCell b={b} canWrite={canWrite} /></td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,12 +1,13 @@
 'use client';
 import { useId } from 'react';
-import { FormField, FormResult, inputClass, SubmitButton } from '@/components/dashboard/FormParts';
+import { FormField, inputClass } from '@/components/dashboard/FormParts';
+import { SaveStatus, viewOfForm } from '@/components/dashboard/SaveStatus';
 import type { CompanySettings } from '@/features/companies/types';
 import { fieldErr } from './CreateForms';
 import { updateSettingsFormAction } from './form-actions';
 import { useDashLang } from './lang';
 import { SETTINGS_UI } from './messages';
-import { useActionForm } from './useActionForm';
+import { useAutosaveForm } from './useAutosave';
 
 const check = 'size-5 rounded border-slate-400 accent-blue-700';
 
@@ -15,12 +16,12 @@ export function SettingsForm({ settings }: { settings: CompanySettings }) {
   const lang = useDashLang();
   const T = SETTINGS_UI[lang];
   const uid = useId();
-  const { state, pending, ref, onSubmit } = useActionForm(updateSettingsFormAction);
+  const { state, pending, formProps } = useAutosaveForm(updateSettingsFormAction);
   const num = (name: string, label: string, value: number, min: number, max: number, hint?: string) => (
     <FormField name={name} label={label} type="number" inputMode="numeric" min={min} max={max} step="1" required defaultValue={String(value)} hint={hint} error={fieldErr(state, lang, name)} />
   );
   return (
-    <form ref={ref} onSubmit={onSubmit} aria-labelledby={`${uid}-t`} className="max-w-3xl space-y-5 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <form {...formProps} aria-labelledby={`${uid}-t`} className="max-w-3xl space-y-5 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <h2 id={`${uid}-t`} className="font-bold">{T.booking}</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField name="timezone" label={T.timezone} hint={T.timezoneHint} required defaultValue={settings.timezone} autoComplete="off" error={fieldErr(state, lang, 'timezone')} />
@@ -47,8 +48,7 @@ export function SettingsForm({ settings }: { settings: CompanySettings }) {
         <label className="flex min-h-8 items-center gap-2 text-sm font-semibold"><input type="checkbox" name="bookingEnabled" defaultChecked={settings.bookingEnabled} className={check} />{T.bookingEnabled}</label>
         <label className="flex min-h-8 items-center gap-2 text-sm font-semibold"><input type="checkbox" name="allowGuestBooking" defaultChecked={settings.allowGuestBooking} className={check} />{T.allowGuestBooking}</label>
       </div>
-      <SubmitButton pending={pending} blocked={false}>{T.save}</SubmitButton>
-      <FormResult state={state} />
+      <SaveStatus view={viewOfForm(state, pending)} className="text-xs" />
     </form>
   );
 }

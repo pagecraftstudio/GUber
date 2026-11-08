@@ -14,6 +14,7 @@ import { companyTimeZone } from '@/features/trips/company-timezone';
 import { localDateTimeToInstant } from '@/features/trips/day-groups';
 import { userService } from '@/features/users/service';
 import { companyService } from '@/features/companies/service';
+import { websiteService } from '@/features/website/service';
 import { buildInviteUrl } from '@/features/users/invite-link';
 import { planUsageService } from '@/features/subscriptions/usage-service';
 import { errorState, successState, type FormState } from './form-state';
@@ -281,4 +282,25 @@ export async function setTripTemplateActiveFormAction(_prev: FormState, f: FormD
   return run('/dashboard/trips/regular', async (c) => {
     await tripTemplateService.setActive(c, { templateId: str(f, 'id'), isActive: str(f, 'active') === '1' });
   });
+}
+
+/** Website settings (website.write). Same FormState contract as the other forms so it can autosave and keep what was typed. */
+export async function saveWebsiteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await websiteService.updateSettings(c, {
+      siteTitle: { en: str(f, 'titleEn'), ar: str(f, 'titleAr') },
+      primaryColor: str(f, 'primaryColor'),
+      secondaryColor: str(f, 'secondaryColor'),
+      contactEmail: str(f, 'contactEmail') || null,
+      contactPhone: str(f, 'contactPhone') || null,
+      contactWhatsapp: str(f, 'contactWhatsapp') || null,
+      footerText: { en: str(f, 'footerEn'), ar: str(f, 'footerAr') },
+    });
+    revalidatePath('/dashboard/website');
+    return successState('saved');
+  } catch (e) {
+    return failure(c, e);
+  }
 }

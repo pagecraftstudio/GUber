@@ -3,12 +3,15 @@ import { CheckCircle2, CircleDashed, CircleDot } from 'lucide-react';
 import { useDashLang } from './lang';
 import { StatusPill } from '@/components/dashboard/DataTable';
 import { Ltr } from '@/components/dashboard/Ltr';
-import { updateAmountPaidAction, updatePaymentStatusAction, updateBookingStatusAction } from './actions';
+import { useEffect, useRef, useState } from 'react';
+import { SaveStatus, viewOfInline } from '@/components/dashboard/SaveStatus';
+import { useInlineSave } from './useAutosave';
+import { cancelBookingAction, setAmountPaidAction, setPaymentStatusAction } from './autosave-actions';
 import type { Booking } from '@/features/bookings/types';
 
 const TXT = {
-  en: { amount: 'Amount paid', save: 'Save', full: 'Paid in full', refund: 'Refund', left: 'Remaining', boarded: 'Boarded', partial: 'Partly boarded', not: 'Not boarded', noTicket: 'No ticket', update: 'Update status', confirmed: 'Confirmed', completed: 'Completed', noShow: 'No show' },
-  ar: { amount: 'المبلغ المدفوع', save: 'حفظ', full: 'مدفوع بالكامل', refund: 'استرداد', left: 'المتبقي', boarded: 'صعد', partial: 'صعد جزء منهم', not: 'لم يصعد', noTicket: 'بدون تذكرة', update: 'تحديث الحالة', confirmed: 'مؤكد', completed: 'مكتمل', noShow: 'لم يحضر' },
+  en: { amount: 'Amount paid', full: 'Paid in full', refund: 'Refund', left: 'Remaining', boarded: 'Boarded', partial: 'Partly boarded', not: 'Not boarded', noTicket: 'No ticket', cancel: 'Cancel booking', sure: 'Cancel this booking and release its seats?', yes: 'Yes, cancel', keep: 'Keep', cancelled: 'Cancelled' },
+  ar: { amount: 'المبلغ المدفوع', full: 'مدفوع بالكامل', refund: 'استرداد', left: 'المتبقي', boarded: 'صعد', partial: 'صعد جزء منهم', not: 'لم يصعد', noTicket: 'بدون تذكرة', cancel: 'إلغاء الحجز', sure: 'إلغاء هذا الحجز وتحرير مقاعده؟', yes: 'نعم، إلغاء', keep: 'إبقاء', cancelled: 'ملغي' },
 } as const;
 
 const money = (n: number) => n.toFixed(2);
@@ -24,55 +27,82 @@ export function BoardingBadge({ b }: { b: Booking }) {
   return <span className={`${base} bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300`}><CircleDashed size={12} aria-hidden="true" />{T.not} <Ltr>{count}</Ltr></span>;
 }
 
-/** Paid indicator + the editable "amount paid". The database derives unpaid / partial / paid from the amount and bounds it by the total. */
-export function PaymentCell({ b, canWrite, returnTo }: { b: Booking; canWrite: boolean; returnTo: string }) {
+/** Amount paid saves by itself (shortly after typing stops, on blur, on Enter). The database derives unpaid / partial / paid and bounds it by the total. */
+function AmountInput({ b }: { b: Booking }) {
+  const T = TXT[useDashLang()];
+  const [value, setValue] = useState(money(b.amountPaid));
+  const last = useRef(money(b.amountPaid));
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { pending, result, run } = useInlineSave();
+  useEffect(() => { last.current = money(b.amountPaid); setValue(money(b.amountPaid)); }, [b.amountPaid]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const save = (v: string) => {
+    clearTimeout(timer.current);
+    if (v.trim() === last.current) return;
+    run(() => setAmountPaidAction(b.id, v));
+  };
+  return (
+    <div className="flex flex-col gap-0.5">
+      <label className="sr-only" htmlFor={`amt-${b.id}`}>{T.amount}</label>
+      <input id={`amt-${b.id}`} type="text" inputMode="decimal" dir="ltr" value={value} title={T.amount}
+        onChange={(e) => { setValue(e.target.value); clearTimeout(timer.current); const v = e.target.value; timer.current = setTimeout(() => save(v), 900); }}
+        onBlur={() => save(value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save(value); } }}
+        className="w-24 rounded-lg border border-slate-300 bg-transparent px-2 py-1 text-xs dark:border-slate-600" />
+      <SaveStatus view={viewOfInline(result, pending)} />
+    </div>
+  );
+}
+
+/** Paid indicator + the editable "amount paid" + one-tap "paid in full" / "refund". All save instantly, nothing reloads. */
+export function PaymentCell({ b, canWrite }: { b: Booking; canWrite: boolean }) {
   const T = TXT[useDashLang()];
   const pct = b.totalAmount > 0 ? Math.min(100, Math.round((b.amountPaid / b.totalAmount) * 100)) : 100;
   const remaining = Math.max(0, b.totalAmount - b.amountPaid);
   const cancelled = b.status === 'cancelled';
-  const hidden = (<><input type="hidden" name="id" value={b.id} /><input type="hidden" name="returnTo" value={returnTo} /></>);
-  const small = 'text-[10px] font-bold text-blue-700 dark:text-blue-300';
+  const { pending, result, run } = useInlineSave();
+  const small = 'text-[10px] font-bold text-blue-700 disabled:opacity-50 dark:text-blue-300';
   return (
     <div className="min-w-52 space-y-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <StatusPill value={b.paymentStatus} />
         <span className="text-xs font-semibold text-slate-800 dark:text-slate-100"><Ltr>{money(b.amountPaid)} / {money(b.totalAmount)} {b.currency}</Ltr></span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" aria-hidden="true"><div className={`h-full ${b.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${pct}%` }} /></div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" aria-hidden="true"><div className={`h-full transition-all ${b.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${pct}%` }} /></div>
       {remaining > 0 && !cancelled && b.paymentStatus !== 'refunded' && <p className="text-[11px] text-slate-600 dark:text-slate-400">{T.left}: <Ltr>{money(remaining)} {b.currency}</Ltr></p>}
-      {canWrite && !cancelled && (
-        <form action={updateAmountPaidAction} className="flex items-center gap-1">
-          {hidden}
-          <label className="sr-only" htmlFor={`amt-${b.id}`}>{T.amount}</label>
-          <input id={`amt-${b.id}`} name="amount" type="text" inputMode="decimal" dir="ltr" defaultValue={money(b.amountPaid)} title={T.amount} className="w-24 rounded-lg border border-slate-300 bg-transparent px-2 py-1 text-xs dark:border-slate-600" />
-          <button className={small}>{T.save}</button>
-        </form>
-      )}
+      {canWrite && !cancelled && <AmountInput b={b} />}
       {canWrite && (
-        <div className="flex flex-wrap gap-3">
-          {!cancelled && b.paymentStatus !== 'paid' && b.totalAmount > 0 && (
-            <form action={updatePaymentStatusAction}>{hidden}<input type="hidden" name="paymentStatus" value="paid" /><button className={small}>{T.full}</button></form>
-          )}
-          {b.amountPaid > 0 && (
-            <form action={updatePaymentStatusAction}>{hidden}<input type="hidden" name="paymentStatus" value="refunded" /><button className="text-[10px] font-bold text-rose-700 dark:text-rose-300">{T.refund}</button></form>
-          )}
+        <div className="flex flex-wrap items-center gap-3">
+          {!cancelled && b.paymentStatus !== 'paid' && b.totalAmount > 0 && <button type="button" disabled={pending} onClick={() => run(() => setPaymentStatusAction(b.id, 'paid'))} className={small}>{T.full}</button>}
+          {b.amountPaid > 0 && <button type="button" disabled={pending} onClick={() => run(() => setPaymentStatusAction(b.id, 'refunded'))} className="text-[10px] font-bold text-rose-700 disabled:opacity-50 dark:text-rose-300">{T.refund}</button>}
+          <SaveStatus view={viewOfInline(result, pending)} />
         </div>
       )}
     </div>
   );
 }
 
-/** Booking status (confirmed / completed / no show). Unchanged behaviour, now returns to the same filtered list. */
-export function StatusForm({ b, returnTo }: { b: Booking; returnTo: string }) {
+/** Last column: Cancel (with one confirm step, like trips). A cancelled booking shows a plain "Cancelled" label instead. */
+export function CancelCell({ b, canWrite }: { b: Booking; canWrite: boolean }) {
   const T = TXT[useDashLang()];
+  const [confirming, setConfirming] = useState(false);
+  const { pending, result, run } = useInlineSave();
+  if (b.status === 'cancelled') return <span className="text-xs font-bold text-rose-700 dark:text-rose-300">{T.cancelled}</span>;
+  if (!canWrite) return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
+  const btn = 'min-h-8 rounded-lg px-3 text-xs font-bold disabled:opacity-50';
   return (
-    <form action={updateBookingStatusAction} className="flex gap-1">
-      <input type="hidden" name="id" value={b.id} /><input type="hidden" name="returnTo" value={returnTo} />
-      <label className="sr-only" htmlFor={`st-${b.id}`}>{T.update}</label>
-      <select id={`st-${b.id}`} name="status" defaultValue={b.status === 'pending' ? 'confirmed' : b.status === 'cancelled' ? 'confirmed' : b.status} className="max-w-28 rounded-lg border border-slate-300 bg-transparent p-1 text-[10px] dark:border-slate-600">
-        <option value="confirmed">{T.confirmed}</option><option value="completed">{T.completed}</option><option value="no_show">{T.noShow}</option>
-      </select>
-      <button className="text-[10px] font-bold text-blue-700 dark:text-blue-300">{T.save}</button>
-    </form>
+    <div className="flex flex-col items-start gap-1.5">
+      {!confirming ? (
+        <button type="button" onClick={() => setConfirming(true)} className={`${btn} border border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10`}>{T.cancel}</button>
+      ) : (
+        <div role="alertdialog" aria-label={T.sure} className="space-y-1.5">
+          <p className="max-w-44 text-[11px] text-slate-700 dark:text-slate-300">{T.sure}</p>
+          <div className="flex gap-2">
+            <button type="button" disabled={pending} onClick={() => run(async () => { const r = await cancelBookingAction(b.id); if (r.ok) setConfirming(false); return r; })} className={`${btn} bg-rose-700 text-white hover:bg-rose-800`}>{T.yes}</button>
+            <button type="button" disabled={pending} onClick={() => setConfirming(false)} className={`${btn} border border-slate-300 dark:border-slate-600`}>{T.keep}</button>
+          </div>
+        </div>
+      )}
+      <SaveStatus view={viewOfInline(result, pending)} />
+    </div>
   );
 }

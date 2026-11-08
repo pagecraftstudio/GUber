@@ -8,7 +8,7 @@ import { planUsageService } from '@/features/subscriptions/usage-service';
 import { PlanLimitNotice } from '@/components/dashboard/FormParts';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { DataTable, StatusPill } from '@/components/dashboard/DataTable';
-import { updateRouteAction } from '@/features/dashboard/actions';
+import { RouteActiveSwitch } from '@/features/dashboard/InlineControls';
 
 const link = 'inline-flex min-h-11 items-center rounded-xl bg-blue-700 px-4 text-xs font-bold text-white hover:bg-blue-800';
 
@@ -30,7 +30,7 @@ export default async function RoutesPage() {
         { key: 'manage', label: 'Manage', render: (r) => (
           <div className="flex items-center gap-3">
             <Link href={`/dashboard/routes/${r.id}`} className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300" aria-label={`${canWrite ? 'Edit' : 'View'} ${r.name}`}>{canWrite ? <T>Edit</T> : <T>View</T>}</Link>
-            {canWrite && <form action={updateRouteAction}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="isActive" value={String(!r.isActive)} /><button aria-label={`${r.isActive ? 'Deactivate' : 'Activate'} ${r.name}`} className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300">{r.isActive ? <T>Deactivate</T> : <T>Activate</T>}</button></form>}
+            {canWrite && <RouteActiveSwitch id={r.id} isActive={r.isActive} name={r.name} />}
           </div>) },
       ]} />
     </>

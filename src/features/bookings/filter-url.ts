@@ -3,7 +3,6 @@ export type BookingFilterValues = {
   q: string;
   view: string;
   sort: string;
-  status: string;
   pay: string;
   boarding: string;
   source: string;
