@@ -8,7 +8,8 @@ import { companyService } from '@/features/companies/service';
 import { idSchema } from '@/lib/validation/common';
 import { addDays, dayKey, dayStartInstant, groupTripsByDay, isValidDateOnly, timeLabel, weekRange } from '@/features/trips/day-groups';
 import { DayHeading } from '@/features/dashboard/DayHeading';
-import { TripFilters, hrefWith, type TripFilterValues } from '@/features/dashboard/TripFilters';
+import { TripFilters } from '@/features/dashboard/TripFilters';
+import { hrefWith, type TripFilterValues } from '@/features/trips/filter-url';
 
 const PAST_CUTOFF_MS = 6 * 3600_000; // "upcoming" lasts until 6 h after departure, so a trip on the road is not buried
 const PAGE_SIZE = 50;

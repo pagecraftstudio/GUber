@@ -2,9 +2,9 @@
 import Link from 'next/link';
 import { useDashLang } from './lang';
 import { inputClass } from '@/components/dashboard/FormParts';
+import { hrefWith, type TripFilterValues } from '@/features/trips/filter-url';
 
 type Option = { id: string; label: string };
-export type TripFilterValues = { view: string; status: string; route: string; bus: string; driver: string; source: string; from: string; to: string };
 export type QuickRange = { key: string; from: string; to: string };
 
 const STATUS = ['draft', 'scheduled', 'boarding', 'in_progress', 'completed', 'cancelled'] as const;
@@ -12,13 +12,6 @@ const TXT = {
   en: { title: 'Filter trips', status: 'Status', route: 'Route', bus: 'Bus', driver: 'Driver', source: 'Type', from: 'From date', to: 'To date', any: 'Any', apply: 'Apply filters', clear: 'Clear all', regular: 'Regular trips', manual: 'One-off trips', quick: { today: 'Today', tomorrow: 'Tomorrow', week: 'This week', nextweek: 'Next week' }, st: { draft: 'Draft', scheduled: 'Scheduled', boarding: 'Boarding', in_progress: 'On the road', completed: 'Completed', cancelled: 'Cancelled' }, active: 'Active filters', unassignedBus: 'No bus', unassignedDriver: 'No driver' },
   ar: { title: 'تصفية الرحلات', status: 'الحالة', route: 'المسار', bus: 'الحافلة', driver: 'السائق', source: 'النوع', from: 'من تاريخ', to: 'إلى تاريخ', any: 'الكل', apply: 'تطبيق', clear: 'مسح الكل', regular: 'رحلات منتظمة', manual: 'رحلات منفردة', quick: { today: 'اليوم', tomorrow: 'غداً', week: 'هذا الأسبوع', nextweek: 'الأسبوع القادم' }, st: { draft: 'مسودة', scheduled: 'مجدولة', boarding: 'صعود', in_progress: 'على الطريق', completed: 'مكتملة', cancelled: 'ملغاة' }, active: 'عوامل التصفية', unassignedBus: 'بدون حافلة', unassignedDriver: 'بدون سائق' },
 } as const;
-
-export const hrefWith = (v: Partial<TripFilterValues>): string => {
-  const q = new URLSearchParams();
-  for (const [k, val] of Object.entries(v)) if (val) q.set(k, val);
-  const s = q.toString();
-  return s ? `/dashboard/trips?${s}` : '/dashboard/trips';
-};
 
 /** A plain GET form: every filter lives in the URL (shareable, back button works, no client state). The server validates each value again. */
 export function TripFilters({ values, routes, buses, drivers, quick }: { values: TripFilterValues; routes: Option[]; buses: Option[]; drivers: Option[]; quick: QuickRange[] }) {
