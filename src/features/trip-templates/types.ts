@@ -21,7 +21,7 @@ export type TripTemplate = {
 };
 
 export const TEMPLATE_SELECT =
-  'id,name,route_id,bus_id,driver_id,departure_time,duration_minutes,days_of_week,start_date,end_date,price,capacity,is_active,generated_through,return_route_id,return_price,round_trip_price,return_times,return_day_offset,route:routes(id,name,origin_name,destination_name),bus:buses(id,plate_number),driver:drivers(id,full_name)';
+  'id,name,route_id,bus_id,driver_id,departure_time,duration_minutes,days_of_week,start_date,end_date,price,capacity,is_active,generated_through,return_route_id,return_price,round_trip_price,return_times,return_day_offset,route:routes!trip_templates_route_fk(id,name,origin_name,destination_name),bus:buses(id,plate_number),driver:drivers(id,full_name)';
 
 export const toTemplate = (r: TripTemplateRow): TripTemplate => ({
   id: r.id, name: r.name, routeId: r.route_id, busId: r.bus_id, driverId: r.driver_id,

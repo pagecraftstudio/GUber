@@ -22,3 +22,11 @@ describe('trip template schema', () => {
     expect(generateSchema.safeParse({ templateId: ID, days: 61 }).success).toBe(false);
   });
 });
+
+import { TEMPLATE_SELECT } from './types';
+describe('template select', () => {
+  it('names the foreign key of the embedded route: trip_templates has TWO links to routes since 0029 (route_id, return_route_id), and an unnamed embed is rejected by PostgREST as ambiguous (PGRST201)', () => {
+    expect(TEMPLATE_SELECT).toContain('route:routes!trip_templates_route_fk(');
+    expect(TEMPLATE_SELECT).not.toMatch(/route:routes\(/);
+  });
+});
