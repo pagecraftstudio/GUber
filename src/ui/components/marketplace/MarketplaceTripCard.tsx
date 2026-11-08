@@ -52,6 +52,11 @@ export const MarketplaceTripCard: React.FC<MarketplaceTripCardProps> = ({
               {trip.priceEgp}
             </span>
             <span className="text-xs text-slate-500 ms-1 font-semibold">{t('egp')}</span>
+            {trip.roundTripPriceEgp !== undefined && (
+              <span className="mt-0.5 block text-[11px] font-bold text-[#3563E9]">
+                {locale === 'ar' ? 'ذهاب وعودة' : 'Go & return'}: <span className="tabular-nums">{trip.roundTripPriceEgp}</span> {t('egp')}
+              </span>
+            )}
           </div>
         </div>
 

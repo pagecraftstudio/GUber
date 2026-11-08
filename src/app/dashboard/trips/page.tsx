@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server';import { requireTenant } from '@/lib/auth/guards';import { createTenantServiceContext } from '@/lib/service/context';import { tripService } from '@/features/trips/service';import { routeService } from '@/features/routes/service';import { busService } from '@/features/buses/service';import { driverService } from '@/features/drivers/service';import { PageHeader } from '@/components/dashboard/PageHeader';import { DataTable,StatusPill } from '@/components/dashboard/DataTable';import { TripActions } from '@/features/dashboard/TripActions';
 import type { Trip } from '@/features/trips/types';
 import { planUsageService } from '@/features/subscriptions/usage-service';
-import { companyService } from '@/features/companies/service';
+import { companyTimeZone } from '@/features/trips/company-timezone';
 import { idSchema } from '@/lib/validation/common';
 import { addDays, dayKey, dayStartInstant, groupTripsByDay, isValidDateOnly, timeLabel, weekRange } from '@/features/trips/day-groups';
 import { DayHeading } from '@/features/dashboard/DayHeading';
@@ -13,7 +13,6 @@ import { hrefWith, type TripFilterValues } from '@/features/trips/filter-url';
 
 const PAST_CUTOFF_MS = 6 * 3600_000; // "upcoming" lasts until 6 h after departure, so a trip on the road is not buried
 const PAGE_SIZE = 50;
-const DEFAULT_TZ = 'Africa/Cairo'; // used only when the member cannot read company settings
 const STATUSES = ['draft', 'scheduled', 'boarding', 'in_progress', 'completed', 'cancelled'] as const;
 type Raw = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
@@ -36,7 +35,7 @@ export default async function TripsPage({ searchParams }: { searchParams: Promis
   };
   const page = Math.min(Math.max(parseInt(one(sp.page), 10) || 1, 1), 1000);
 
-  const tz = has('settings.read') ? await companyService.getSettings(ctx).then((s) => s.timezone, () => DEFAULT_TZ) : DEFAULT_TZ;
+  const tz = await companyTimeZone(ctx);
   const today = dayKey(Date.now(), tz);
   const cutoff = new Date(Date.now() - PAST_CUTOFF_MS).toISOString();
   const hasDates = Boolean(f.from || f.to);
@@ -65,7 +64,7 @@ export default async function TripsPage({ searchParams }: { searchParams: Promis
     { key: 'resources', label: 'Assignment', render: (r: Trip) => <div>{r.bus?.plateNumber ? <Ltr>{r.bus.plateNumber}</Ltr> : <T>No bus</T>}<p className="text-xs text-slate-600 dark:text-slate-400">{r.driver?.fullName || <T>No driver</T>}</p></div> },
     { key: 'seats', label: 'Seats', render: (r: Trip) => <Ltr>{r.seatsBooked}/{r.capacity}</Ltr> },
     { key: 'status', label: 'Status', render: (r: Trip) => <StatusPill value={r.status} /> },
-    { key: 'action', label: 'Actions', render: (r: Trip) => canWrite ? <TripActions tripId={r.id} status={r.status} label={`${r.route?.name ?? ''} ${new Date(r.departureAt).toLocaleString()}`.trim()} /> : null },
+    { key: 'action', label: 'Actions', render: (r: Trip) => canWrite ? <TripActions tripId={r.id} status={r.status} label={`${r.route?.name ?? ''} ${dayKey(r.departureAt, tz)} ${timeLabel(r.departureAt, tz)}`.trim()} /> : null },
   ];
 
   return <>

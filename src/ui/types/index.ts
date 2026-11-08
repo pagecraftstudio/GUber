@@ -125,6 +125,22 @@ export interface Trip {
   status: 'scheduled' | 'boarding' | 'in_transit' | 'completed' | 'cancelled';
   published: boolean;
   recurringScheduleId?: string;
+  /** Go-and-return (real mode): price per seat for both legs, set only when a return time is bookable. priceEgp is then the go-only price. */
+  roundTripPriceEgp?: number;
+  returnOptionsCount?: number;
+}
+
+/** One bookable return time of a go-and-return trip. */
+export interface ReturnOption {
+  id: string;
+  routeId: string;
+  originName: string;
+  destName: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalTime: string;
+  priceEgp: number;
+  availableSeats: number;
 }
 
 export interface RecurringSchedule {
@@ -171,6 +187,8 @@ export interface Booking {
   cancellationReason?: string;
   /** Real mode only: server-computed (my_booking_details.can_cancel). Undefined in mock mode. */
   canCancel?: boolean;
+  /** Go-and-return purchase: the booking of the return leg. fareEgp then covers BOTH legs. */
+  returnLeg?: { bookingReference: string; tripId: string };
 }
 
 export * from './auth';
@@ -261,6 +279,8 @@ export interface MarketplaceTripItem {
   totalSeats: number;
   bookedSeats: number;
   availableSeats: number;
+  roundTripPriceEgp?: number;
+  returnOptionsCount?: number;
   isFullyBooked: boolean;
   busModel: string;
   busFeatures: string[];

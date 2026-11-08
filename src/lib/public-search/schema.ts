@@ -50,6 +50,11 @@ export const publicTripRowSchema = z.object({
   departure_at: z.string(), arrival_at: z.string(),
   price: num, currency: z.string(), capacity: z.number().int(), seats_available: z.number().int(),
   max_seats_per_booking: z.number().int(), timezone: z.string(),
+  round_trip_price: num.nullable().default(null), return_options: z.number().int().default(0),
+});
+export const publicReturnOptionRowSchema = z.object({
+  trip_id: z.uuid(), route_id: z.uuid(), origin_name: z.string(), destination_name: z.string(),
+  departure_at: z.string(), arrival_at: z.string(), price: num, seats_available: z.number().int(), timezone: z.string(),
 });
 export const publicStopRowSchema = z.object({
   stop_id: z.uuid(), name: z.string(), address: z.string().nullable(), stop_order: z.number().int(),

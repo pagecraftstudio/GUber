@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireTenant } from '@/lib/auth/guards';
+import { companyTimeZone } from '@/features/trips/company-timezone';
 import { AppError } from '@/lib/errors';
 import { createTenantServiceContext } from '@/lib/service/context';
 import { customerService } from '@/features/customers/service';
@@ -26,6 +27,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     if (e instanceof AppError && (e.code === 'not_found' || e.code === 'validation')) notFound();
     throw e;
   }
+  const tz = await companyTimeZone(ctx);
   const canSeeBookings = auth.membership.permissions.includes('bookings.read');
   const bookings = canSeeBookings ? await bookingService.list(ctx, { customerId: customer.id, page: 1, pageSize: 50 }) : null;
   return (
@@ -45,7 +47,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <h2 id="bk-h" className="mb-3 font-bold"><T>Bookings</T> ({bookings.total})</h2>
             <DataTable rows={bookings.items} emptyTitle="No bookings" emptyText="This customer has no bookings yet." columns={[
               { key: 'ref', label: 'Reference', render: (b) => <Ltr className="font-mono text-xs font-bold">{b.reference}</Ltr> },
-              { key: 'trip', label: 'Trip', render: (b) => b.trip ? <>{b.trip.routeName ?? <T>Route</T>} · <Dt value={b.trip.departureAt} time /></> : '—' },
+              { key: 'trip', label: 'Trip', render: (b) => b.trip ? <>{b.trip.routeName ?? <T>Route</T>} · <Dt value={b.trip.departureAt} time timeZone={tz} /></> : '—' },
               { key: 'seats', label: 'Seats', render: (b) => String(b.seatsCount) },
               { key: 'total', label: 'Total', render: (b) => <Ltr>{b.totalAmount} {b.currency}</Ltr> },
               { key: 'status', label: 'Status', render: (b) => <StatusPill value={b.status} /> },

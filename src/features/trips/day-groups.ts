@@ -57,3 +57,22 @@ export const timeLabel = (iso: string, tz: string): string =>
   new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
 
 export const isValidDateOnly = (v: string | undefined): v is string => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`));
+
+/**
+ * A <input type="datetime-local"> value ("YYYY-MM-DDTHH:mm", no zone) read as wall-clock time in the COMPANY zone -> UTC ISO instant.
+ * `new Date(local)` must not be used for this: it uses the server's zone (UTC on Vercel), which silently shifts every trip by the offset.
+ * A wall time that does not exist (spring-forward gap) or happens twice (fall-back) resolves to the first matching instant; null if malformed.
+ */
+export function localDateTimeToInstant(local: string, tz: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local.trim());
+  if (!m) return null;
+  const [y, mo, d, h, mi] = m.slice(1).map(Number) as [number, number, number, number, number];
+  const wall = Date.UTC(y, mo - 1, d, h, mi);
+  if (Number.isNaN(wall) || new Date(wall).getUTCMonth() !== mo - 1) return null;
+  let guess = wall;
+  for (let i = 0; i < 3; i++) {
+    const p = partsOf(guess, tz);
+    guess -= Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi, p.s) - wall;
+  }
+  return new Date(guess).toISOString();
+}

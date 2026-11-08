@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trip, Route, Bus, Stop, Booking } from '../../types';
+import { Trip, Route, Bus, Stop, Booking, ReturnOption } from '../../types';
 import { useLocale } from '../../context/LocaleContext';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +20,7 @@ import {
   LogIn,
   UserCheck,
   Plus,
+  Repeat,
 } from 'lucide-react';
 
 interface BookingFlowModalProps {
@@ -67,6 +68,25 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
     }
   }, [isOpen, trip?.id]);
 
+  // Go and return (real backend only): a second trip, the student picks one of the company's return times.
+  const [roundTrip, setRoundTrip] = useState(false);
+  const [returnOptions, setReturnOptions] = useState<ReturnOption[] | null>(null);
+  const [returnTripId, setReturnTripId] = useState('');
+  const [returnsError, setReturnsError] = useState('');
+  const offersRoundTrip = !isMockMode() && trip?.roundTripPriceEgp !== undefined;
+
+  useEffect(() => { setRoundTrip(false); setReturnOptions(null); setReturnTripId(''); setReturnsError(''); }, [isOpen, trip?.id]);
+  useEffect(() => {
+    if (!isOpen || !trip || !roundTrip || !offersRoundTrip || returnOptions) return;
+    let on = true;
+    transportService.getReturnOptions(trip.id)
+      .then((o) => { if (on) setReturnOptions(o); })
+      .catch((e) => { if (on) setReturnsError(describeBackendError(e, locale)); });
+    return () => { on = false; };
+  }, [isOpen, trip?.id, roundTrip, offersRoundTrip, returnOptions, locale]);
+  // A key belongs to ONE request: another return time (or one-way vs round trip) is a different request.
+  useEffect(() => { idempotencyKey.current = crypto.randomUUID(); }, [roundTrip, returnTripId]);
+
   // Autofill when modal opens or user profile changes
   useEffect(() => {
     if (isOpen && isAuthenticated && user && !isBookingForSomeoneElse) {
@@ -82,7 +102,9 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   const guestBlocked = !isMockMode() && !isAuthenticated;
   const bus = buses.find((b) => b.id === trip.busId);
 
-  const availableSeats = Math.max(0, trip.totalSeats - trip.bookedSeats);
+  const selectedReturn = roundTrip ? returnOptions?.find((o) => o.id === returnTripId) : undefined;
+  const outboundAvailable = Math.max(0, trip.totalSeats - trip.bookedSeats);
+  const availableSeats = selectedReturn ? Math.min(outboundAvailable, selectedReturn.availableSeats) : outboundAvailable;
   const isFullyBooked = availableSeats <= 0;
 
   // Student discount: 15% off if studentId is provided (optional unless required)
@@ -90,7 +112,10 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   const hasStudentDiscount = isMockMode() && studentId.trim().length > 3;
   const baseFarePerPassenger = trip.priceEgp;
   const discountPerPassenger = hasStudentDiscount ? Math.round(baseFarePerPassenger * 0.15) : 0;
-  const finalFare = (baseFarePerPassenger - discountPerPassenger) * passengerCount;
+  const roundTripFare = trip.roundTripPriceEgp ?? 0;
+  const separateFare = baseFarePerPassenger + (selectedReturn?.priceEgp ?? 0);
+  const saving = selectedReturn ? Math.max(0, separateFare - roundTripFare) : 0;
+  const finalFare = roundTrip ? roundTripFare * passengerCount : (baseFarePerPassenger - discountPerPassenger) * passengerCount;
 
   const handleResetToGuest = () => {
     setIsBookingForSomeoneElse(true);
@@ -134,6 +159,9 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
     if (passengerCount > availableSeats) {
       newErrors.count = t('validationSeatsAvailableOnly');
     }
+    if (roundTrip && !returnTripId) {
+      newErrors.returnTrip = locale === 'ar' ? 'اختر موعد العودة.' : 'Choose a return time.';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -150,7 +178,14 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
         ...extraPassengerNames.slice(0, passengerCount - 1).map((n, i) => n.trim() || `Guest ${i + 2}`),
       ];
 
-      const booking = await transportService.createBooking({
+      const common = {
+        companyId: trip.companyId || currentCompany.id, tripId: trip.id, passengerName: passengerName.trim(), passengerPhone: passengerPhone.trim(),
+        studentId: studentId.trim() || undefined, passengerCount, pickupStopId: route?.originStopId || '', dropoffStopId: route?.destStopId || '',
+        idempotencyKey: idempotencyKey.current,
+      };
+      const booking = roundTrip
+        ? await transportService.createRoundTripBooking({ ...common, returnTripId })
+        : await transportService.createBooking({
         companyId: trip.companyId || currentCompany.id,
         customerId: isAuthenticated && !isBookingForSomeoneElse ? user?.id : undefined,
         tripId: trip.id,
@@ -311,6 +346,54 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
           )}
         </div>
 
+        {/* Go and return: one extra ticket for the way back, chosen from the company's return times */}
+        {offersRoundTrip && !isFullyBooked && (
+          <div className="space-y-3 border-t border-slate-200 pt-4">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 has-[:checked]:border-[#3563E9] has-[:checked]:bg-blue-50/60">
+              <input type="checkbox" checked={roundTrip} onChange={(e) => { setRoundTrip(e.target.checked); setReturnTripId(''); }} className="mt-0.5 h-4 w-4 accent-[#3563E9]" />
+              <span className="space-y-0.5 text-xs">
+                <strong className="flex items-center gap-1.5 text-sm text-slate-900"><Repeat className="h-4 w-4 text-[#3563E9]" />{locale === 'ar' ? 'ذهاب وعودة' : 'Go and return'}</strong>
+                <span className="block text-slate-600">
+                  {locale === 'ar' ? 'أضف رحلة العودة بسعر الذهاب والعودة: ' : 'Add the trip back at the go-and-return price: '}
+                  <strong className="tabular-nums text-slate-900">{trip.roundTripPriceEgp} {t('egp')}</strong>
+                  {locale === 'ar' ? ' للمقعد' : ' per seat'}
+                </span>
+              </span>
+            </label>
+            {roundTrip && (
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-bold uppercase tracking-wider text-slate-700">{locale === 'ar' ? 'اختر موعد العودة' : 'Choose your return time'}</legend>
+                {returnsError ? (
+                  <p role="alert" className="text-xs font-medium text-red-600">{returnsError}</p>
+                ) : !returnOptions ? (
+                  <p className="text-xs text-slate-500">{locale === 'ar' ? 'جارٍ تحميل مواعيد العودة…' : 'Loading return times…'}</p>
+                ) : returnOptions.length === 0 ? (
+                  <p className="text-xs text-slate-600">{locale === 'ar' ? 'لا توجد مواعيد عودة متاحة حالياً.' : 'No return times are available right now.'}</p>
+                ) : (
+                  returnOptions.map((o) => {
+                    const disabled = o.availableSeats < passengerCount || o.availableSeats <= 0;
+                    return (
+                      <label key={o.id} className={`flex items-center justify-between gap-3 rounded-lg border p-3 text-xs ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${returnTripId === o.id ? 'border-[#3563E9] bg-blue-50/60' : 'border-slate-200'}`}>
+                        <span className="flex items-center gap-2">
+                          <input type="radio" name="returnTrip" value={o.id} checked={returnTripId === o.id} disabled={disabled} onChange={() => setReturnTripId(o.id)} className="accent-[#3563E9]" />
+                          <span>
+                            <strong className="tabular-nums text-slate-900" dir="ltr">{o.departureDate} {o.departureTime}</strong>
+                            <span className="block text-slate-500">{o.originName} → {o.destName} · <span dir="ltr">{o.departureTime} – {o.arrivalTime}</span></span>
+                          </span>
+                        </span>
+                        <span className={`whitespace-nowrap font-semibold ${o.availableSeats <= 0 ? 'text-red-600' : 'text-slate-600'}`}>
+                          {o.availableSeats <= 0 ? t('fullyBooked') : `${o.availableSeats} ${t('seatsRemainingText')}`}
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
+                {errors.returnTrip && <p className="text-xs font-medium text-red-600">{errors.returnTrip}</p>}
+              </fieldset>
+            )}
+          </div>
+        )}
+
         {/* Step 2: Passenger Count Selection & Multi-Passenger Manifest (Rule #4) */}
         <div className="space-y-3 border-t border-slate-200 pt-4">
           <div className="flex items-center justify-between">
@@ -383,12 +466,18 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
         <div className="space-y-2.5 border-t border-slate-200 pt-4 bg-slate-50 -mx-5 -mb-5 p-5">
           <div className="flex justify-between text-xs text-slate-600">
             <span>
-              {t('ticketFare')} ({passengerCount} × {baseFarePerPassenger} {t('egp')})
+              {roundTrip ? (locale === 'ar' ? 'ذهاب وعودة' : 'Go and return') : t('ticketFare')} ({passengerCount} × {roundTrip ? roundTripFare : baseFarePerPassenger} {t('egp')})
             </span>
             <span className="font-semibold text-slate-900 tabular-nums">
-              {baseFarePerPassenger * passengerCount} {t('egp')}
+              {(roundTrip ? roundTripFare : baseFarePerPassenger) * passengerCount} {t('egp')}
             </span>
           </div>
+          {roundTrip && saving > 0 && (
+            <div className="flex justify-between text-xs text-[#0F9D8A]">
+              <span>{locale === 'ar' ? 'توفير مقارنة بحجز كل رحلة منفصلة' : 'You save compared with two single tickets'}</span>
+              <span className="font-semibold tabular-nums">{saving * passengerCount} {t('egp')}</span>
+            </div>
+          )}
 
           {hasStudentDiscount && (
             <div className="flex justify-between text-xs text-[#0F9D8A]">

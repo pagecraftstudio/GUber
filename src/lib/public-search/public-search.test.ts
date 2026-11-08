@@ -19,7 +19,7 @@ const C = '00000000-0000-4000-8000-000000000b01';
 const row = (extra: Record<string, unknown> = {}) => ({
   trip_id: T, company_id: C, company_name: 'Fayoum Bus', company_slug: 'fayoum', route_id: T,
   origin_name: 'Fayoum', destination_name: 'Cairo', departure_at: '2026-12-01T06:00:00Z', arrival_at: '2026-12-01T08:00:00Z',
-  price: '40.00', currency: 'EGP', capacity: 10, seats_available: 4, max_seats_per_booking: 5, timezone: 'Africa/Cairo', ...extra,
+  price: '40.00', currency: 'EGP', capacity: 10, seats_available: 4, max_seats_per_booking: 5, timezone: 'Africa/Cairo', round_trip_price: null, return_options: 0, ...extra,
 });
 const get = (qs = '') => searchGET(new NextRequest(`https://app.example.test/api/public/trips${qs}`));
 const stops = (id: string, qs = '') => stopsGET(new NextRequest(`https://app.example.test/api/public/trips/${id}/stops${qs}`), { params: Promise.resolve({ tripId: id }) });
@@ -146,5 +146,27 @@ describe('GET /api/public/trips/:tripId/stops', () => {
     const res = await stops(T);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ data: [] });
+  });
+});
+
+describe('GET /api/public/trips/:tripId/return-options', () => {
+  const opt = { trip_id: T, route_id: T, origin_name: 'Galala', destination_name: 'Cairo', departure_at: '2026-12-01T14:00:00Z', arrival_at: '2026-12-01T16:00:00Z', price: 45, seats_available: 3, timezone: 'Africa/Cairo' };
+  const call = async (id: string, qs = '') => {
+    const { GET } = await import('@/app/api/public/trips/[tripId]/return-options/route');
+    return GET(new NextRequest(`https://app.example.test/api/public/trips/${id}/return-options${qs}`), { params: Promise.resolve({ tripId: id }) });
+  };
+  it('returns allow-listed columns with the short trips cache (seats change on every booking)', async () => {
+    rpc.mockResolvedValue({ data: [{ ...opt, bus_id: 'hide me' }], error: null, status: 200 });
+    const res = await call(T);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe(TRIPS_CACHE);
+    expect(JSON.stringify(await res.json())).not.toContain('hide me');
+    expect(rpc).toHaveBeenCalledWith('public_trip_return_options', { p_trip_id: T });
+  });
+  it('rejects a non-uuid id and any query parameter before touching the database', async () => {
+    rpc.mockClear();
+    expect((await call('abc')).status).toBe(400);
+    expect((await call(T, '?x=1')).status).toBe(400);
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

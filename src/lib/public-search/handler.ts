@@ -52,7 +52,7 @@ const upstreamFailure = (status: 429 | 502) =>
   NextResponse.json({ error: { code: status === 429 ? 'rate_limited' : 'upstream_unavailable' } }, { status, headers: NO_STORE });
 
 export async function publicRpc<S extends z.ZodType>(
-  event: 'public_search.trips' | 'public_search.stops', fn: string, args: Record<string, unknown>, row: S, cacheControl: string,
+  event: 'public_search.trips' | 'public_search.stops' | 'public_search.return_options', fn: string, args: Record<string, unknown>, row: S, cacheControl: string,
 ): Promise<NextResponse> {
   try {
     const res = await anonClient().rpc(fn, args);

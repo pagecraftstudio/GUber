@@ -9,6 +9,20 @@ export interface PublicTripRow {
   departure_at: string; arrival_at: string;
   price: number | string; currency: string; capacity: number; seats_available: number;
   max_seats_per_booking: number; timezone: string;
+  /** Go-and-return: price for both legs per seat; null when the trip has no bookable return time. */
+  round_trip_price?: number | string | null; return_options?: number;
+}
+export interface PublicReturnOptionRow {
+  trip_id: string; route_id: string; origin_name: string; destination_name: string;
+  departure_at: string; arrival_at: string; price: number | string; seats_available: number; timezone: string;
+}
+export interface CreatedRoundTrip {
+  group_id: string; currency: string; total_amount: number | string; idempotent_replay: boolean;
+  outbound: { id: string; reference: string; status: string; trip_id: string; seats_count: number; unit_price: number | string; total_amount: number | string };
+  return: { id: string; reference: string; status: string; trip_id: string; seats_count: number; unit_price: number | string; total_amount: number | string };
+}
+export interface CreateRoundTripInput extends Omit<CreateBookingInput, 'tripId'> {
+  outboundTripId: string; returnTripId: string; returnPickupStopId?: string; returnDropoffStopId?: string;
 }
 export interface PublicStopRow {
   stop_id: string; name: string; address: string | null; stop_order: number; stop_type: 'pickup' | 'dropoff' | 'both'; offset_minutes: number;
@@ -95,7 +109,7 @@ interface RpcError { code?: string; message: string; hint?: string }
 
 /** RPCs whose failures are reported to the server log (see api/telemetry/failure). Everything else stays silent. */
 const REPORTED_OPS: Record<string, Operation> = {
-  create_my_booking: 'booking.create', cancel_my_booking: 'booking.cancel', my_ticket_qr: 'ticket.qr',
+  create_my_booking: 'booking.create', create_my_round_trip_booking: 'booking.create', cancel_my_booking: 'booking.cancel', my_ticket_qr: 'ticket.qr',
 };
 
 async function rpc<T>(client: SupabaseClient, fn: string, args: Record<string, unknown>): Promise<T> {
@@ -105,7 +119,7 @@ async function rpc<T>(client: SupabaseClient, fn: string, args: Record<string, u
     const op = REPORTED_OPS[fn];
     if (op) {
       // identifiers only: never names, phones, notes, idempotency keys or QR tokens
-      const tripId = typeof args.p_trip_id === 'string' ? args.p_trip_id : undefined;
+      const tripId = typeof args.p_trip_id === 'string' ? args.p_trip_id : typeof args.p_outbound_trip_id === 'string' ? args.p_outbound_trip_id : undefined;
       const bookingId = typeof args.p_booking_id === 'string' ? args.p_booking_id : undefined;
       reportOperationFailure(op, { pgCode: error.code }, {
         ...(tripId ? { tripId } : {}), ...(bookingId ? { bookingId } : {}), ...(typeof args.p_seats === 'number' ? { seats: args.p_seats } : {}),
@@ -150,6 +164,16 @@ export function createCustomerBackend(client: SupabaseClient, fetchImpl: FetchLi
         companyId: i.companyId, limit: i.limit ?? 100, offset: i.offset || undefined,
       }),
     tripStops: (tripId: string) => publicGet<PublicStopRow[]>(fetchImpl, `/api/public/trips/${encodeURIComponent(tripId)}/stops`),
+    returnOptions: (tripId: string) => publicGet<PublicReturnOptionRow[]>(fetchImpl, `/api/public/trips/${encodeURIComponent(tripId)}/return-options`),
+    /** Outbound + chosen return trip, one price, one transaction. Company and customer come from the trips and the session. */
+    createRoundTripBooking: (i: CreateRoundTripInput) =>
+      rpc<CreatedRoundTrip>(client, 'create_my_round_trip_booking', {
+        p_outbound_trip_id: i.outboundTripId, p_return_trip_id: i.returnTripId, p_seats: i.seats, p_full_name: i.fullName, p_phone: i.phoneE164,
+        p_email: i.email ?? null, p_university: i.university ?? null, p_student_id: i.studentId ?? null,
+        p_pickup_stop_id: i.pickupStopId || null, p_dropoff_stop_id: i.dropoffStopId || null,
+        p_return_pickup_stop_id: i.returnPickupStopId || null, p_return_dropoff_stop_id: i.returnDropoffStopId || null,
+        p_idempotency_key: i.idempotencyKey, p_notes: i.notes ?? null,
+      }),
     createBooking: (i: CreateBookingInput) =>
       rpc<CreatedBooking>(client, 'create_my_booking', {
         p_trip_id: i.tripId, p_seats: i.seats, p_full_name: i.fullName, p_phone: i.phoneE164,

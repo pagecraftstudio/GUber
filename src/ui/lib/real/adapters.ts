@@ -1,5 +1,5 @@
-import type { Booking, CanonicalLocation, Company, MarketplaceSearchParams, MarketplaceTripItem, Route, Stop, Trip } from '../../types';
-import type { BookingDetailRow, PublicStopRow, PublicTripRow } from './customerBackend';
+import type { Booking, CanonicalLocation, Company, MarketplaceSearchParams, MarketplaceTripItem, ReturnOption, Route, Stop, Trip } from '../../types';
+import type { BookingDetailRow, PublicReturnOptionRow, PublicStopRow, PublicTripRow } from './customerBackend';
 
 /** Pure mapping DB rows -> UI types. No I/O, fully unit-tested. */
 
@@ -72,7 +72,13 @@ export function tripFromRow(r: PublicTripRow): Trip {
     departureDate: dep.date, departureTime: dep.time, arrivalTime: arr.time,
     priceEgp: Number(r.price), totalSeats: r.capacity, bookedSeats: r.capacity - r.seats_available,
     status: 'scheduled', published: true,
+    ...(r.round_trip_price != null && (r.return_options ?? 0) > 0 ? { roundTripPriceEgp: Number(r.round_trip_price), returnOptionsCount: r.return_options ?? 0 } : {}),
   };
+}
+
+export function returnOptionFromRow(r: PublicReturnOptionRow): ReturnOption {
+  const dep = zoned(r.departure_at, r.timezone); const arr = zoned(r.arrival_at, r.timezone);
+  return { id: r.trip_id, routeId: r.route_id, originName: r.origin_name, destName: r.destination_name, departureDate: dep.date, departureTime: dep.time, arrivalTime: arr.time, priceEgp: Number(r.price), availableSeats: r.seats_available };
 }
 
 export function marketplaceItemFromRow(r: PublicTripRow): MarketplaceTripItem {
@@ -89,6 +95,7 @@ export function marketplaceItemFromRow(r: PublicTripRow): MarketplaceTripItem {
     priceEgp: t.priceEgp, totalSeats: r.capacity, bookedSeats: t.bookedSeats,
     availableSeats: r.seats_available, isFullyBooked: r.seats_available <= 0,
     busModel: '', busFeatures: [], status: 'scheduled', published: true,
+    ...(t.roundTripPriceEgp !== undefined ? { roundTripPriceEgp: t.roundTripPriceEgp, returnOptionsCount: t.returnOptionsCount ?? 0 } : {}),
   };
 }
 

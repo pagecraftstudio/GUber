@@ -3,6 +3,7 @@ import {
   CanonicalLocation,
   Company,
   Stop,
+  ReturnOption,
   Route,
   Bus,
   Driver,
@@ -194,6 +195,10 @@ export class MockTransportService {
     }
     return [...this.trips];
   }
+
+  /** Go-and-return exists only in the real backend; the mock has no return times. */
+  async getReturnOptions(_tripId: string): Promise<ReturnOption[]> { return []; }
+  async createRoundTripBooking(_args: Record<string, unknown>): Promise<Booking> { throw new Error('Go-and-return is not available in mock mode.'); }
 
   async getTripById(id: string): Promise<Trip | undefined> {
     await this.delay();

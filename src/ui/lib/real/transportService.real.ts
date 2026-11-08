@@ -1,9 +1,9 @@
 import type {
-  Booking, Bus, CanonicalLocation, PassengerTicket, Company, MarketplaceSearchParams, MarketplaceTripItem, Route, Stop, Trip,
+  Booking, Bus, CanonicalLocation, PassengerTicket, Company, MarketplaceSearchParams, MarketplaceTripItem, ReturnOption, Route, Stop, Trip,
 } from '../../types';
 import {
   applyClientFilters, bookingFromDetail, companyFromRow, locationNameFromId, locationsFromRows, marketplaceItemFromRow,
-  routeFromBookingDetail, routeFromRow, stopFromRow, tripFromBookingDetail, tripFromRow,
+  returnOptionFromRow, routeFromBookingDetail, routeFromRow, stopFromRow, tripFromBookingDetail, tripFromRow,
 } from './adapters';
 import type { BookingDetailRow, CustomerBackend, PublicStopRow, PublicTripRow } from './customerBackend';
 
@@ -98,6 +98,11 @@ export class RealTransportService {
     return this.trips.get(id);
   }
 
+  /** Bookable return times of a go-and-return trip (public, anonymous read). Empty for a one-way trip. */
+  async getReturnOptions(tripId: string): Promise<ReturnOption[]> {
+    return (await this.backend.returnOptions(tripId)).map(returnOptionFromRow);
+  }
+
   // ---- write: through the booking RPCs only ----
   async createBooking(a: CreateBookingArgs): Promise<Booking> {
     const created = await this.backend.createBooking({
@@ -114,6 +119,34 @@ export class RealTransportService {
       passengerCount: created.seats_count, fareEgp: Number(created.total_amount),
       status: created.status as Booking['status'], pickupStopId: a.pickupStopId ?? '', dropoffStopId: a.dropoffStopId ?? '',
       createdAt: new Date().toISOString(), qrTicketToken: '', passengers: [],
+    };
+  }
+
+  /**
+   * Go and return: outbound + chosen return trip in ONE database transaction at the round-trip price.
+   * Returns the OUTBOUND booking; fareEgp is the total of both legs and returnLeg carries the return booking reference.
+   */
+  async createRoundTripBooking(a: CreateBookingArgs & { returnTripId: string; returnPickupStopId?: string; returnDropoffStopId?: string }): Promise<Booking> {
+    const created = await this.backend.createRoundTripBooking({
+      outboundTripId: a.tripId, returnTripId: a.returnTripId, seats: a.passengerCount || 1, fullName: a.passengerName.trim(),
+      phoneE164: this.toE164(a.passengerPhone), email: a.email, studentId: a.studentId || undefined,
+      pickupStopId: a.pickupStopId || undefined, dropoffStopId: a.dropoffStopId || undefined,
+      returnPickupStopId: a.returnPickupStopId || undefined, returnDropoffStopId: a.returnDropoffStopId || undefined,
+      idempotencyKey: a.idempotencyKey ?? crypto.randomUUID(),
+    });
+    const bump = (tripId: string) => {
+      const t = this.trips.get(tripId);
+      if (t && !created.idempotent_replay) this.trips.set(t.id, { ...t, bookedSeats: Math.min(t.totalSeats, t.bookedSeats + created.outbound.seats_count) });
+    };
+    bump(created.outbound.trip_id); bump(created.return.trip_id);
+    const trip = this.trips.get(created.outbound.trip_id);
+    return {
+      id: created.outbound.id, bookingReference: created.outbound.reference, companyId: trip?.companyId ?? '', tripId: created.outbound.trip_id,
+      passengerName: a.passengerName.trim(), passengerPhone: a.passengerPhone.trim(), studentId: a.studentId,
+      passengerCount: created.outbound.seats_count, fareEgp: Number(created.total_amount),
+      status: created.outbound.status as Booking['status'], pickupStopId: a.pickupStopId ?? '', dropoffStopId: a.dropoffStopId ?? '',
+      createdAt: new Date().toISOString(), qrTicketToken: '', passengers: [],
+      returnLeg: { bookingReference: created.return.reference, tripId: created.return.trip_id },
     };
   }
 

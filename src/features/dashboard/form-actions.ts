@@ -10,6 +10,8 @@ import { busService } from '@/features/buses/service';
 import { driverService } from '@/features/drivers/service';
 import { tripService } from '@/features/trips/service';
 import { tripTemplateService } from '@/features/trip-templates/service';
+import { companyTimeZone } from '@/features/trips/company-timezone';
+import { localDateTimeToInstant } from '@/features/trips/day-groups';
 import { userService } from '@/features/users/service';
 import { companyService } from '@/features/companies/service';
 import { buildInviteUrl } from '@/features/users/invite-link';
@@ -61,16 +63,23 @@ export async function createDriverFormAction(_prev: FormState, f: FormData): Pro
 
 export async function createTripFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   return run('/dashboard/trips', async (c) => {
-    const dep = new Date(str(f, 'departureAt'));
-    const arr = new Date(str(f, 'arrivalAt'));
-    if (Number.isNaN(dep.getTime()) || Number.isNaN(arr.getTime())) throw new AppError('validation', { fields: { departureAt: 'invalid' } });
+    // The form sends wall-clock times ("2026-12-01T08:00"): read them in the COMPANY time zone, never the server's.
+    const tz = await companyTimeZone(c);
+    const at = (v: string, field: string): string => {
+      const iso = localDateTimeToInstant(v, tz);
+      if (!iso) throw new AppError('validation', { fields: { [field]: 'invalid' } });
+      return iso;
+    };
+    const departureAt = at(str(f, 'departureAt'), 'departureAt');
+    const arrivalAt = at(str(f, 'arrivalAt'), 'arrivalAt');
     if (f.get('roundTrip') === 'on') {
       const deps = f.getAll('retDep').map(String), arrs = f.getAll('retArr').map(String);
-      const returns = deps.map((d, i) => ({ d, a: arrs[i] ?? '' })).filter((r) => r.d && r.a).map((r) => ({ routeId: str(f, 'returnRouteId'), departureAt: new Date(r.d).toISOString(), arrivalAt: new Date(r.a).toISOString(), price: num(f, 'returnPrice') }));
-      await tripService.createWithReturns(c, { routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null, departureAt: dep.toISOString(), arrivalAt: arr.toISOString(), price: num(f, 'price'), roundTripPrice: num(f, 'roundTripPrice'), capacity: num(f, 'capacity'), notes: str(f, 'notes') || undefined, returns });
+      const returns = deps.map((d, i) => ({ d, a: arrs[i] ?? '' })).filter((r) => r.d && r.a)
+        .map((r) => ({ routeId: str(f, 'returnRouteId'), departureAt: at(r.d, 'retDep'), arrivalAt: at(r.a, 'retArr'), price: num(f, 'returnPrice') }));
+      await tripService.createWithReturns(c, { routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null, departureAt, arrivalAt, price: num(f, 'price'), roundTripPrice: num(f, 'roundTripPrice'), capacity: num(f, 'capacity'), notes: str(f, 'notes') || undefined, returns });
       return;
     }
-    await tripService.createDraft(c, { routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null, departureAt: dep.toISOString(), arrivalAt: arr.toISOString(), price: num(f, 'price'), capacity: num(f, 'capacity'), notes: str(f, 'notes') || undefined });
+    await tripService.createDraft(c, { routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null, departureAt, arrivalAt, price: num(f, 'price'), capacity: num(f, 'capacity'), notes: str(f, 'notes') || undefined });
   });
 }
 

@@ -153,6 +153,11 @@ export const DigitalTicketView: React.FC<DigitalTicketViewProps> = ({
             <span className="font-mono font-bold text-sm text-amber-300 tracking-wider">
               {booking.bookingReference}
             </span>
+            {booking.returnLeg && (
+              <span className="text-[10px] text-slate-300 block">
+                {locale === 'ar' ? 'حجز العودة' : 'Return booking'}: <span className="font-mono text-amber-300">{booking.returnLeg.bookingReference}</span>
+              </span>
+            )}
             {passengers.length > 1 && (
               <span className="text-[10px] text-slate-300 block font-mono">
                 Pass {activePassenger?.ticketIndex} of {passengers.length}

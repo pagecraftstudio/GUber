@@ -14,10 +14,11 @@ export function Bi({ en, ar }: { en: string; ar: string }) {
 }
 
 /** Date/time in the dashboard language (Latin digits, so they match phone numbers and references). Server and browser may differ in time zone, hence suppressHydrationWarning. */
-export function Dt({ value, time = false }: { value: string; time?: boolean }) {
+/** `timeZone`: pass the COMPANY zone for trip times so every screen (and every viewer's browser) shows the same wall-clock time. */
+export function Dt({ value, time = false, timeZone }: { value: string; time?: boolean; timeZone?: string }) {
   const lang = useDashLang();
   const d = new Date(value);
   const locale = lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB';
-  const text = time ? d.toLocaleString(locale) : d.toLocaleDateString(locale);
+  const text = time ? d.toLocaleString(locale, timeZone ? { timeZone } : undefined) : d.toLocaleDateString(locale, timeZone ? { timeZone } : undefined);
   return <time dateTime={value} dir="ltr" suppressHydrationWarning>{text}</time>;
 }

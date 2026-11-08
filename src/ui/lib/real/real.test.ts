@@ -169,3 +169,26 @@ describe('public catalogue goes through the same-origin server routes', () => {
     await expect(backendWith(async () => new Response('<html>', { status: 200 })).searchTrips({})).rejects.toBeInstanceOf(BackendError);
   });
 });
+
+describe('go and return (real backend)', () => {
+  it('publishes a round trip price only when a return time is bookable', () => {
+    expect(marketplaceItemFromRow(row({ round_trip_price: '80.00', return_options: 2 }))).toMatchObject({ roundTripPriceEgp: 80, returnOptionsCount: 2 });
+    expect(marketplaceItemFromRow(row({ round_trip_price: '80.00', return_options: 0 })).roundTripPriceEgp).toBeUndefined();
+    expect(marketplaceItemFromRow(row({ round_trip_price: null, return_options: 0 })).roundTripPriceEgp).toBeUndefined();
+    expect(marketplaceItemFromRow(row()).roundTripPriceEgp).toBeUndefined();
+  });
+  it('sends no company or customer id when booking a round trip, and maps the result', async () => {
+    const calls: { fn: string; args: Record<string, unknown> }[] = [];
+    const client = { rpc: async (fn: string, args: Record<string, unknown>) => { calls.push({ fn, args }); return { data: {
+      group_id: 'g', currency: 'EGP', total_amount: 160, idempotent_replay: false,
+      outbound: { id: 'b1', reference: 'MB-1', status: 'confirmed', trip_id: 'o', seats_count: 2, unit_price: 48, total_amount: 96 },
+      return: { id: 'b2', reference: 'MB-2', status: 'confirmed', trip_id: 'r', seats_count: 2, unit_price: 32, total_amount: 64 } }, error: null }; } };
+    const backend = createCustomerBackend(client as never);
+    const svc = new RealTransportService(backend, (p) => p);
+    const b = await svc.createRoundTripBooking({ tripId: 'o', returnTripId: 'r', passengerName: ' Ann ', passengerPhone: '+201000000001', passengerCount: 2, companyId: 'evil', customerId: 'evil', fareEgp: 1 });
+    expect(calls[0]!.fn).toBe('create_my_round_trip_booking');
+    expect(Object.keys(calls[0]!.args).some((k) => /company|customer|user|fare|price/i.test(k))).toBe(false);
+    expect(calls[0]!.args).toMatchObject({ p_outbound_trip_id: 'o', p_return_trip_id: 'r', p_seats: 2 });
+    expect(b).toMatchObject({ bookingReference: 'MB-1', fareEgp: 160, tripId: 'o', returnLeg: { bookingReference: 'MB-2', tripId: 'r' } });
+  });
+});
