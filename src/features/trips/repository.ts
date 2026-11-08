@@ -35,6 +35,7 @@ export const tripRepository: TripRepository = {
     if (q.routeId) query = query.eq('route_id', q.routeId);
     if (q.busId) query = query.eq('bus_id', q.busId);
     if (q.driverId) query = query.eq('driver_id', q.driverId);
+    if (q.source) query = q.source === 'regular' ? query.not('template_id', 'is', null) : query.is('template_id', null);
     if (q.from) query = query.gte('departure_at', q.from);
     if (q.to) query = query.lt('departure_at', q.to);
     const { from, to } = rangeFor(q);

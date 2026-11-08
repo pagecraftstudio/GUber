@@ -48,6 +48,8 @@ export const tripListSchema = pageQuerySchema.extend({
   driverId: idSchema.optional(),
   from: instantSchema.optional(), // departure_at >= from
   to: instantSchema.optional(), // departure_at < to
+  /** 'regular' = generated from a regular-trip template, 'manual' = added one by one. */
+  source: z.enum(['regular', 'manual']).optional(),
   dir: z.enum(['asc', 'desc']).default('asc'),
 });
 export type TripListQuery = z.output<typeof tripListSchema>;
