@@ -31,19 +31,22 @@ async function run(paths: string[], work: (c: TenantServiceContext) => Promise<u
   return { ok: true };
 }
 
-export const setBusStatusAction = (id: string, status: string) =>
-  run(['/dashboard/buses'], (c) => busService.update(c, id, { status: status as 'active' | 'maintenance' | 'inactive' }));
+export async function setBusStatusAction(id: string, status: string): Promise<AutoResult> {
+  return run(['/dashboard/buses'], (c) => busService.update(c, id, { status: status as 'active' | 'maintenance' | 'inactive' }));
+}
 
-export const setDriverStatusAction = (id: string, status: string) =>
-  run(['/dashboard/drivers'], (c) => driverService.update(c, id, { status: status as 'active' | 'inactive' }));
+export async function setDriverStatusAction(id: string, status: string): Promise<AutoResult> {
+  return run(['/dashboard/drivers'], (c) => driverService.update(c, id, { status: status as 'active' | 'inactive' }));
+}
 
-export const setRouteActiveAction = (id: string, isActive: boolean) =>
-  run(['/dashboard/routes'], (c) => routeService.update(c, id, { isActive: isActive === true }));
+export async function setRouteActiveAction(id: string, isActive: boolean): Promise<AutoResult> {
+  return run(['/dashboard/routes'], (c) => routeService.update(c, id, { isActive: isActive === true }));
+}
 
 /** Staff-entered amount received. Accepts "50", "50.5", "50,5" and Arabic-Indic digits. The database bounds it by the booking total. */
-export const setAmountPaidAction = (id: string, rawAmount: string) => {
+export async function setAmountPaidAction(id: string, rawAmount: string): Promise<AutoResult> {
   const raw = String(rawAmount).trim().replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).replace('٫', '.').replace(',', '.');
-  if (!/^\d+(\.\d{1,2})?$/.test(raw)) return Promise.resolve<AutoResult>({ ok: false, code: 'validation', detail: 'amount_invalid' });
+  if (!/^\d+(\.\d{1,2})?$/.test(raw)) return { ok: false, code: 'validation', detail: 'amount_invalid' };
   return run(['/dashboard/bookings'], async (c) => {
     try { await bookingService.setAmountPaid(c, { bookingId: id, amount: Number(raw) }); }
     catch (e) {
@@ -52,11 +55,13 @@ export const setAmountPaidAction = (id: string, rawAmount: string) => {
       throw e;
     }
   });
-};
+}
 
-export const setPaymentStatusAction = (id: string, paymentStatus: string) =>
-  run(['/dashboard/bookings'], (c) => bookingService.setPaymentStatus(c, { bookingId: id, paymentStatus }));
+export async function setPaymentStatusAction(id: string, paymentStatus: string): Promise<AutoResult> {
+  return run(['/dashboard/bookings'], (c) => bookingService.setPaymentStatus(c, { bookingId: id, paymentStatus }));
+}
 
 /** Cancel a booking (releases its seats exactly once; repeating is a harmless no-op). */
-export const cancelBookingAction = (id: string) =>
-  run(['/dashboard/bookings'], (c) => bookingService.cancel(c, { bookingId: id }));
+export async function cancelBookingAction(id: string): Promise<AutoResult> {
+  return run(['/dashboard/bookings'], (c) => bookingService.cancel(c, { bookingId: id }));
+}
