@@ -17,8 +17,8 @@ update trips set departure_at = date_trunc('day', now()) + interval '1 day 8 hou
 -- all on far-future dates so they never collide with fixture trips. A: bus 225 / driver 234 are the free pair.
 insert into trips (id, company_id, route_id, bus_id, driver_id, departure_at, arrival_at, price, capacity, status) values
   (t.u(601), t.u(101), t.u(201), t.u(225), t.u(234), date_trunc('day', now()) + interval '40 day 8 hours', date_trunc('day', now()) + interval '40 day 10 hours', 30, 10, 'draft'),
-  (t.u(602), t.u(101), t.u(201), t.u(225), t.u(231), date_trunc('day', now()) + interval '40 day 9 hours', date_trunc('day', now()) + interval '40 day 11 hours', 30, 10, 'draft'),
-  (t.u(603), t.u(101), t.u(201), t.u(222), t.u(234), date_trunc('day', now()) + interval '40 day 9 hours', date_trunc('day', now()) + interval '40 day 11 hours', 30, 10, 'draft'),
+  (t.u(602), t.u(101), t.u(201), t.u(225), t.u(231), date_trunc('day', now()) + interval '50 day 8 hours', date_trunc('day', now()) + interval '50 day 10 hours', 30, 10, 'draft'),
+  (t.u(603), t.u(101), t.u(201), t.u(222), t.u(234), date_trunc('day', now()) + interval '55 day 8 hours', date_trunc('day', now()) + interval '55 day 10 hours', 30, 10, 'draft'),
   (t.u(605), t.u(101), t.u(201), t.u(222), t.u(232), now() - interval '5 hours', now() - interval '3 hours', 30, 10, 'draft'),
   (t.u(606), t.u(101), t.u(201), t.u(221), t.u(231), date_trunc('day', now()) + interval '45 day 8 hours', date_trunc('day', now()) + interval '45 day 10 hours', 30, 10, 'draft');
 insert into trips (id, company_id, route_id, departure_at, arrival_at, price, capacity, status) values
@@ -48,10 +48,32 @@ select t.eq('invalid status name is invalid input', left(t.err_of($$select publi
 -- ===== draft -> scheduled: preconditions and conflicts =====
 select t.eq('draft -> scheduled works with bus+driver', (select (public.transition_trip(t.u(601), 'scheduled'))->>'status'), 'scheduled');
 select t.eq('repeat is a no-op', (select (public.transition_trip(t.u(601), 'scheduled'))->>'changed'), 'false');
-select t.eq('bus conflict (overlap, same bus) refused by the exclusion constraint', left(t.err_of($$select public.transition_trip(t.u(602), 'scheduled')$$), 5), '23P01');
-select t.eq('...and names the bus constraint', t.err_of($$select public.transition_trip(t.u(602), 'scheduled')$$) like '%trips_bus_no_overlap%', true);
-select t.eq('driver conflict (overlap, same driver) refused', t.err_of($$select public.transition_trip(t.u(603), 'scheduled')$$) like '23P01|%trips_driver_no_overlap%', true);
-select t.eq('losers stay drafts', t.tstatus(t.u(602)) || '/' || t.tstatus(t.u(603)), 'draft/draft');
+-- 0027: overlaps are refused when a trip is CREATED or MOVED, drafts included (they used to be judged only at draft -> scheduled)
+select t.eq('bus overlap refused when a DRAFT is moved onto a scheduled trip (same bus)', left(t.err_of($$update trips set departure_at = date_trunc('day', now()) + interval '40 day 9 hours', arrival_at = date_trunc('day', now()) + interval '40 day 11 hours' where id = t.u(602)$$), 5), '23P01');
+select t.eq('...and names the bus constraint', t.err_of($$update trips set departure_at = date_trunc('day', now()) + interval '40 day 9 hours', arrival_at = date_trunc('day', now()) + interval '40 day 11 hours' where id = t.u(602)$$) like '%trips_bus_no_overlap%', true);
+select t.eq('driver overlap refused when a DRAFT is moved onto a scheduled trip (same driver)', t.err_of($$update trips set departure_at = date_trunc('day', now()) + interval '40 day 9 hours', arrival_at = date_trunc('day', now()) + interval '40 day 11 hours' where id = t.u(603)$$) like '23P01|%trips_driver_no_overlap%', true);
+select t.eq('a refused move leaves the drafts where they were', t.tstatus(t.u(602)) || '/' || t.tstatus(t.u(603)), 'draft/draft');
+select t.as_admin();
+select t.eq('a NEW draft overlapping an existing draft of the same bus is refused at creation', left(t.err_of($$insert into trips (company_id,route_id,bus_id,departure_at,arrival_at,price,capacity,status) values (t.u(101), t.u(201), t.u(225), date_trunc('day', now()) + interval '50 day 9 hours', date_trunc('day', now()) + interval '50 day 11 hours', 30, 10, 'draft')$$), 5), '23P01');
+select t.eq('a NEW draft overlapping an existing draft of the same driver is refused at creation', left(t.err_of($$insert into trips (company_id,route_id,driver_id,departure_at,arrival_at,price,capacity,status) values (t.u(101), t.u(201), t.u(231), date_trunc('day', now()) + interval '50 day 9 hours', date_trunc('day', now()) + interval '50 day 11 hours', 30, 10, 'draft')$$), 5), '23P01');
+select t.eq('a draft inside the 30 minute buffer after another trip is refused too', left(t.err_of($$insert into trips (company_id,route_id,bus_id,departure_at,arrival_at,price,capacity,status) values (t.u(101), t.u(201), t.u(225), date_trunc('day', now()) + interval '50 day 10 hours 15 minutes', date_trunc('day', now()) + interval '50 day 12 hours', 30, 10, 'draft')$$), 5), '23P01');
+insert into trips (id, company_id, route_id, bus_id, departure_at, arrival_at, price, capacity, status) values
+  (t.u(609), t.u(101), t.u(201), t.u(225), date_trunc('day', now()) + interval '50 day 10 hours 31 minutes', date_trunc('day', now()) + interval '50 day 12 hours', 30, 10, 'draft');
+select t.eq('...the 31-minutes-later draft exists', (select count(*) from trips where id = t.u(609)), 1::bigint);
+delete from trips where id = t.u(609);
+select t.as_user(t.u(4));
+select t.as_admin();
+insert into trips (id, company_id, route_id, bus_id, driver_id, departure_at, arrival_at, price, capacity, status) values
+  (t.u(611), t.u(101), t.u(201), t.u(225), t.u(231), date_trunc('day', now()) + interval '60 day 8 hours', date_trunc('day', now()) + interval '60 day 10 hours', 30, 10, 'draft');
+select t.as_user(t.u(4));
+select t.eq('draft -> scheduled still works for a conflict-free draft', (select (public.transition_trip(t.u(611), 'scheduled'))->>'status'), 'scheduled');
+select public.transition_trip(t.u(611), 'cancelled');
+select t.as_admin();
+insert into trips (id, company_id, route_id, bus_id, driver_id, departure_at, arrival_at, price, capacity, status) values
+  (t.u(610), t.u(101), t.u(201), t.u(225), t.u(231), date_trunc('day', now()) + interval '60 day 9 hours', date_trunc('day', now()) + interval '60 day 11 hours', 30, 10, 'draft');
+select t.eq('a CANCELLED trip frees its bus and driver: an overlapping trip can be created', (select count(*) from trips where id = t.u(610)), 1::bigint);
+delete from trips where id in (t.u(610), t.u(611));
+select t.as_user(t.u(4));
 select t.eq('no bus/driver: refused', t.err_of($$select public.transition_trip(t.u(604), 'scheduled')$$) like '23514|%trips_assigned_when_live%', true);
 select t.eq('departure in the past: refused', t.err_of($$select public.transition_trip(t.u(605), 'scheduled')$$), '23514|trip already departed');
 select t.as_admin();

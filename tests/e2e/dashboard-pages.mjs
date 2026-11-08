@@ -189,25 +189,24 @@ t = await fillTrip(owner, { bus: 'M2P-ACT', cap: 31, dep: '2031-03-05T08:00', ar
 check('business rule: capacity above the bus capacity is refused with a clear message', /between 1 and 30/.test(t) && tripsA() === before + 1, t.slice(-300));
 t = await fillTrip(owner, { cap: 20, dep: '2031-03-05T10:00', arr: '2031-03-05T09:00' });
 check('business rule: arrival before departure is refused with a clear message', /Arrival must be later than departure/.test(t) && tripsA() === before + 1, t.slice(-300));
-// Drafts may overlap; the exclusion constraints apply once a trip is scheduled. Create the drafts, then move them through the UI.
+// 0027: overlaps are refused when a trip is CREATED (drafts included). Free combinations are accepted.
 await fillTrip(owner, { bus: 'M2P-ACT', driver: 'M2P Driver2', cap: 20, dep: '2031-03-04T09:00', arr: '2031-03-04T11:00' });
+check('trips/new: the same bus at an overlapping time is refused at creation', tripsA() === before + 1);
 await fillTrip(owner, { bus: 'M2P-ACT2', driver: 'M2P Driver', cap: 20, dep: '2031-03-04T09:00', arr: '2031-03-04T11:00' });
+check('trips/new: the same driver at an overlapping time is refused at creation', tripsA() === before + 1);
+await fillTrip(owner, { bus: 'M2P-ACT2', driver: 'M2P Driver', cap: 20, dep: '2031-03-06T09:00', arr: '2031-03-06T11:00' });
 await fillTrip(owner, { cap: 20, dep: '2031-03-04T12:00', arr: '2031-03-04T13:00' });
-check('trips/new: overlapping drafts are accepted (rules apply when a trip is scheduled)', tripsA() === before + 4);
-const tripId = (bus, drv, hour) => sql(`select t.id from trips t left join buses b on b.id = t.bus_id left join drivers d on d.id = t.driver_id where t.company_id = '${A}' and t.status = 'draft' and ${bus ? `b.plate_number = '${bus}'` : 't.bus_id is null'} ${drv ? `and d.full_name = '${drv}'` : ''} and to_char(t.departure_at at time zone 'UTC', 'YYYY-MM-DD') = '2031-03-04' order by t.created_at limit 1`);
+check('trips/new: free combinations and a trip without bus or driver are accepted', tripsA() === before + 3);
+const tripId = (bus, drv, hour) => sql(`select t.id from trips t left join buses b on b.id = t.bus_id left join drivers d on d.id = t.driver_id where t.company_id = '${A}' and t.status = 'draft' and ${bus ? `b.plate_number = '${bus}'` : 't.bus_id is null'} ${drv ? `and d.full_name = '${drv}'` : ''} and to_char(t.departure_at at time zone 'UTC', 'YYYY-MM-DD') like '2031-03-0%' order by t.created_at limit 1`);
 async function moveTrip(p, id, to) {
   await go(p, '/dashboard/trips');
-  const ok = await p.evaluate((id, to) => { const f = document.querySelector(`input[name=id][value="${id}"]`)?.closest('form'); if (!f) return false; f.querySelector('select[name=to]').value = to; f.requestSubmit(); return true; }, id, to);
+  const ok = await p.evaluate((id, to) => { const f = document.querySelector(`input[name=id][value="${id}"]`)?.closest('form'); if (!f) return false; if (!f.querySelector('input[name=expected]')) return false; f.requestSubmit(); return true; }, id, to);
   await sleep(2500);
   return { ok, t: await text(p), alert: await p.evaluate(() => [...document.querySelectorAll('[role=alert]')].map((e) => e.textContent).join(' | ')) };
 }
-const t1 = tripId('M2P-ACT', 'M2P Driver'), t2 = tripId('M2P-ACT', 'M2P Driver2'), t3 = tripId('M2P-ACT2', 'M2P Driver'), t4 = tripId(null, null);
+const t1 = tripId('M2P-ACT', 'M2P Driver'), t3 = tripId('M2P-ACT2', 'M2P Driver'), t4 = tripId(null, null);
 let r = await moveTrip(owner, t1, 'scheduled');
-check('lifecycle: a trip with a free bus and driver can be scheduled', sql(`select status from trips where id = '${t1}'`) === 'scheduled' && /Saved\./.test(r.t), r.t.slice(-300));
-r = await moveTrip(owner, t2, 'scheduled');
-check('business rule: an overlapping bus is refused with a clear message (no error page)', /already assigned to an overlapping trip/.test(r.alert) && sql(`select status from trips where id = '${t2}'`) === 'draft', JSON.stringify(r.alert) + r.t.slice(-200));
-r = await moveTrip(owner, t3, 'scheduled');
-check('business rule: an overlapping driver is refused with a clear message', /driver is already assigned to an overlapping trip/.test(r.alert) && sql(`select status from trips where id = '${t3}'`) === 'draft', JSON.stringify(r.alert));
+check('lifecycle: a trip with a free bus and driver can be scheduled', sql(`select status from trips where id = '${t1}'`) === 'scheduled' && /Status updated\./.test(r.t), r.t.slice(-300));
 r = await moveTrip(owner, t4, 'scheduled');
 check('business rule: scheduling without a bus and driver is refused with a clear message', /Assign a bus and a driver/.test(r.alert) && sql(`select status from trips where id = '${t4}'`) === 'draft', JSON.stringify(r.alert));
 sql(`update buses set status = 'inactive' where company_id = '${A}' and plate_number = 'M2P-ACT2'`);
@@ -215,7 +214,6 @@ sql(`update trips set driver_id = (select id from drivers where company_id = '${
 r = await moveTrip(owner, t3, 'scheduled');
 check('business rule: a bus that became inactive after the draft was saved is refused with a clear message', /This bus is not active/.test(r.alert) && sql(`select status from trips where id = '${t3}'`) === 'draft', JSON.stringify(r.alert));
 await go(owner, '/dashboard/trips'); await axeScan(owner, 'trips list (rule message shown)');
-await go(pages.owner, '/dashboard/trips?error=bus_conflict'); check('a11y: rule messages are announced as an alert', (await pages.owner.evaluate(() => [...document.querySelectorAll('[role=alert]')].some((e) => /overlapping trip/.test(e.textContent)))));
 await go(pages.owner, '/dashboard/trips?error=<script>alert(1)</script>'); check('security: unknown error codes in the URL are never echoed', !/<script|alert\(1\)/.test(await text(pages.owner)));
 const dbTrip = await fetch(`${L.STUB}/rest/v1/rpc/transition_trip`, { method: 'POST', headers: { authorization: `Bearer ${tokB}`, apikey: 'x', 'content-type': 'application/json' }, body: JSON.stringify({ p_trip_id: sql(`select id from trips where company_id = '${A}' order by created_at desc limit 1`), p_to: 'scheduled' }) });
 check('isolation (API): Company B cannot move a Company A trip through the lifecycle', dbTrip.status >= 400);

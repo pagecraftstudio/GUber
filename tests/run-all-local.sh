@@ -96,6 +96,7 @@ if [ -n "${E2E_TOOLS:-}" ]; then   # real browser (production build + next start
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh dashboard-m2.mjs 1; rc=$?; echo "e2e(dashboard-m2) exit $rc"; [ $rc = 0 ] || fail=1
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh dashboard-users.mjs 1; rc=$?; echo "e2e(dashboard-users) exit $rc"; [ $rc = 0 ] || fail=1
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh dashboard-drivers-team.mjs 1; rc=$?; echo "e2e(dashboard-drivers-team) exit $rc"; [ $rc = 0 ] || fail=1
+  SKIP_BUILD=1 bash tests/e2e/run-e2e.sh dashboard-trips.mjs 1; rc=$?; echo "e2e(dashboard-trips) exit $rc"; [ $rc = 0 ] || fail=1
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh dashboard-pages.mjs 1; rc=$?; echo "e2e(dashboard-pages) exit $rc"; [ $rc = 0 ] || fail=1
   SKIP_BUILD=1 bash tests/e2e/run-e2e.sh dashboard-rtl.mjs 1; rc=$?; echo "e2e(dashboard-rtl) exit $rc"; [ $rc = 0 ] || fail=1
   step "browser e2e: sign-out + protected routes"

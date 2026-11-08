@@ -88,17 +88,43 @@ const GENERIC: Record<string, Record<Lang, string>> = {
   rate_limited: { en: 'Too many requests. Wait a moment and try again.', ar: 'طلبات كثيرة. انتظر قليلاً ثم حاول مجدداً.' },
   business_rule: { en: 'This action is not allowed.', ar: 'هذا الإجراء غير مسموح.' },
   internal: { en: 'Something went wrong on our side. Nothing was lost; try again.', ar: 'حدث خطأ من جانبنا. لم يضع شيء، حاول مجدداً.' },
-  bus_conflict: { en: 'This bus is already assigned to an overlapping trip.', ar: 'هذه الحافلة مخصصة لرحلة متداخلة.' },
-  driver_conflict: { en: 'This driver is already assigned to an overlapping trip.', ar: 'هذا السائق مخصص لرحلة متداخلة.' },
   bus_inactive: { en: 'This bus is not active.', ar: 'هذه الحافلة غير نشطة.' },
   driver_inactive: { en: 'This driver is not active.', ar: 'هذا السائق غير نشط.' },
   seats_exceed_capacity: { en: 'The seats booked are more than the trip capacity.', ar: 'عدد المقاعد المحجوزة أكبر من سعة الرحلة.' },
   bus_and_driver_required: { en: 'Assign a bus and a driver before scheduling this trip.', ar: 'عيّن حافلة وسائقًا قبل جدولة هذه الرحلة.' },
+  trip_changed: { en: 'This trip was changed by someone else. Reload the page and try again.', ar: 'تم تغيير هذه الرحلة بواسطة شخص آخر. أعد تحميل الصفحة وحاول مجدداً.' },
+  trip_final: { en: 'This trip is already finished or cancelled; it has no next step.', ar: 'هذه الرحلة منتهية أو ملغاة وليس لها خطوة تالية.' },
+  trip_departed: { en: 'The departure time has already passed, so the trip cannot be scheduled. Change the departure time first.', ar: 'مر وقت الانطلاق بالفعل فلا يمكن جدولة الرحلة. غيّر وقت الانطلاق أولاً.' },
+  trip_not_started: { en: 'The trip cannot be completed before its departure time.', ar: 'لا يمكن إكمال الرحلة قبل وقت انطلاقها.' },
+  trip_has_bookings: { en: 'This trip has bookings or booking history, so it cannot be deleted. Cancel it instead.', ar: 'لهذه الرحلة حجوزات أو سجل حجوزات فلا يمكن حذفها. ألغِها بدلاً من ذلك.' },
+  trip_not_draft: { en: 'Only a draft trip can be deleted. Cancel it instead.', ar: 'يمكن حذف المسودات فقط. ألغِ الرحلة بدلاً من ذلك.' },
+  trip_transition_invalid: { en: 'That status change is not allowed from the current status.', ar: 'تغيير الحالة هذا غير مسموح من الحالة الحالية.' },
+  bus_conflict: { en: 'This bus is already on another trip that overlaps this time (a 30 minute turnaround is kept after every trip).', ar: 'هذه الحافلة مخصصة لرحلة أخرى تتداخل مع هذا الوقت (تُحفظ فترة 30 دقيقة بعد كل رحلة).' },
+  driver_conflict: { en: 'This driver is already on another trip that overlaps this time (a 30 minute turnaround is kept after every trip).', ar: 'هذا السائق مخصص لرحلة أخرى تتداخل مع هذا الوقت (تُحفظ فترة 30 دقيقة بعد كل رحلة).' },
   trip_failed: { en: 'The trip status could not be changed. Check the trip and try again.', ar: 'تعذر تغيير حالة الرحلة. راجع الرحلة وحاول مرة أخرى.' },
   capacity_exceeds_bus: { en: 'Trip capacity is larger than the bus capacity.', ar: 'سعة الرحلة أكبر من سعة الحافلة.' },
 };
 export const genericErrorText = (lang: Lang, code: string, detail?: string): string =>
   (detail && GENERIC[detail]?.[lang]) || (detail && STOP_ISSUES[detail]?.[lang]) || GENERIC[code]?.[lang] || GENERIC.internal![lang];
+
+export const TRIP_UI = {
+  en: {
+    next: { draft: 'Schedule', scheduled: 'Open boarding', boarding: 'Start trip', in_progress: 'Complete trip' },
+    final: { completed: 'Completed', cancelled: 'Cancelled' },
+    cancel: 'Cancel trip', del: 'Delete', confirmCancel: 'Cancel this trip? Every booking on it will be cancelled too.', confirmDelete: 'Delete this draft permanently?',
+    yesCancel: 'Yes, cancel trip', yesDelete: 'Yes, delete', keep: 'Keep', working: 'Working…', actions: 'Trip actions',
+    done: { advanced: 'Status updated.', cancelled: 'Trip cancelled.', deleted: 'Trip deleted.' },
+    flow: 'Draft → Scheduled → Boarding → On the road → Completed',
+  },
+  ar: {
+    next: { draft: 'جدولة', scheduled: 'فتح الصعود', boarding: 'بدء الرحلة', in_progress: 'إكمال الرحلة' },
+    final: { completed: 'مكتملة', cancelled: 'ملغاة' },
+    cancel: 'إلغاء الرحلة', del: 'حذف', confirmCancel: 'إلغاء هذه الرحلة؟ ستُلغى كل الحجوزات عليها أيضاً.', confirmDelete: 'حذف هذه المسودة نهائياً؟',
+    yesCancel: 'نعم، ألغِ الرحلة', yesDelete: 'نعم، احذف', keep: 'إبقاء', working: 'جارٍ التنفيذ…', actions: 'إجراءات الرحلة',
+    done: { advanced: 'تم تحديث الحالة.', cancelled: 'تم إلغاء الرحلة.', deleted: 'تم حذف الرحلة.' },
+    flow: 'مسودة ← مجدولة ← صعود ← على الطريق ← مكتملة',
+  },
+} as const;
 
 export const FORM_TEXT = {
   en: { saved: 'Saved.', created: 'Created.', saving: 'Saving…', fixErrors: (n: number) => `${n} ${n === 1 ? 'problem needs' : 'problems need'} fixing before you can save.`, limitBlocked: 'Adding is paused until the plan limit is resolved.' },
@@ -169,6 +195,7 @@ export const SETTINGS_UI = {
 /** Arabic for page chrome written in English inside server pages (shown by <T>). Anything missing falls back to the English text; a unit test checks the pages' literals are all covered. */
 export const PAGE_AR: Record<string, string> = {
   "Login": "حساب الدخول",
+  "Actions": "الإجراءات",
   "Fleet operations": "عمليات الأسطول",
   "Fleet management": "إدارة الأسطول",
   "Manage your vehicles, registration details and seating capacity.": "أدر مركباتك وبيانات تسجيلها وسعة المقاعد.",

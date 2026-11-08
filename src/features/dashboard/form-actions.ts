@@ -206,3 +206,25 @@ export async function linkDriverFormAction(_prev: FormState, f: FormData): Promi
   revalidateTeam();
   return successState('saved');
 }
+
+/** Trip row actions. The id comes from the row; the company comes from the session; the NEXT status is computed server-side. */
+async function tripAction(work: (c: TenantServiceContext) => Promise<void>, message: 'advanced' | 'cancelled' | 'deleted'): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    await work(c);
+  } catch (e) {
+    return failure(c, e);
+  }
+  revalidatePath('/dashboard/trips');
+  return successState(message);
+}
+export async function advanceTripFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return tripAction(async (c) => { await tripService.advance(c, str(f, 'id'), str(f, 'expected')); }, 'advanced');
+}
+export async function cancelTripFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return tripAction(async (c) => { await tripService.cancel(c, str(f, 'id'), str(f, 'reason') || undefined); }, 'cancelled');
+}
+export async function deleteTripFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return tripAction(async (c) => { await tripService.deleteDraft(c, str(f, 'id')); }, 'deleted');
+}
