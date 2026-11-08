@@ -9,6 +9,7 @@ import { routeService } from '@/features/routes/service';
 import { busService } from '@/features/buses/service';
 import { driverService } from '@/features/drivers/service';
 import { tripService } from '@/features/trips/service';
+import { tripTemplateService } from '@/features/trip-templates/service';
 import { userService } from '@/features/users/service';
 import { companyService } from '@/features/companies/service';
 import { buildInviteUrl } from '@/features/users/invite-link';
@@ -227,4 +228,41 @@ export async function cancelTripFormAction(_prev: FormState, f: FormData): Promi
 }
 export async function deleteTripFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   return tripAction(async (c) => { await tripService.deleteDraft(c, str(f, 'id')); }, 'deleted');
+}
+
+/** Regular trips. Days arrive as checkboxes named `days` (ISO weekday 1 = Mon .. 7 = Sun). The company comes from the session. */
+export async function createTripTemplateFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    const { generated } = await tripTemplateService.create(c, {
+      name: str(f, 'name'), routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null,
+      departureTime: str(f, 'departureTime'), durationMinutes: num(f, 'durationMinutes'), daysOfWeek: f.getAll('days').map((d) => Number(d)),
+      startDate: str(f, 'startDate'), endDate: str(f, 'endDate') || null, price: num(f, 'price'), capacity: num(f, 'capacity'),
+    });
+    revalidatePath('/dashboard/trips/regular');
+    revalidatePath('/dashboard/trips');
+    return successState('generated', undefined, generated);
+  } catch (e) {
+    return failure(c, e);
+  }
+}
+
+export async function generateTripTemplateFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let c: TenantServiceContext | null = null;
+  try {
+    c = await ctx();
+    const generated = await tripTemplateService.generate(c, { templateId: str(f, 'id'), days: 28 });
+    revalidatePath('/dashboard/trips/regular');
+    revalidatePath('/dashboard/trips');
+    return successState('generated', undefined, generated);
+  } catch (e) {
+    return failure(c, e);
+  }
+}
+
+export async function setTripTemplateActiveFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run('/dashboard/trips/regular', async (c) => {
+    await tripTemplateService.setActive(c, { templateId: str(f, 'id'), isActive: str(f, 'active') === '1' });
+  });
 }

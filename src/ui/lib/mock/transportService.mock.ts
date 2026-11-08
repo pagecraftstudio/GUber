@@ -335,10 +335,10 @@ export class MockTransportService {
     } else if (params.sortBy === 'price_desc') {
       results.sort((a, b) => b.priceEgp - a.priceEgp);
     } else if (params.sortBy === 'time_desc') {
-      results.sort((a, b) => b.departureTime.localeCompare(a.departureTime));
+      results.sort((a, b) => `${b.departureDate}T${b.departureTime}`.localeCompare(`${a.departureDate}T${a.departureTime}`));
     } else {
       // Default: time_asc
-      results.sort((a, b) => a.departureTime.localeCompare(b.departureTime));
+      results.sort((a, b) => `${a.departureDate}T${a.departureTime}`.localeCompare(`${b.departureDate}T${b.departureTime}`));
     }
 
     return results;
