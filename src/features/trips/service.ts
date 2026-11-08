@@ -6,7 +6,7 @@ import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { tripRepository, type TripRepository } from './repository';
 import { canCancel, nextStatus } from './lifecycle';
-import { tripCreateSchema, tripListSchema, tripTransitionSchema, tripUpdateSchema } from './schema';
+import { tripCreateSchema, tripWithReturnsSchema, tripListSchema, tripTransitionSchema, tripUpdateSchema } from './schema';
 import type { Trip, TripTransitioned } from './types';
 
 /**
@@ -29,6 +29,11 @@ export function makeTripService(repo: TripRepository) {
       requirePermission(ctx, PERMISSIONS.tripsWrite);
       return repo.createDraft(ctx, parseInput(tripCreateSchema, input));
     },
+    /** Go-and-return: outbound + its return options in one database transaction (all drafts). */
+    async createWithReturns(ctx: TenantServiceContext, input: unknown): Promise<{ id: string; returnIds: string[] }> {
+      requirePermission(ctx, PERMISSIONS.tripsWrite);
+      return repo.createWithReturns(ctx, parseInput(tripWithReturnsSchema, input));
+    },
     async update(ctx: TenantServiceContext, rawId: unknown, input: unknown): Promise<Trip> {
       requirePermission(ctx, PERMISSIONS.tripsWrite);
       return repo.update(ctx, parseInput(idSchema, rawId), parseInput(tripUpdateSchema, input));
@@ -48,7 +53,12 @@ export function makeTripService(repo: TripRepository) {
       if (trip.status !== expectedStatus) throw new AppError('conflict', { detail: 'trip_changed' });
       const to = nextStatus(trip.status);
       if (!to) throw new AppError('business_rule', { detail: 'trip_final' });
-      return repo.transition(ctx, { tripId: trip.id, to });
+      const moved = await repo.transition(ctx, { tripId: trip.id, to });
+      // Scheduling an outbound trip also schedules its draft return options, so the company does not click once per return time.
+      if (trip.status === 'draft' && to === 'scheduled' && trip.roundTripPrice !== null) {
+        for (const r of await repo.listReturns(ctx, trip.id)) if (r.status === 'draft') await repo.transition(ctx, { tripId: r.id, to: 'scheduled' });
+      }
+      return moved;
     },
     /** Cancel is its own action (bookings are cancelled with it, in the same database transaction). */
     async cancel(ctx: TenantServiceContext, rawId: unknown, reason?: unknown): Promise<TripTransitioned> {

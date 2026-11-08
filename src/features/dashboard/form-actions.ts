@@ -64,6 +64,12 @@ export async function createTripFormAction(_prev: FormState, f: FormData): Promi
     const dep = new Date(str(f, 'departureAt'));
     const arr = new Date(str(f, 'arrivalAt'));
     if (Number.isNaN(dep.getTime()) || Number.isNaN(arr.getTime())) throw new AppError('validation', { fields: { departureAt: 'invalid' } });
+    if (f.get('roundTrip') === 'on') {
+      const deps = f.getAll('retDep').map(String), arrs = f.getAll('retArr').map(String);
+      const returns = deps.map((d, i) => ({ d, a: arrs[i] ?? '' })).filter((r) => r.d && r.a).map((r) => ({ routeId: str(f, 'returnRouteId'), departureAt: new Date(r.d).toISOString(), arrivalAt: new Date(r.a).toISOString(), price: num(f, 'returnPrice') }));
+      await tripService.createWithReturns(c, { routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null, departureAt: dep.toISOString(), arrivalAt: arr.toISOString(), price: num(f, 'price'), roundTripPrice: num(f, 'roundTripPrice'), capacity: num(f, 'capacity'), notes: str(f, 'notes') || undefined, returns });
+      return;
+    }
     await tripService.createDraft(c, { routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null, departureAt: dep.toISOString(), arrivalAt: arr.toISOString(), price: num(f, 'price'), capacity: num(f, 'capacity'), notes: str(f, 'notes') || undefined });
   });
 }
@@ -239,6 +245,7 @@ export async function createTripTemplateFormAction(_prev: FormState, f: FormData
       name: str(f, 'name'), routeId: str(f, 'routeId'), busId: str(f, 'busId') || null, driverId: str(f, 'driverId') || null,
       departureTime: str(f, 'departureTime'), durationMinutes: num(f, 'durationMinutes'), daysOfWeek: f.getAll('days').map((d) => Number(d)),
       startDate: str(f, 'startDate'), endDate: str(f, 'endDate') || null, price: num(f, 'price'), capacity: num(f, 'capacity'),
+      ...(f.get('roundTrip') === 'on' ? { returnRouteId: str(f, 'returnRouteId'), returnPrice: num(f, 'returnPrice'), roundTripPrice: num(f, 'roundTripPrice'), returnDayOffset: Number(str(f, 'returnDayOffset') || 0), returnTimes: f.getAll('returnTimes').map(String).filter(Boolean) } : {}),
     });
     revalidatePath('/dashboard/trips/regular');
     revalidatePath('/dashboard/trips');

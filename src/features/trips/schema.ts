@@ -24,6 +24,31 @@ export const tripCreateSchema = z
   .refine((v) => Date.parse(v.arrivalAt) > Date.parse(v.departureAt), { path: ['arrivalAt'], message: 'must_be_after_departure' });
 export type TripCreate = z.output<typeof tripCreateSchema>;
 
+/**
+ * Go-and-return: the outbound trip (price = go only, roundTripPrice = go + return) plus 1..10 RETURN OPTIONS. Each option is a
+ * separate trip on the return route with its own times; price = return only. Bus/driver/capacity default to the outbound's.
+ * No outbound id or status is accepted: the database links the trips in one transaction.
+ */
+export const returnOptionSchema = z
+  .strictObject({ routeId: idSchema, departureAt: instantSchema, arrivalAt: instantSchema, price: moneySchema })
+  .refine((v) => Date.parse(v.arrivalAt) > Date.parse(v.departureAt), { path: ['arrivalAt'], message: 'must_be_after_departure' });
+export const tripWithReturnsSchema = z
+  .strictObject({
+    routeId: idSchema,
+    busId: idSchema.nullable().optional(),
+    driverId: idSchema.nullable().optional(),
+    departureAt: instantSchema,
+    arrivalAt: instantSchema,
+    price: moneySchema,
+    roundTripPrice: moneySchema,
+    capacity,
+    notes: optionalText(1000),
+    returns: z.array(returnOptionSchema).min(1).max(10),
+  })
+  .refine((v) => Date.parse(v.arrivalAt) > Date.parse(v.departureAt), { path: ['arrivalAt'], message: 'must_be_after_departure' })
+  .refine((v) => v.returns.every((r) => Date.parse(r.departureAt) >= Date.parse(v.arrivalAt)), { path: ['returns'], message: 'return_before_outbound_arrival' });
+export type TripWithReturnsCreate = z.output<typeof tripWithReturnsSchema>;
+
 export const tripUpdateSchema = atLeastOneField(
   z.strictObject({
     routeId: idSchema.optional(),

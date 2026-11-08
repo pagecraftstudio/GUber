@@ -1,4 +1,4 @@
-import { T, Dt } from '@/components/dashboard/T';
+import { T, Dt, Bi } from '@/components/dashboard/T';
 import { Ltr } from '@/components/dashboard/Ltr';
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server';import { requireTenant } from '@/lib/auth/guards';import { createTenantServiceContext } from '@/lib/service/context';import { tripService } from '@/features/trips/service';import { routeService } from '@/features/routes/service';import { busService } from '@/features/buses/service';import { driverService } from '@/features/drivers/service';import { PageHeader } from '@/components/dashboard/PageHeader';import { DataTable,StatusPill } from '@/components/dashboard/DataTable';import { TripActions } from '@/features/dashboard/TripActions';
@@ -61,7 +61,7 @@ export default async function TripsPage({ searchParams }: { searchParams: Promis
 
   const columns = [
     { key: 'time', label: 'Time', render: (r: Trip) => <time dateTime={r.departureAt} dir="ltr" className="font-bold">{timeLabel(r.departureAt, tz)}</time> },
-    { key: 'route', label: 'Route', render: (r: Trip) => <div className="font-bold text-slate-800 dark:text-white">{r.route?.name || <T>Route</T>}<p className="text-xs font-normal text-slate-600 dark:text-slate-400">{r.route?.originName} <span aria-hidden="true" className="inline-block rtl:rotate-180">→</span> {r.route?.destinationName}</p></div> },
+    { key: 'route', label: 'Route', render: (r: Trip) => <div className="font-bold text-slate-800 dark:text-white">{r.route?.name || <T>Route</T>}<p className="text-xs font-normal text-slate-600 dark:text-slate-400">{r.route?.originName} <span aria-hidden="true" className="inline-block rtl:rotate-180">→</span> {r.route?.destinationName}</p>{r.roundTripPrice !== null && <p className="mt-0.5 text-[11px] font-bold text-blue-800 dark:text-blue-300"><Bi en="Go and return" ar="ذهاب وعودة" /> · <Ltr>{r.price}</Ltr> / <Ltr>{r.roundTripPrice}</Ltr></p>}{r.outboundTripId && <p className="mt-0.5 text-[11px] font-bold text-violet-800 dark:text-violet-300"><Bi en="Return trip" ar="رحلة عودة" /> · <Ltr>{r.price}</Ltr></p>}</div> },
     { key: 'resources', label: 'Assignment', render: (r: Trip) => <div>{r.bus?.plateNumber ? <Ltr>{r.bus.plateNumber}</Ltr> : <T>No bus</T>}<p className="text-xs text-slate-600 dark:text-slate-400">{r.driver?.fullName || <T>No driver</T>}</p></div> },
     { key: 'seats', label: 'Seats', render: (r: Trip) => <Ltr>{r.seatsBooked}/{r.capacity}</Ltr> },
     { key: 'status', label: 'Status', render: (r: Trip) => <StatusPill value={r.status} /> },

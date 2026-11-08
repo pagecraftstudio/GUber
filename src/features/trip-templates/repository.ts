@@ -25,6 +25,8 @@ export const tripTemplateRepository: TripTemplateRepository = {
       company_id: ctx.companyId, name: i.name, route_id: i.routeId, bus_id: i.busId ?? null, driver_id: i.driverId ?? null,
       departure_time: i.departureTime, duration_minutes: i.durationMinutes, days_of_week: i.daysOfWeek,
       start_date: i.startDate, end_date: i.endDate ?? null, price: i.price, capacity: i.capacity,
+      return_route_id: i.returnRouteId ?? null, return_price: i.returnPrice ?? null, round_trip_price: i.roundTripPrice ?? null,
+      return_times: i.returnTimes ?? [], return_day_offset: i.returnDayOffset ?? 0,
     };
     return expectOne<TripTemplateRow, TripTemplate>(asRow(await ctx.db.from('trip_templates').insert(row).select(TEMPLATE_SELECT).single()), toTemplate);
   },
@@ -42,7 +44,7 @@ export const tripTemplateRepository: TripTemplateRepository = {
     const { data, error } = await ctx.db.rpc('generate_template_trips', { p_template_id: id, p_days: days });
     if (error) throw mapDbError(error);
     if (data == null) throw new AppError('internal', { cause: new Error('rpc returned no data') });
-    const r = data as { created: number; already_existed: number; conflicts: number; limit_reached: boolean; through: string };
-    return { created: r.created, alreadyExisted: r.already_existed, conflicts: r.conflicts, limitReached: r.limit_reached, through: r.through };
+    const r = data as { created: number; return_trips_created: number; already_existed: number; conflicts: number; limit_reached: boolean; through: string };
+    return { created: r.created, returnTripsCreated: r.return_trips_created ?? 0, alreadyExisted: r.already_existed, conflicts: r.conflicts, limitReached: r.limit_reached, through: r.through };
   },
 };

@@ -26,7 +26,7 @@ export default async function NewTripPage() {
         action={<Link href="/dashboard/trips" className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"><T>Back to trips</T></Link>} />
       <div className="max-w-4xl">
         <TripDraftForm usage={usage}
-          routes={routes.items.map((r) => ({ id: r.id, label: r.name }))}
+          routes={routes.items.map((r) => ({ id: r.id, label: r.name, origin: r.originName, destination: r.destinationName }))}
           buses={buses.items.map((b) => ({ id: b.id, plateNumber: b.plateNumber, capacity: b.capacity }))}
           drivers={drivers.items.filter((d) => d.status === 'active').map((d) => ({ id: d.id, label: d.fullName }))} />
       </div>

@@ -22,8 +22,22 @@ export const templateCreateSchema = z
     endDate: dateOnlySchema.nullable().optional(),
     price: moneySchema,
     capacity: z.number().int().min(1).max(100),
+    /** Go-and-return (all four together or none): return route, return times, return-only price, go+return price. */
+    returnRouteId: idSchema.nullable().optional(),
+    returnTimes: z.array(timeOfDay).max(10).transform((t) => [...new Set(t)].sort()).optional(),
+    returnDayOffset: z.number().int().min(0).max(7).optional(),
+    returnPrice: moneySchema.nullable().optional(),
+    roundTripPrice: moneySchema.nullable().optional(),
   })
-  .refine((v) => !v.endDate || v.endDate >= v.startDate, { path: ['endDate'], message: 'must_be_after_start' });
+  .refine((v) => !v.endDate || v.endDate >= v.startDate, { path: ['endDate'], message: 'must_be_after_start' })
+  .refine(
+    (v) => {
+      const on = (v.returnTimes?.length ?? 0) > 0;
+      const parts = [v.returnRouteId, v.returnPrice, v.roundTripPrice].map((x) => x !== null && x !== undefined);
+      return on ? parts.every(Boolean) : !parts.some(Boolean);
+    },
+    { path: ['returnTimes'], message: 'return_incomplete' },
+  );
 export type TemplateCreate = z.output<typeof templateCreateSchema>;
 
 export const generateSchema = z.strictObject({ templateId: idSchema, days: z.number().int().min(1).max(60).default(28) });

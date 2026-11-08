@@ -7,8 +7,8 @@ import { useActionForm } from './useActionForm';
 
 const base = 'inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-bold';
 const TXT = {
-  en: { generate: 'Generate next 4 weeks', working: 'Working…', pause: 'Pause', resume: 'Resume', created: (n: number) => `${n} trip${n === 1 ? '' : 's'} created.`, existed: (n: number) => `${n} already existed.`, conflicts: (n: number) => `${n} skipped: bus or driver already busy.`, limit: 'Stopped: monthly trip limit of your plan reached.' },
-  ar: { generate: 'توليد الأسابيع الأربعة القادمة', working: 'جارٍ التنفيذ…', pause: 'إيقاف', resume: 'استئناف', created: (n: number) => `تم إنشاء ${n} رحلة.`, existed: (n: number) => `${n} موجودة مسبقاً.`, conflicts: (n: number) => `تم تخطي ${n}: الحافلة أو السائق مشغول.`, limit: 'توقف التوليد: تم بلوغ حد الرحلات الشهري في باقتك.' },
+  en: { generate: 'Generate next 4 weeks', working: 'Working…', pause: 'Pause', resume: 'Resume', created: (n: number) => `${n} trip${n === 1 ? '' : 's'} created.`, returns: (n: number) => `${n} return trip${n === 1 ? '' : 's'} created.`, existed: (n: number) => `${n} already existed.`, conflicts: (n: number) => `${n} skipped: bus or driver already busy.`, limit: 'Stopped: monthly trip limit of your plan reached.' },
+  ar: { generate: 'توليد الأسابيع الأربعة القادمة', working: 'جارٍ التنفيذ…', pause: 'إيقاف', resume: 'استئناف', created: (n: number) => `تم إنشاء ${n} رحلة.`, returns: (n: number) => `تم إنشاء ${n} رحلة عودة.`, existed: (n: number) => `${n} موجودة مسبقاً.`, conflicts: (n: number) => `تم تخطي ${n}: الحافلة أو السائق مشغول.`, limit: 'توقف التوليد: تم بلوغ حد الرحلات الشهري في باقتك.' },
 } as const;
 
 /** What the generator did, in numbers. Shown after creating a regular trip and after "Generate". */
@@ -20,6 +20,7 @@ export function GenerateSummary({ state }: { state: FormState }) {
       {g && (
         <ul role="status" className="space-y-0.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
           <li>{T.created(g.created)}</li>
+          {g.returnTripsCreated > 0 && <li>{T.returns(g.returnTripsCreated)}</li>}
           {g.alreadyExisted > 0 && <li>{T.existed(g.alreadyExisted)}</li>}
           {g.conflicts > 0 && <li className="text-amber-800 dark:text-amber-300">{T.conflicts(g.conflicts)}</li>}
           {g.limitReached && <li className="text-red-700 dark:text-red-300">{T.limit}</li>}

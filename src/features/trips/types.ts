@@ -14,6 +14,8 @@ export type TripRow = {
   buffer_minutes: number;
   blocked_until: string;
   template_id: string | null;
+  outbound_trip_id: string | null;
+  round_trip_price: number | null;
   price: number;
   capacity: number;
   seats_booked: number;
@@ -37,6 +39,10 @@ export type Trip = {
   blockedUntil: string;
   bufferMinutes: number;
   templateId: string | null;
+  /** Set on a RETURN option: the outbound trip it belongs to. */
+  outboundTripId: string | null;
+  /** Set on an OUTBOUND trip that offers go-and-return: price for both legs. `price` is then the go-only price. */
+  roundTripPrice: number | null;
   price: number;
   capacity: number;
   /** Maintained by the database only (booking RPCs, Phase 5/8). Never writable from here. */
@@ -54,7 +60,7 @@ export type Trip = {
 };
 
 export const TRIP_SELECT =
-  'id,route_id,bus_id,driver_id,departure_at,arrival_at,buffer_minutes,blocked_until,template_id,price,capacity,seats_booked,status,notes,created_at,updated_at,route:routes(id,name,origin_name,destination_name),bus:buses(id,plate_number,capacity),driver:drivers(id,full_name)';
+  'id,route_id,bus_id,driver_id,departure_at,arrival_at,buffer_minutes,blocked_until,template_id,outbound_trip_id,round_trip_price,price,capacity,seats_booked,status,notes,created_at,updated_at,route:routes(id,name,origin_name,destination_name),bus:buses(id,plate_number,capacity),driver:drivers(id,full_name)';
 
 export const toTrip = (r: TripRow): Trip => ({
   id: r.id,
@@ -66,6 +72,8 @@ export const toTrip = (r: TripRow): Trip => ({
   blockedUntil: r.blocked_until,
   bufferMinutes: r.buffer_minutes,
   templateId: r.template_id,
+  outboundTripId: r.outbound_trip_id,
+  roundTripPrice: r.round_trip_price,
   price: r.price,
   capacity: r.capacity,
   seatsBooked: r.seats_booked,

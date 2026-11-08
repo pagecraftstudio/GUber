@@ -2,15 +2,17 @@ import { mapColumns } from '@/lib/db/columns';
 import { rangeFor, type Page } from '@/lib/db/pagination';
 import { AppError } from '@/lib/errors';
 import { mapDbError } from '@/lib/db/map-error';
-import { asRow, asRows, expectFound, expectMaybe, expectOne, expectPage } from '@/lib/db/query';
+import { asRow, asRows, expectFound, expectList, expectMaybe, expectOne, expectPage } from '@/lib/db/query';
 import type { TenantServiceContext } from '@/lib/service/context';
-import type { TripCreate, TripListQuery, TripTransitionInput, TripUpdate } from './schema';
+import type { TripCreate, TripWithReturnsCreate, TripListQuery, TripTransitionInput, TripUpdate } from './schema';
 import { TRIP_SELECT, toTrip, type Trip, type TripRow, type TripTransitioned } from './types';
 
 export type TripRepository = {
   list(ctx: TenantServiceContext, q: TripListQuery): Promise<Page<Trip>>;
   get(ctx: TenantServiceContext, id: string): Promise<Trip | null>;
   createDraft(ctx: TenantServiceContext, input: TripCreate): Promise<Trip>;
+  createWithReturns(ctx: TenantServiceContext, input: TripWithReturnsCreate): Promise<{ id: string; returnIds: string[] }>;
+  listReturns(ctx: TenantServiceContext, outboundId: string): Promise<Trip[]>;
   update(ctx: TenantServiceContext, id: string, patch: TripUpdate): Promise<Trip>;
   transition(ctx: TenantServiceContext, input: TripTransitionInput): Promise<TripTransitioned>;
   deleteDraft(ctx: TenantServiceContext, id: string): Promise<void>;
@@ -52,6 +54,23 @@ export const tripRepository: TripRepository = {
   async createDraft(ctx, input) {
     const row = { company_id: ctx.companyId, ...mapColumns(input, COLUMNS) }; // status: database default 'draft' (not a granted column)
     return expectOne<TripRow, Trip>(asRow(await ctx.db.from('trips').insert(row).select(TRIP_SELECT).single()), toTrip);
+  },
+
+  // One RPC (0029): the outbound and every return option are created in one transaction, linked by the database.
+  async createWithReturns(ctx, i) {
+    const { data, error } = await ctx.db.rpc('create_trip_with_returns', {
+      p_route_id: i.routeId, p_bus_id: i.busId ?? null, p_driver_id: i.driverId ?? null, p_departure_at: i.departureAt, p_arrival_at: i.arrivalAt,
+      p_price: i.price, p_capacity: i.capacity, p_notes: i.notes ?? null, p_round_trip_price: i.roundTripPrice,
+      p_returns: i.returns.map((r) => ({ route_id: r.routeId, departure_at: r.departureAt, arrival_at: r.arrivalAt, price: r.price })),
+    });
+    if (error) throw mapDbError(error);
+    if (data == null) throw new AppError('internal', { cause: new Error('rpc returned no data') });
+    const r = data as { id: string; return_ids: string[] };
+    return { id: r.id, returnIds: r.return_ids };
+  },
+
+  async listReturns(ctx, outboundId) {
+    return expectList<TripRow, Trip>(asRows(await ctx.db.from('trips').select(TRIP_SELECT).eq('company_id', ctx.companyId).eq('outbound_trip_id', outboundId).order('departure_at')), toTrip);
   },
 
   async update(ctx, id, patch) {

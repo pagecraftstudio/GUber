@@ -275,6 +275,7 @@ export const PAGE_AR: Record<string, string> = {
   "Since": "منذ",
   "University": "الجامعة",
   "Add a trip": "إضافة رحلة",
+  "Prices": "الأسعار",
   "All": "الكل",
   "Time": "الوقت",
   "No trips match": "لا توجد رحلات مطابقة",
