@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { normalizePhone } from './phone';
+import { normalizeDigitsUnknown } from '@/ds/format/normalize-digits';
 
 /** Shared field builders. Business schemas are strict objects built from these. */
 
@@ -26,6 +27,13 @@ export const optionalText = (max: number) =>
     .transform((v) => (v === '' ? null : v))
     .nullable()
     .optional();
+
+/**
+ * Optional identifier typed by a person (student ID, licence number). Arabic-Indic and Persian digits are stored as ASCII
+ * so the same ID can never exist twice in two digit systems. Empty clears the value, like optionalText.
+ */
+export const optionalIdentifier = (max: number) =>
+  z.preprocess(normalizeDigitsUnknown, optionalText(max));
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254));
 export const optionalEmail = z

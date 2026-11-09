@@ -1,4 +1,5 @@
 'use server';
+import { normalizeDigits } from '@/ds/format/normalize-digits';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
@@ -25,7 +26,7 @@ import { errorState, successState, type FormState } from './form-state';
  * No company id is read from the form; the context derives it from the session.
  */
 const str = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
-const num = (f: FormData, k: string) => (str(f, k) === '' ? NaN : Number(str(f, k)));
+const num = (f: FormData, k: string) => (str(f, k) === '' ? NaN : Number(normalizeDigits(str(f, k))));
 
 async function ctx(): Promise<TenantServiceContext> {
   const auth = await requireTenant(); // redirects when signed out / no usable company

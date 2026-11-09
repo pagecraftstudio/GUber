@@ -58,6 +58,10 @@
   --color-action-hover: var(--ds-action-primary-hover);
   --color-on-action: var(--ds-action-on-primary);
   --color-accent: var(--ds-accent);
+  --color-focus: var(--ds-focus-ring);
+  --color-destructive: var(--ds-action-destructive);
+  --color-destructive-hover: var(--ds-action-destructive-hover);
+  --color-on-destructive: var(--ds-action-on-destructive);
   --color-status-success-fg: var(--ds-status-success-fg);
   --color-status-success-bg: var(--ds-status-success-bg);
   --color-status-warning-fg: var(--ds-status-warning-fg);
@@ -85,6 +89,9 @@
   --ds-action-primary-hover: #0f4f3b; /* never carries mint text (4.39:1) */
   --ds-action-on-primary: #ffffff;
   --ds-accent: #14c88a; /* accent on dark surfaces; fill only with black text */
+  --ds-action-destructive: #b03535;
+  --ds-action-destructive-hover: #922b2b;
+  --ds-action-on-destructive: #ffffff;
   --ds-focus-ring: #0b3d2e;
   --ds-selection: #b3e8d2;
 
@@ -120,6 +127,9 @@
   --ds-action-primary: #14c88a;
   --ds-action-primary-hover: #3dd9a4;
   --ds-action-on-primary: #000000;
+  --ds-action-destructive: #f08a8a;
+  --ds-action-destructive-hover: #f4a3a3;
+  --ds-action-on-destructive: #000000;
   --ds-focus-ring: #14c88a;
   --ds-selection: #0f4f3b;
 

@@ -24,3 +24,6 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | Font verification (5.5) | Pass, or fallback and why | | |
 | Gate G1 (light approved) | Signed by: ____________ | | |
 | Phase 2 deviations (naming `--ds-*`, `brand-*`; bridge via `--bridge-*`; marketplace flag at build time) | Pending owner approval, see PHASE-2-REPORT.md | | |
+| Phase 3 validation change (5.7 rule 6): `normalizeDigits` into amount, seats, student ID, plate, search, form `num()`; phone and amount reuse it | Applied on the instruction "Start Phase 3". Owner to confirm. Files listed in PHASE-3-REPORT.md | 9 Nov 2026 | Claude |
+| Phase 3 `next.config.ts` change: `env.DS_GALLERY` build-time switch so the gallery is not compiled into production | Pending owner approval | 9 Nov 2026 | Claude |
+| Phase 3 dev dependencies: jsdom, @testing-library/react, @testing-library/dom, @testing-library/user-event, axe-core | Pending owner approval (dev only, nothing ships) | 9 Nov 2026 | Claude |

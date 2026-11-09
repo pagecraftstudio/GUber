@@ -1,4 +1,5 @@
 'use server';
+import { parseAmountInput } from '@/ds/format/normalize-digits';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireTenant } from '@/lib/auth/guards';
@@ -45,10 +46,10 @@ export async function setRouteActiveAction(id: string, isActive: boolean): Promi
 
 /** Staff-entered amount received. Accepts "50", "50.5", "50,5" and Arabic-Indic digits. The database bounds it by the booking total. */
 export async function setAmountPaidAction(id: string, rawAmount: string): Promise<AutoResult> {
-  const raw = String(rawAmount).trim().replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).replace('٫', '.').replace(',', '.');
-  if (!/^\d+(\.\d{1,2})?$/.test(raw)) return { ok: false, code: 'validation', detail: 'amount_invalid' };
+  const amount = parseAmountInput(String(rawAmount));
+  if (amount === null) return { ok: false, code: 'validation', detail: 'amount_invalid' };
   return run(['/dashboard/bookings'], async (c) => {
-    try { await bookingService.setAmountPaid(c, { bookingId: id, amount: Number(raw) }); }
+    try { await bookingService.setAmountPaid(c, { bookingId: id, amount }); }
     catch (e) {
       if (e instanceof AppError && (e.code === 'validation' || e.code === 'business_rule'))
         throw new AppError(e.code, { detail: e.detail === 'amount_exceeds_total' || e.detail === 'booking_not_cancellable' ? e.detail : 'amount_invalid' });

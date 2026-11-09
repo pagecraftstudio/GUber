@@ -18,8 +18,10 @@ function allowed(): boolean {
 const SPACING = [4, 8, 12, 16, 20, 24, 28, 32, 36, 48, 56, 64];
 const TYPE: [string, number][] = [['display', 40], ['h1', 32], ['h2', 24], ['h3', 20], ['h4', 18], ['body-lg', 16], ['body', 14], ['body-sm', 13], ['caption', 12]];
 
-export default function DesignPage() {
+export default async function DesignPage() {
   if (!allowed()) notFound();
+  // `process.env.DS_GALLERY` is replaced at build time (next.config.ts), so in production this import is dead code and never bundled.
+  const Gallery = process.env.DS_GALLERY === '1' ? (await import('@/ds/gallery/Gallery')).Gallery : null;
   const failing = REQUIRED_PAIRS.filter((p) => contrast(p.fg, p.bg) < (p.kind === 'text' ? 4.5 : 3));
   return (
     <div data-ds="masar" style={{ display: 'contents' }}>
@@ -94,6 +96,7 @@ export default function DesignPage() {
         <p style={{ fontSize: 14 }}>Latin reference inside Arabic: <span dir="rtl" lang="ar">الحجز <span className="ds-ltr ds-tabular">MB-7K3Q9X</span> مؤكد</span></p>
         <p className="ds-tabular" style={{ fontSize: 14 }}>0123456789 / <span lang="ar">٠١٢٣٤٥٦٧٨٩</span> / 1,250.00 / <span lang="ar">١٬٢٥٠٫٠٠</span></p>
       </main>
+      {Gallery ? <><Gallery lang="en" /><Gallery lang="ar" /></> : null}
     </div>
   );
 }

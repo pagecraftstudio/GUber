@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { pageQuerySchema } from '@/lib/db/pagination';
-import { idSchema, instantSchema, optionalEmail, optionalText, phoneSchema, text } from '@/lib/validation/common';
+import { idSchema, instantSchema, optionalEmail, optionalIdentifier, optionalText, phoneSchema, text } from '@/lib/validation/common';
+import { integerFromInput } from '@/ds/format/normalize-digits';
 
 export const BOOKING_SORTS = ['trip_asc', 'trip_desc', 'newest', 'oldest', 'name'] as const;
 export type BookingSort = (typeof BOOKING_SORTS)[number];
@@ -34,10 +35,10 @@ export const createBookingSchema = z
     tripId: idSchema,
     customerName: text(1, 120),
     customerPhone: phoneSchema,
-    seats: z.number().int().min(1).max(100),
+    seats: z.preprocess(integerFromInput, z.number().int().min(1).max(100)),
     customerEmail: optionalEmail,
     university: optionalText(200),
-    studentId: optionalText(100),
+    studentId: optionalIdentifier(100),
     pickupStopId: idSchema.nullable().optional(),
     dropoffStopId: idSchema.nullable().optional(),
     /** Send one per user action. A retry with the same key never books twice. */

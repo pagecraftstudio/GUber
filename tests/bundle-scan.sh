@@ -31,4 +31,5 @@ CLIENT=(.next/static)
 scan "client bundle: no demo company / demo accounts / demo passwords"    'Galala Connect|comp_galala_connect|Pass1234|karim@' "${CLIENT[@]}"
 scan "client bundle: no mock opaque QR token / mock data module markers" 'malaky_sec_tk_[A-Za-z0-9]|mockData|transportService\.mock|MockTransportService' "${CLIENT[@]}"
 scan "client bundle: no design-token page (dev/preview only)"            'MASAR-DESIGN-PAGE' "${CLIENT[@]}"
+scan "client bundle: no component gallery (dev/preview only)"            'MASAR-DESIGN-GALLERY' "${CLIENT[@]}"
 [ $fail = 0 ] && echo "BUNDLE SCAN: PASS" || echo "BUNDLE SCAN: FAIL"; exit $fail

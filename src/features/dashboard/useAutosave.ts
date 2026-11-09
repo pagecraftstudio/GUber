@@ -1,6 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import type { AutoResult } from './autosave-actions';
+import { useCallback, useEffect, useRef } from 'react';
 import type { FormState } from './form-state';
 import { useActionForm } from './useActionForm';
 
@@ -39,16 +38,4 @@ export function useAutosaveForm(action: (prev: FormState, fd: FormData) => Promi
   return { ...base, formProps: { ref, onSubmit: base.onSubmit, onChange: schedule, onBlur: flush } };
 }
 
-/** Instant, optimistic single-field saves (status selects, toggles, buttons). Result is shown next to the control. */
-export function useInlineSave() {
-  const [pending, start] = useTransition();
-  const [result, setResult] = useState<AutoResult | null>(null);
-  const run = useCallback((work: () => Promise<AutoResult>, optimistic?: () => void) => {
-    start(async () => {
-      optimistic?.();
-      setResult(null);
-      try { setResult(await work()); } catch { setResult({ ok: false, code: 'internal' }); }
-    });
-  }, []);
-  return { pending, result, run };
-}
+export { useInlineSave } from '@/ds/hooks/useInlineSave';

@@ -1,4 +1,5 @@
 import { sanitizeSearch } from '@/lib/db/search';
+import { normalizeDigits } from '@/ds/format/normalize-digits';
 
 /** Columns of the booking_list view the staff search box looks at: reference (= ticket number), passenger, e-mail, student id, university, route, notes. Phone is handled separately. */
 const TEXT_COLUMNS = ['reference', 'customer_name', 'customer_email', 'customer_student_id', 'customer_university', 'route_name', 'notes'] as const;
@@ -12,7 +13,7 @@ const TEXT_COLUMNS = ['reference', 'customer_name', 'customer_email', 'customer_
  * Tenant scoping is a separate AND clause plus RLS: a search can never widen access.
  */
 export function bookingSearchFilter(raw: string | undefined | null): string | null {
-  const term = sanitizeSearch(raw);
+  const term = sanitizeSearch(raw ? normalizeDigits(raw) : raw);
   if (!term) return null;
   const clauses: string[] = TEXT_COLUMNS.map((c) => `${c}.ilike.%${term}%`);
 

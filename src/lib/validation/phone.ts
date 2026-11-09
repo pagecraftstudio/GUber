@@ -1,4 +1,5 @@
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/max';
+import { normalizeDigits } from '@/ds/format/normalize-digits';
 
 /**
  * Phone policy (migration 0009 is the unbypassable DB layer; this is the country-aware server layer).
@@ -9,17 +10,12 @@ import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/
  */
 export const DEFAULT_PHONE_COUNTRY: CountryCode = 'EG';
 
-const DIGIT_MAP: Record<string, string> = {
-  '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
-  '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
-};
-
 /** Returns E.164 or null. Never throws. */
 export function normalizePhone(input: unknown, defaultCountry: CountryCode = DEFAULT_PHONE_COUNTRY): string | null {
   if (typeof input !== 'string') return null;
   let s = input.trim();
   if (s.length === 0 || s.length > 40) return null;
-  s = s.replace(/[٠-٩۰-۹]/g, (d) => DIGIT_MAP[d] ?? d);
+  s = normalizeDigits(s);
   s = s.replace(/[\s().\-\u200e\u200f\u202a-\u202e]/g, '');
   if (s.startsWith('00')) s = `+${s.slice(2)}`;
   if (!/^\+?[0-9]+$/.test(s)) return null;

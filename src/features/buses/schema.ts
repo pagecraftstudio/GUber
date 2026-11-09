@@ -1,10 +1,11 @@
+import { normalizeDigits } from '@/ds/format/normalize-digits';
 import { z } from 'zod';
 import { pageQuerySchema } from '@/lib/db/pagination';
 import { atLeastOneField, optionalText, text } from '@/lib/validation/common';
 
 const status = z.enum(['active', 'maintenance', 'inactive']);
 // Whitespace collapsed + upper-cased so "ab 123" and "AB 123" cannot both exist (unique per company).
-const plate = text(2, 20).transform((v) => v.replace(/\s+/g, ' ').toUpperCase());
+const plate = text(2, 20).transform((v) => normalizeDigits(v).replace(/\s+/g, ' ').toUpperCase());
 const capacity = z.number().int().min(1).max(100);
 const year = z.number().int().min(1950).max(2100).nullable().optional();
 

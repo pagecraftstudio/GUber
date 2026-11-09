@@ -1,13 +1,13 @@
 import { z } from 'zod';
 import { pageQuerySchema } from '@/lib/db/pagination';
-import { atLeastOneField, optionalEmail, optionalText, phoneSchema, text } from '@/lib/validation/common';
+import { atLeastOneField, optionalEmail, optionalIdentifier, optionalText, phoneSchema, text } from '@/lib/validation/common';
 
 export const customerCreateSchema = z.strictObject({
   fullName: text(2, 100),
   phone: phoneSchema,
   email: optionalEmail,
   university: optionalText(120),
-  studentId: optionalText(50),
+  studentId: optionalIdentifier(50),
   notes: optionalText(1000),
 });
 export type CustomerCreate = z.output<typeof customerCreateSchema>;
@@ -18,7 +18,7 @@ export const customerUpdateSchema = atLeastOneField(
     phone: phoneSchema.optional(),
     email: optionalEmail,
     university: optionalText(120),
-    studentId: optionalText(50),
+    studentId: optionalIdentifier(50),
     notes: optionalText(1000),
   }),
 );
