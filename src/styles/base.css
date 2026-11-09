@@ -1,0 +1,27 @@
+/*
+ * MASAR base styles. Scoped to [data-ds="masar"] while the migration runs (D9); unscoped surfaces keep their
+ * own base. Focus ring, reduced motion, selection, scrollbars, RTL helpers.
+ */
+[data-ds="masar"] {
+  font-family: var(--font-latin, 'IBM Plex Sans'), var(--font-arabic, 'IBM Plex Sans Arabic'), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-latin, 'IBM Plex Sans'), var(--font-arabic, 'IBM Plex Sans Arabic'), system-ui, sans-serif;
+  color: var(--ds-text-primary);
+  font-synthesis: none;
+}
+[data-ds="masar"] :focus-visible {
+  outline: 2px solid var(--ds-focus-ring);
+  outline-offset: 2px;
+}
+[data-ds="masar"] ::selection { background: var(--ds-selection); }
+[data-ds="masar"] * { scrollbar-color: var(--ds-border-strong) transparent; }
+/* Latin identifiers inside RTL text: isolate and keep left-to-right. Used by <Identifier> in Phase 3. */
+[data-ds="masar"] .ds-ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; }
+[data-ds="masar"] .ds-tabular { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  [data-ds="masar"] *, [data-ds="masar"] *::before, [data-ds="masar"] *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

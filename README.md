@@ -13,3 +13,9 @@ Next.js 16 + Supabase backend (Phase 5A) + customer marketplace at `/` (real bac
 | `/company/login` | staff, drivers, platform admins | operator sign in -> `/dashboard`, `/driver`, `/admin` |
 | `/continue` | signed-in | role-aware dispatcher (server-resolved role) |
 | `/app/*` | legacy | redirects to `/` |
+
+## Browser support (decision D7)
+Evergreen: the current and previous major version of Chrome, Edge, Firefox and Safari (desktop, iOS, Android), plus current Samsung Internet. Recorded in `browserslist` in `package.json`. Tailwind 4 already requires roughly Safari 16.4 / Chrome 111 / Firefox 128.
+
+## MASAR redesign flags (Phase 2)
+`DS_SURFACES` (comma list of marketplace,public,dashboard,admin,driver,auth,system or `all`) and `DS_PILOT_COMPANIES` (company UUIDs) switch the MASAR look on per surface. Both unset = nothing changes. See `src/ds/scope.ts`. `/dev/design` shows the tokens and contrast table; it returns 404 in production.

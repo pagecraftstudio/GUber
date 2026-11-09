@@ -20,7 +20,7 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
 export const ACTOR_TYPES = ['platform_user', 'company_user', 'customer', 'system'] as const;
 export type AuditActorType = (typeof ACTOR_TYPES)[number];
 export const ACTOR_LABEL: Record<AuditActorType, string> = {
-  platform_user: 'MALAKY staff',
+  platform_user: 'MASAR platform team',
   company_user: 'Company staff',
   customer: 'Customer',
   system: 'System',

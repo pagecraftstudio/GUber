@@ -1,5 +1,5 @@
 /**
- * Provisional API Contracts for MALAKY Bus SaaS
+ * Provisional API Contracts for MASAR
  * Reconciles frontend transport/auth service with PostgreSQL/Supabase implementation.
  */
 

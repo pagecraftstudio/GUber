@@ -73,7 +73,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Ra
               )}
             </div>
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">MALAKY staff activity</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">MASAR platform team activity</p>
               {summary.platformActors.length === 0 ? <p className="text-xs text-slate-500">No staff activity.</p> : (
                 <ul className="mt-1 space-y-0.5">
                   {summary.platformActors.map((a) => (

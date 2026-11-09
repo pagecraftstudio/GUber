@@ -1,3 +1,4 @@
+import { DsScope } from '@/ds/shell/DsScope';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { logoutAction } from '@/features/auth/actions';
@@ -7,11 +8,12 @@ import { requirePlatform } from '@/lib/auth/guards';
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requirePlatform(); // 404 for anyone who is not active platform staff
   return (
+    <DsScope surface="admin">
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-800 bg-slate-900 text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">MALAKY Admin</p>
+            <p className="text-sm font-semibold">MASAR Admin</p>
             <p className="truncate text-xs text-slate-400">
               {ctx.fullName} · {ctx.platformRole}
             </p>
@@ -28,5 +30,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
+    </DsScope>
   );
 }

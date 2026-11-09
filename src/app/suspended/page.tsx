@@ -11,7 +11,7 @@ export default async function SuspendedPage() {
   const ctx = await requireUser();
   if (accessState(ctx) !== 'tenant_locked') redirect(homePathFor(ctx));
   return (
-    <AuthCard title="Access suspended" subtitle="Your company's account is currently suspended. Please contact MALAKY Studio support.">
+    <AuthCard title="Access suspended" subtitle="Your company's account is currently suspended. Please contact MASAR support.">
       <form action={logoutAction}>
         <SubmitButton variant="ghost">Sign out</SubmitButton>
       </form>

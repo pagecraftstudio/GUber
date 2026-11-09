@@ -40,7 +40,7 @@ export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({ onBrowseOp
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-base tracking-tight text-slate-900 leading-none">
-                MALAKY Bus Hub
+                MASAR
               </span>
               <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#3563E9] border border-blue-200 px-1.5 py-0.2 rounded">
                 {locale === 'ar' ? 'سوق الرحلات' : 'Marketplace'}

@@ -295,7 +295,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
         </div>
       </Section>
 
-      <Section id="h-notes" title="Internal notes" aside={<span className="text-xs text-slate-400">MALAKY staff only</span>}>
+      <Section id="h-notes" title="Internal notes" aside={<span className="text-xs text-slate-400">MASAR platform team only</span>}>
         <div className="space-y-4">
           {canNote ? <AddNoteForm companyId={c.id} /> : null}
           {notes.length === 0 ? (

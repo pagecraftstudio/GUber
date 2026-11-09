@@ -30,4 +30,5 @@ done < <(grep -rIohE 'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-
 CLIENT=(.next/static)
 scan "client bundle: no demo company / demo accounts / demo passwords"    'Galala Connect|comp_galala_connect|Pass1234|karim@' "${CLIENT[@]}"
 scan "client bundle: no mock opaque QR token / mock data module markers" 'malaky_sec_tk_[A-Za-z0-9]|mockData|transportService\.mock|MockTransportService' "${CLIENT[@]}"
+scan "client bundle: no design-token page (dev/preview only)"            'MASAR-DESIGN-PAGE' "${CLIENT[@]}"
 [ $fail = 0 ] && echo "BUNDLE SCAN: PASS" || echo "BUNDLE SCAN: FAIL"; exit $fail

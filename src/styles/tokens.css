@@ -1,0 +1,136 @@
+/*
+ * MASAR design tokens (redesign Phase 2). Plan sections 5.2 and 6.
+ * Two layers: primitives (@theme static) and semantic (--ds-*, light in :root, dark in :root.dark).
+ * Components use the semantic layer only. Dark values are UNSIGNED until Phase 7 (D4).
+ *
+ * Naming: semantic variables carry a `ds-` prefix because the legacy marketplace stylesheet (ui.css) already
+ * defines --surface-page, --surface-card, --text-primary, --text-secondary, --text-muted and --border-strong.
+ * Re-using those names would restyle unscoped surfaces. Primitive green/mint/neutral use `brand-` and `ds-`
+ * prefixes for the same reason (Tailwind ships its own green-* ramp).
+ * Nothing in this file affects an element until a component or the scoped bridge references it.
+ */
+
+@theme static {
+  --color-brand-green-900: #0b3d2e;
+  --color-brand-green-800: #0f4f3b;
+  --color-brand-green-700: #0a7d56;
+  --color-brand-mint-500: #14c88a;
+
+  --color-ds-neutral-000: #ffffff;
+  --color-ds-neutral-025: #fafafa;
+  --color-ds-neutral-050: #f5f5f5;
+  --color-ds-neutral-100: #eeeeee;
+  --color-ds-neutral-200: #dcdcdc;
+  --color-ds-neutral-300: #8a8a8a;
+  --color-ds-neutral-500: #6b6b6b;
+  --color-ds-neutral-700: #444444;
+  --color-ds-neutral-900: #171717;
+  --color-ds-neutral-950: #000000;
+
+  --spacing-7: 1.75rem; /* 28 */
+  --spacing-9: 2.25rem; /* 36 */
+  --spacing-14: 3.5rem; /* 56 */
+
+  --radius-ds-sm: 6px;
+  --radius-ds-md: 10px;
+  --radius-ds-lg: 14px;
+  --radius-ds-xl: 20px;
+
+  --ease-ds: cubic-bezier(0.2, 0, 0, 1);
+  --duration-ds-feedback: 120ms;
+  --duration-ds-enter: 200ms;
+  --duration-ds-large: 280ms;
+}
+
+/* Utilities for semantic tokens: bg-surface-card, text-text-secondary, border-line-default ... */
+@theme inline {
+  --color-surface-page: var(--ds-surface-page);
+  --color-surface-card: var(--ds-surface-card);
+  --color-surface-sunken: var(--ds-surface-sunken);
+  --color-line-hairline: var(--ds-border-hairline);
+  --color-line-default: var(--ds-border-default);
+  --color-line-strong: var(--ds-border-strong);
+  --color-ink-primary: var(--ds-text-primary);
+  --color-ink-secondary: var(--ds-text-secondary);
+  --color-ink-muted: var(--ds-text-muted);
+  --color-ink-link: var(--ds-text-link);
+  --color-action: var(--ds-action-primary);
+  --color-action-hover: var(--ds-action-primary-hover);
+  --color-on-action: var(--ds-action-on-primary);
+  --color-accent: var(--ds-accent);
+  --color-status-success-fg: var(--ds-status-success-fg);
+  --color-status-success-bg: var(--ds-status-success-bg);
+  --color-status-warning-fg: var(--ds-status-warning-fg);
+  --color-status-warning-bg: var(--ds-status-warning-bg);
+  --color-status-error-fg: var(--ds-status-error-fg);
+  --color-status-error-bg: var(--ds-status-error-bg);
+  --color-status-info-fg: var(--ds-status-info-fg);
+  --color-status-info-bg: var(--ds-status-info-bg);
+  --color-status-neutral-fg: var(--ds-status-neutral-fg);
+  --color-status-neutral-bg: var(--ds-status-neutral-bg);
+}
+
+:root {
+  --ds-surface-page: #fafafa;
+  --ds-surface-card: #ffffff;
+  --ds-surface-sunken: #f5f5f5;
+  --ds-border-hairline: #eeeeee; /* decorative only */
+  --ds-border-default: #dcdcdc; /* cards, dividers that are not the only cue */
+  --ds-border-strong: #8a8a8a; /* inputs and controls, 3:1 non-text */
+  --ds-text-primary: #171717;
+  --ds-text-secondary: #444444;
+  --ds-text-muted: #6b6b6b;
+  --ds-text-link: #0a7d56;
+  --ds-action-primary: #0b3d2e;
+  --ds-action-primary-hover: #0f4f3b; /* never carries mint text (4.39:1) */
+  --ds-action-on-primary: #ffffff;
+  --ds-accent: #14c88a; /* accent on dark surfaces; fill only with black text */
+  --ds-focus-ring: #0b3d2e;
+  --ds-selection: #b3e8d2;
+
+  --ds-status-success-fg: #126c4a;
+  --ds-status-success-bg: #e8f5ef;
+  --ds-status-warning-fg: #8f5f0f;
+  --ds-status-warning-bg: #fdf6e7;
+  --ds-status-error-fg: #b03535;
+  --ds-status-error-bg: #fbeded;
+  --ds-status-info-fg: #2867a6;
+  --ds-status-info-bg: #eaf2fa;
+  --ds-status-neutral-fg: #444444;
+  --ds-status-neutral-bg: #f5f5f5;
+
+  /* Tenant accent (D5): only the tenant public site, company tile and ticket header set these, per request. */
+  --tenant-accent: #0b3d2e;
+  --tenant-on-accent: #ffffff;
+  --tenant-accent-ink: #0b3d2e;
+}
+
+/* Dark column. Present so the existing toggle keeps working; NOT signed off until Phase 7 (D4). */
+:root.dark {
+  --ds-surface-page: #0a0a0a;
+  --ds-surface-card: #141414;
+  --ds-surface-sunken: #0f0f0f;
+  --ds-border-hairline: #1f1f1f;
+  --ds-border-default: #2e2e2e;
+  --ds-border-strong: #8a8a8a;
+  --ds-text-primary: #f5f5f5;
+  --ds-text-secondary: #c4c4c4;
+  --ds-text-muted: #9a9a9a;
+  --ds-text-link: #14c88a;
+  --ds-action-primary: #14c88a;
+  --ds-action-primary-hover: #3dd9a4;
+  --ds-action-on-primary: #000000;
+  --ds-focus-ring: #14c88a;
+  --ds-selection: #0f4f3b;
+
+  --ds-status-success-fg: #5fd9a8;
+  --ds-status-success-bg: #0f2a20;
+  --ds-status-warning-fg: #e3b35c;
+  --ds-status-warning-bg: #2a200c;
+  --ds-status-error-fg: #f08a8a;
+  --ds-status-error-bg: #2d1414;
+  --ds-status-info-fg: #7fb4e8;
+  --ds-status-info-bg: #12202e;
+  --ds-status-neutral-fg: #c4c4c4;
+  --ds-status-neutral-bg: #1f1f1f;
+}

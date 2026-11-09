@@ -101,7 +101,7 @@ export function AddNoteForm({ companyId }: { companyId: string }) {
   return (
     <form action={formAction} className="space-y-2" key={state.status === 'ok' ? 'sent' : 'draft'}>
       <input type="hidden" name="companyId" value={companyId} />
-      <AdminTextarea label="Internal note" name="body" required maxLength={2000} error={state.fields?.body} hint="Visible to MALAKY staff only." />
+      <AdminTextarea label="Internal note" name="body" required maxLength={2000} error={state.fields?.body} hint="Visible to the MASAR platform team only." />
       <ErrorLine message={state.status === 'error' && !state.fields?.body ? state.message : undefined} />
       <button type="submit" disabled={pending} className={PRIMARY}>{pending ? 'Adding…' : 'Add note'}</button>
     </form>

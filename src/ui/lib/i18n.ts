@@ -3,7 +3,7 @@ export type Locale = 'en' | 'ar';
 export const translations = {
   en: {
     // Platform brand
-    platformName: 'MALAKY Bus SaaS',
+    platformName: 'MASAR',
     platformTagline: 'Multi-Tenant Intercity Bus Management',
 
     // Preview bar
@@ -11,14 +11,14 @@ export const translations = {
     marketplaceView: 'Master Marketplace',
     publicSite: 'Public Passenger Site',
     companyDashboard: 'Operator Dashboard',
-    superAdmin: 'MALAKY Super Admin',
+    superAdmin: 'MASAR platform admin',
     selectTenant: 'Select Operator',
     langToggle: 'عربي',
     hidePreview: 'Hide Bar',
     showPreview: 'Show Preview Bar',
     devNotice: 'Dev Switcher: Switch between Master Marketplace, White-Label Tenant Sites, Operator Dashboard, and Super Admin. In production, routing is controlled by subdomains and auth.',
     devSwitcherTitle: 'Dev Switcher',
-    devSwitcherBadge: 'MALAKY DEV:',
+    devSwitcherBadge: 'MASAR DEV:',
     languageLabel: 'Language',
 
     // Common
@@ -150,7 +150,7 @@ export const translations = {
     step2EnterDetailsDesc: 'Enter your passenger details and Galala University ID.',
     step3BoardingPass: '03. Instant Boarding Pass',
     step3BoardingPassDesc: 'Receive your instant digital boarding pass with QR code.',
-    poweredByMalaky: 'Powered by MALAKY Bus SaaS · White-Label Transit Core',
+    poweredByMalaky: 'Powered by MALAKY Studio',
     demoDataNotice: 'Fictional transit demonstration data for platform testing.',
     liveDispatchQueueSubtitle: 'Live operational manifest for coaches on Galala highway.',
     studentsAndFaculty: 'Students & Faculty',
@@ -231,7 +231,7 @@ export const translations = {
     fleetCoaches: 'Fleet coaches',
     thisSemesterPeak: '+24% this semester',
     trialPending: '+1 trial pending',
-    operatorsProvisionedNotice: 'Bus operators currently provisioned on MALAKY.',
+    operatorsProvisionedNotice: 'Bus operators currently provisioned on MASAR.',
     immutableLedgerNotice: 'Immutable platform event ledger recording security, dispatch mutations, and billing adjustments.',
     dashboardJump: 'Dashboard',
     operatorIdentityColors: 'Operator Identity & Brand Colors',

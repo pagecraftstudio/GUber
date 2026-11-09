@@ -1,3 +1,4 @@
+import { DsScope } from '@/ds/shell/DsScope';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { logoutAction } from '@/features/auth/actions';
 import { requireDriver } from '@/lib/auth/guards';
@@ -7,6 +8,7 @@ export const metadata = { title: 'Driver' };
 export default async function DriverLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireDriver(); // server gate, re-verified per request; board_ticket re-verifies per scan in Postgres
   return (
+    <DsScope surface="driver" companyId={ctx.membership.companyId}>
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
@@ -19,5 +21,6 @@ export default async function DriverLayout({ children }: { children: React.React
       </header>
       <main className="mx-auto max-w-md px-4 py-6">{children}</main>
     </div>
+    </DsScope>
   );
 }
