@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDsFlipped } from '@/ds/shell/flag';
 import { getSupabaseBrowser } from '@/ui/lib/real/supabaseBrowser';
 import { BOARD_MESSAGES, BoardError, createDriverApi, type BoardingStats, type DriverTrip } from './driverApi';
 import { QrScanner } from './QrScanner';
+import { DriverBoardingMasarView, type Outcome } from './masar/DriverBoardingMasarView';
 
-type Outcome = { kind: 'ok' | 'dup' | 'bad'; text: string };
+const RETRYABLE = new Set(['network', 'rate_limited', 'unknown']);
 const fmt = (iso: string) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
 export function DriverBoarding() {
@@ -18,15 +20,28 @@ export function DriverBoarding() {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const flipped = useDsFlipped();
+  const [lastToken, setLastToken] = useState('');
+  const [online, setOnline] = useState(true);
 
-  useEffect(() => {
-    api.myTrips().then((t) => { setTrips(t); if (t[0]) setTripId(t[0].trip_id); }).catch((e) => setLoadError(BOARD_MESSAGES[e instanceof BoardError ? e.code : 'unknown']));
+  const loadTrips = useCallback(() => {
+    setLoadError(null);
+    api.myTrips().then((t) => { setTrips(t); setTripId((cur) => cur || t[0]?.trip_id || ''); }).catch((e) => setLoadError(BOARD_MESSAGES[e instanceof BoardError ? e.code : 'unknown']));
   }, [api]);
+  useEffect(() => { loadTrips(); }, [loadTrips]);
+  // Reflect the phone's connection so the driver knows a scan will not go through (the server stays the only authority).
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener('online', sync); window.addEventListener('offline', sync);
+    return () => { window.removeEventListener('online', sync); window.removeEventListener('offline', sync); };
+  }, []);
   useEffect(() => { setStats(null); if (tripId) api.stats(tripId).then(setStats).catch(() => setStats(null)); }, [api, tripId]);
 
   const submit = useCallback(async (raw: string) => {
     const token = raw.trim();
     if (!tripId || !token || busy) return;
+    setLastToken(token);
     setBusy(true);
     try {
       const r = await api.board(tripId, token);
@@ -36,7 +51,8 @@ export function DriverBoarding() {
         : { kind: 'dup', text: `Already boarded (ticket ${r.ticket_index}, ${fmt(r.boarded_at)})` });
       setManual('');
     } catch (e) {
-      setOutcome({ kind: 'bad', text: BOARD_MESSAGES[e instanceof BoardError ? e.code : 'unknown'] });
+      const code = e instanceof BoardError ? e.code : 'unknown';
+      setOutcome({ kind: 'bad', text: BOARD_MESSAGES[code], retryable: RETRYABLE.has(code) });
     } finally { setBusy(false); }
   }, [api, tripId, busy]);
 
@@ -44,6 +60,17 @@ export function DriverBoarding() {
   const pct = stats && stats.expected > 0 ? Math.round((stats.boarded / stats.expected) * 1000) / 10 : 0;
   const tone = outcome?.kind === 'ok' ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : outcome?.kind === 'dup' ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-red-300 bg-red-50 text-red-800';
 
+  if (flipped) {
+    return (
+      <DriverBoardingMasarView
+        trips={trips} loadError={loadError} onReload={loadTrips}
+        tripId={tripId} onSelectTrip={(id) => { setTripId(id); setOutcome(null); }}
+        stats={stats} outcome={outcome} onRetry={() => void submit(lastToken)}
+        scanning={scanning} onToggleScan={() => setScanning((x) => !x)} onScanToken={(t) => void submit(t)}
+        manual={manual} onManualChange={setManual} onSubmitManual={() => void submit(manual)} busy={busy} online={online}
+      />
+    );
+  }
   if (loadError) return <p role="alert" className="text-sm text-red-600">{loadError}</p>;
   if (!trips) return <p className="text-sm text-slate-500">Loading your trips…</p>;
   if (trips.length === 0) return <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600">No trips are assigned to you right now.</p>;

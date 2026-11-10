@@ -16,6 +16,8 @@ import { BOOKING_SORTS } from '@/features/bookings/schema';
 import type { Booking } from '@/features/bookings/types';
 import { BookingFilters } from '@/features/dashboard/BookingFilters';
 import { BoardingBadge, CancelCell, PaymentCell } from '@/features/dashboard/BookingParts';
+import { isSurfaceScoped } from '@/ds/scope';
+import { BookingsMasarView } from '@/features/dashboard/masar/BookingsMasarView';
 
 const PAGE_SIZE = 50;
 const PAST_CUTOFF_MS = 6 * 3600_000; // "upcoming" lasts until 6 h after departure, so a trip on the road is not buried
@@ -74,6 +76,11 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   }
   const tripLabel = result.items.find((b) => b.tripId === f.trip)?.trip?.routeName ?? '…';
   const th = 'whitespace-nowrap px-4 py-3 text-start';
+
+  if (isSurfaceScoped('dashboard', auth.membership.companyId)) {
+    return <BookingsMasarView tz={tz} f={f} hasDates={hasDates} canWrite={canWrite} routes={routes.items.map((r) => ({ id: r.id, label: r.name }))}
+      groups={groups} byTrip={byTrip} page={page} pageSize={PAGE_SIZE} total={result.total} tripLabel={tripLabel} />;
+  }
 
   return (
     <>

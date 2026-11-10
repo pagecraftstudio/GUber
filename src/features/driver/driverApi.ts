@@ -9,7 +9,7 @@ export interface DriverTrip {
 export interface BoardingStats { expected: number; boarded: number; remaining: number }
 export interface BoardResult extends BoardingStats { result: 'boarded' | 'already_boarded'; ticket_index: number; boarded_at: string }
 
-export type BoardErrorCode = 'not_signed_in' | 'trip_not_found' | 'invalid_ticket' | 'wrong_trip' | 'cancelled' | 'boarding_closed' | 'not_open' | 'rate_limited' | 'unknown';
+export type BoardErrorCode = 'not_signed_in' | 'trip_not_found' | 'invalid_ticket' | 'wrong_trip' | 'cancelled' | 'boarding_closed' | 'not_open' | 'rate_limited' | 'network' | 'unknown';
 export class BoardError extends Error {
   constructor(readonly code: BoardErrorCode) { super(code); this.name = 'BoardError'; }
 }
@@ -23,11 +23,14 @@ export const BOARD_MESSAGES: Record<BoardErrorCode, string> = {
   boarding_closed: 'Boarding is closed for this trip.',
   not_open: 'Boarding has not opened yet for this trip.',
   rate_limited: 'Scanning too fast. Wait a few seconds, then continue.',
+  network: 'No connection. Check your signal, then try again. This scan was not recorded.',
   unknown: 'Something went wrong. Try again.',
 };
 
 export function classifyBoardError(code: string | undefined, message: string): BoardErrorCode {
   const m = message.toLowerCase();
+  // a request that never reached the server has no database code (fetch failed, offline, dropped signal)
+  if (!code && /failed to fetch|networkerror|network request failed|load failed|fetch failed/.test(m)) return 'network';
   if (code === 'PT429') return 'rate_limited';
   if (code === '28000' || code === 'PGRST301' || (code === '42501' && (m.includes('permission') || m.includes('jwt')))) return 'not_signed_in';
   if (code === 'P0002') return m.includes('invalid ticket') ? 'invalid_ticket' : 'trip_not_found';

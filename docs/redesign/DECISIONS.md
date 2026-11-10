@@ -35,3 +35,6 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | Phase 5 J1: tenant colour only on the company tile and ticket header, through `tenantAccent` (strict hex, 4.5:1). Buttons stay MASAR (the old per-company Book button colour is dropped in the flipped view) | Owner to confirm (D5) | 10 Nov 2026 | Claude |
 | Phase 5 J1: ds `Ticket`/`TripCard` got optional props only; `paymentStatus` on `Ticket` is now optional | Existing tests unchanged | 10 Nov 2026 | Claude |
 | Phase 5 J1 Arabic strings reuse existing keys; a few new inline Arabic strings (pagination, quick-date label) | Unreviewed until O1 reviewer signs (D10) | 10 Nov 2026 | Claude |
+| Phase 5 J3: new `network` error class in `driverApi` (message: scan was not recorded) and a Try again that re-sends the same code | Additive; coded database errors classify exactly as before. Owner to confirm wording | 10 Nov 2026 | Claude |
+| Phase 5 J3: `/dev/driver-preview` (fake data, dev and Vercel preview only) so the boarding screen can be judged on a real phone without a login | Gated like /dev/design; bundle scan checks the marker | 10 Nov 2026 | Claude |
+| Phase 5 J3: driver screens stay English (no Arabic copy exists), so digits are Latin | Arabic driver UI needs copy and the reviewer (O1) | 10 Nov 2026 | Claude |

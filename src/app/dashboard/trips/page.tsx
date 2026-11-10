@@ -10,6 +10,8 @@ import { addDays, dayKey, dayStartInstant, groupTripsByDay, isValidDateOnly, tim
 import { DayHeading } from '@/features/dashboard/DayHeading';
 import { TripFilters } from '@/features/dashboard/TripFilters';
 import { hrefWith, type TripFilterValues } from '@/features/trips/filter-url';
+import { isSurfaceScoped } from '@/ds/scope';
+import { TripsMasarView } from '@/features/dashboard/masar/TripsMasarView';
 
 const PAST_CUTOFF_MS = 6 * 3600_000; // "upcoming" lasts until 6 h after departure, so a trip on the road is not buried
 const PAGE_SIZE = 50;
@@ -57,6 +59,12 @@ export default async function TripsPage({ searchParams }: { searchParams: Promis
   const quick = [{ key: 'today', from: today, to: today }, { key: 'tomorrow', from: addDays(today, 1), to: addDays(today, 1) }, { key: 'week', ...week }, { key: 'nextweek', ...next }];
   const tab = (active: boolean) => `inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-bold ${active ? 'bg-[#14243A] text-white' : 'border border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'}`;
   const pageHref = (p: number) => `${hrefWith({ ...f })}${hrefWith({ ...f }).includes('?') ? '&' : '?'}page=${p}`;
+
+  if (isSurfaceScoped('dashboard', auth.membership.companyId)) {
+    return <TripsMasarView tz={tz} today={today} f={f} hasDates={hasDates} groups={groups.map((g) => ({ day: g.day, trips: g.trips }))} canWrite={canWrite}
+      routes={routes.items.map((r) => ({ id: r.id, label: r.name }))} buses={buses.items.map((b) => ({ id: b.id, label: b.plateNumber }))} drivers={drivers.items.map((d) => ({ id: d.id, label: d.fullName }))}
+      quick={quick as { key: 'today' | 'tomorrow' | 'week' | 'nextweek'; from: string; to: string }[]} page={page} pageSize={PAGE_SIZE} total={trips.total} />;
+  }
 
   const columns = [
     { key: 'time', label: 'Time', render: (r: Trip) => <time dateTime={r.departureAt} dir="ltr" className="font-bold">{timeLabel(r.departureAt, tz)}</time> },

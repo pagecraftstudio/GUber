@@ -9,7 +9,7 @@ import { useInlineSave } from './useAutosave';
 import { cancelBookingAction, setAmountPaidAction, setPaymentStatusAction } from './autosave-actions';
 import type { Booking } from '@/features/bookings/types';
 
-const TXT = {
+export const TXT = {
   en: { amount: 'Amount paid', full: 'Paid in full', refund: 'Refund', left: 'Remaining', boarded: 'Boarded', partial: 'Partly boarded', not: 'Not boarded', noTicket: 'No ticket', cancel: 'Cancel booking', sure: 'Cancel this booking and release its seats?', yes: 'Yes, cancel', keep: 'Keep', cancelled: 'Cancelled' },
   ar: { amount: 'المبلغ المدفوع', full: 'مدفوع بالكامل', refund: 'استرداد', left: 'المتبقي', boarded: 'صعد', partial: 'صعد جزء منهم', not: 'لم يصعد', noTicket: 'بدون تذكرة', cancel: 'إلغاء الحجز', sure: 'إلغاء هذا الحجز وتحرير مقاعده؟', yes: 'نعم، إلغاء', keep: 'إبقاء', cancelled: 'ملغي' },
 } as const;

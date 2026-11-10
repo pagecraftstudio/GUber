@@ -5,7 +5,7 @@ import { FORM_TEXT, genericErrorText } from '@/features/dashboard/messages';
 import type { FormState } from '@/features/dashboard/form-state';
 import type { AutoResult } from '@/features/dashboard/autosave-actions';
 
-const EXTRA: Record<string, { en: string; ar: string }> = {
+export const EXTRA: Record<string, { en: string; ar: string }> = {
   amount_exceeds_total: { en: 'More than the booking total.', ar: 'أكثر من إجمالي الحجز.' },
   amount_invalid: { en: 'Enter a valid amount.', ar: 'أدخل مبلغاً صحيحاً.' },
   booking_not_cancellable: { en: 'Cancelled booking: use refund.', ar: 'حجز ملغي: استخدم الاسترداد.' },

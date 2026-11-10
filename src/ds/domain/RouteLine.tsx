@@ -36,13 +36,13 @@ export function RouteLine({ stops, size = 'full' }: { stops: RouteStop[]; size?:
 }
 
 /** Seats booked / boarded against capacity, with the figures in text beside the bar. */
-export function OccupancyBar({ booked, boarded, capacity, label, figures }: { booked: number; boarded?: number; capacity: number; label: string; figures: string }) {
+export function OccupancyBar({ booked, boarded, capacity, label, figures, tone = 'neutral' }: { booked: number; boarded?: number; capacity: number; label: string; figures: string; /** `action` paints the main value in the brand colour (boarding progress); the default is the quiet grey of a seat count. */ tone?: 'neutral' | 'action' }) {
   const pct = (n: number) => (capacity > 0 ? Math.min(100, Math.max(0, (n / capacity) * 100)) : 0);
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2 text-[13px]"><span className="text-ink-secondary">{label}</span><span className="tabular-nums text-ink-primary">{figures}</span></div>
       <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={capacity} aria-valuenow={booked} aria-valuetext={figures} className="relative h-2 overflow-hidden rounded-full bg-surface-sunken">
-        <span className="absolute inset-y-0 start-0 bg-line-strong" style={{ width: `${pct(booked)}%` }} />
+        <span className={cx('absolute inset-y-0 start-0', tone === 'action' ? 'bg-action' : 'bg-line-strong')} style={{ width: `${pct(booked)}%` }} />
         {boarded !== undefined ? <span className="absolute inset-y-0 start-0 bg-action" style={{ width: `${pct(boarded)}%` }} /> : null}
       </div>
     </div>

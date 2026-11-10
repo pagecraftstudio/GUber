@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyBoardError } from './driverApi';
+import { BOARD_MESSAGES, classifyBoardError } from './driverApi';
 
 describe('classifyBoardError', () => {
   it.each([
@@ -13,6 +13,18 @@ describe('classifyBoardError', () => {
     ['42501', 'permission denied for function board_ticket', 'not_signed_in'],
     ['XX000', 'boom', 'unknown'],
   ])('%s / %s -> %s', (code, msg, want) => expect(classifyBoardError(code, msg)).toBe(want));
+});
+
+describe('classifyBoardError: poor network', () => {
+  it.each(['TypeError: Failed to fetch', 'NetworkError when attempting to fetch resource.', 'Load failed', 'fetch failed'])('%s -> network', (msg) => {
+    expect(classifyBoardError(undefined, msg)).toBe('network');
+    expect(classifyBoardError('', msg)).toBe('network');
+  });
+  it('a database error that mentions nothing about the network stays unknown, and a coded error is never network', () => {
+    expect(classifyBoardError(undefined, 'boom')).toBe('unknown');
+    expect(classifyBoardError('XX000', 'Failed to fetch')).toBe('unknown');
+  });
+  it('the network message says the scan was not recorded', () => expect(BOARD_MESSAGES.network).toMatch(/not recorded/));
 });
 
 describe('classifyBoardError: rate limiting (0020)', () => {

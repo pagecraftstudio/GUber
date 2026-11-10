@@ -1,11 +1,12 @@
 import { DriverBoarding } from '@/features/driver/DriverBoarding';
+import { PageTitle } from '@/features/driver/PageTitle';
 
 export const metadata = { title: 'Boarding' };
 
 export default function DriverPage() {
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Boarding</h1>
+      <PageTitle />
       <DriverBoarding />
     </div>
   );

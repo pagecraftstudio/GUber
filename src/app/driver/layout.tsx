@@ -1,6 +1,7 @@
 import { DsScope } from '@/ds/shell/DsScope';
 import { DriverShellMasar } from '@/ds/shell/DriverShellMasar';
 import { isSurfaceScoped } from '@/ds/scope';
+import { DsFlagProvider } from '@/ds/shell/flag';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { logoutAction } from '@/features/auth/actions';
 import { requireDriver } from '@/lib/auth/guards';
@@ -12,7 +13,7 @@ export default async function DriverLayout({ children }: { children: React.React
   if (isSurfaceScoped('driver', ctx.membership.companyId)) {
     return (
       <DsScope surface="driver" companyId={ctx.membership.companyId}>
-        <DriverShellMasar companyName={ctx.membership.companyName} driverName={ctx.fullName} logoutAction={logoutAction}>{children}</DriverShellMasar>
+        <DriverShellMasar companyName={ctx.membership.companyName} driverName={ctx.fullName} logoutAction={logoutAction}><DsFlagProvider value>{children}</DsFlagProvider></DriverShellMasar>
       </DsScope>
     );
   }
