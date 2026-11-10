@@ -27,3 +27,16 @@ export type Grade = 'AAA' | 'AA' | 'AA-large' | 'fail';
 export function gradeText(ratio: number): Grade {
   return ratio >= 7 ? 'AAA' : ratio >= 4.5 ? 'AA' : ratio >= 3 ? 'AA-large' : 'fail';
 }
+
+/**
+ * Tenant colour guardrail (plan 5.4, D5). A company colour may reach CSS only if it is a strict 6-digit hex and one of
+ * white or black text reaches 4.5:1 on it. Anything else returns null and the caller falls back to the MASAR colours.
+ * White is preferred when both pass, so company headers keep a consistent light-on-dark look.
+ */
+export function tenantAccent(hex: string | null | undefined): { accent: string; onAccent: string } | null {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return null;
+  const accent = hex.toLowerCase();
+  if (contrast(accent, '#ffffff') >= 4.5) return { accent, onAccent: '#ffffff' };
+  if (contrast(accent, '#000000') >= 4.5) return { accent, onAccent: '#000000' };
+  return null;
+}

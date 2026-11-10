@@ -25,6 +25,7 @@ import { QuietFooter } from '@/ds/shell/MarketplaceHeaderMasar';
 import { SHELL_TEXT } from '@/ds/shell/text';
 import { formatYear } from '@/ds/format';
 import { DigitalTicketView } from '../public/DigitalTicketView';
+import { MarketplaceMasarView } from '../masar/MarketplaceMasarView';
 import { Button } from '../common/Button';
 import { Pagination } from '../common/Pagination';
 import { ToastContainer, ToastMessage } from '../common/Toast';
@@ -140,7 +141,7 @@ export const MasterMarketplace: React.FC = () => {
 
   if (activeTicket) {
     return (
-      <div className="min-h-screen bg-[#F5F7FA]">
+      <div className={flipped ? 'min-h-screen bg-surface-page' : 'min-h-screen bg-[#F5F7FA]'}>
         <MarketplaceHeader onBrowseOperators={() => setSelectedCompanyId(companies[0]?.id || null)} />
         <main className="py-8">
           <DigitalTicketView
@@ -169,6 +170,33 @@ export const MasterMarketplace: React.FC = () => {
   if (searchParams.timeOfDay && searchParams.timeOfDay !== 'all') activeFilterCount++;
   if (searchParams.maxPrice && searchParams.maxPrice < 300) activeFilterCount++;
   if (searchParams.minAvailableSeats && searchParams.minAvailableSeats > 1) activeFilterCount++;
+
+  if (flipped) {
+    return (
+      <div className="flex min-h-screen flex-col justify-between bg-surface-page">
+        <div>
+          <MarketplaceHeader onBrowseOperators={() => setSelectedCompanyId(companies[0]?.id || null)} />
+          <MarketplaceMasarView
+            locations={locations} companies={companies} params={searchParams} trips={trips} total={totalResults} loading={loading}
+            page={currentPage} pageSize={pageSize} onPage={setCurrentPage}
+            onSearch={handleSearch} onFilter={handleFilterChange} onReset={handleResetFilters}
+            onBook={handleStartBooking} onOperator={(cid) => setSelectedCompanyId(cid)}
+          />
+        </div>
+        <QuietFooter>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName} · {isMockMode() ? `${t('demoDataNotice')} · ` : ''}{SHELL_TEXT[locale].poweredBy}</QuietFooter>
+        <CompanyProfileModal isOpen={!!selectedCompanyId} onClose={() => setSelectedCompanyId(null)} company={selectedCompanyObj} companyTrips={companyTrips} onBookTrip={handleStartBooking} />
+        <BookingFlowModal
+          isOpen={!!bookingTrip} onClose={() => setBookingTrip(null)} trip={bookingTrip} routes={routes} buses={buses} stops={stops}
+          onBookingSuccess={(booking, trip) => {
+            setBookingTrip(null); setActiveTicket({ booking, trip });
+            addToast('success', isMockMode() ? t('ticketIssuedSuccess') : (locale === 'ar' ? 'تم تأكيد الحجز' : 'Booking confirmed'), `${booking.passengerName} (Ref: ${booking.bookingReference})`);
+            fetchMarketplaceTrips();
+          }}
+        />
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between">

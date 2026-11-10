@@ -31,3 +31,13 @@ describe('every required token pair passes', () => {
     });
   }
 });
+
+import { tenantAccent } from './contrast';
+describe('tenantAccent guardrail (plan 5.4)', () => {
+  it('accepts a dark colour with white text', () => expect(tenantAccent('#14243A')).toEqual({ accent: '#14243a', onAccent: '#ffffff' }));
+  it('accepts a light colour with black text', () => expect(tenantAccent('#FFEB3B')).toEqual({ accent: '#ffeb3b', onAccent: '#000000' }));
+  it('a mid colour gets whichever text passes (one of white or black always reaches 4.5:1)', () => expect(tenantAccent('#808080')).toEqual({ accent: '#808080', onAccent: '#000000' }));
+  it('rejects anything that is not a strict 6-digit hex (CSS injection)', () => {
+    for (const bad of ['red', '#fff', 'url(x)', '#14243A;background:red', '', null, undefined]) expect(tenantAccent(bad as string)).toBeNull();
+  });
+});

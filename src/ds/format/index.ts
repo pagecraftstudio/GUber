@@ -86,4 +86,21 @@ export function formatDuration(totalMinutes: number, lang: Lang): string {
   return parts.join(' ');
 }
 
+const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩';
+/** Digits of an already-formatted string in the language's digits ("08:30" -> "٠٨:٣٠" in Arabic). Display only. */
+export function localDigits(text: string, lang: Lang): string {
+  return lang === 'ar' ? text.replace(/[0-9]/g, (d) => ARABIC_INDIC[Number(d)] ?? d) : text;
+}
+
+/** A stored wall-clock time such as "08:30" or "08:30:00" (company local time, no zone to convert). Arabic digits in Arabic. */
+export function formatClock(hhmm: string, lang: Lang): string {
+  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm.trim());
+  return m ? localDigits(`${(m[1] ?? '').padStart(2, '0')}:${m[2]}`, lang) : '';
+}
+
+/** A stored calendar day "YYYY-MM-DD" shown as a long date with no time-zone shift. */
+export function formatDay(day: string, lang: Lang, style: 'numeric' | 'long' = 'long'): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? formatDate(new Date(`${day}T00:00:00Z`), lang, { timeZone: 'UTC', style }) : '';
+}
+
 export { normalizeDigits, parseAmountInput, parseIntegerInput, integerFromInput, normalizeDigitsUnknown } from './normalize-digits';

@@ -30,3 +30,8 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | Phase 4: old shells kept (not deleted) and chosen per surface by `isSurfaceScoped`; old class-name tests in `rtl.test.ts` left as they are | They still test code that still ships. Convert or delete with the old shells in Phase 6 | 10 Nov 2026 | Claude |
 | Phase 4: fake search box dropped from the dashboard topbar (the product has no search); theme toggle kept on dashboard and marketplace so nobody is stuck in unsigned dark (D4/O4) | Owner to confirm | 10 Nov 2026 | Claude |
 | Phase 4 Arabic footer wording "بدعم من MALAKY Studio" and shell chrome Arabic | Unreviewed until O1 reviewer signs (D10) | 10 Nov 2026 | Claude |
+| Phase 5 J1: flipped views are drawn by new `ui/components/masar/*` components; data loading, validation, idempotency keys and the QR payload stay in the old components and are shared. No logic was copied | Owner to confirm | 10 Nov 2026 | Claude |
+| Phase 5 J1: no hero photograph on the marketplace (O5 open); the search card sits on a plain surface | Add the image when O5 is answered | 10 Nov 2026 | Claude |
+| Phase 5 J1: tenant colour only on the company tile and ticket header, through `tenantAccent` (strict hex, 4.5:1). Buttons stay MASAR (the old per-company Book button colour is dropped in the flipped view) | Owner to confirm (D5) | 10 Nov 2026 | Claude |
+| Phase 5 J1: ds `Ticket`/`TripCard` got optional props only; `paymentStatus` on `Ticket` is now optional | Existing tests unchanged | 10 Nov 2026 | Claude |
+| Phase 5 J1 Arabic strings reuse existing keys; a few new inline Arabic strings (pagination, quick-date label) | Unreviewed until O1 reviewer signs (D10) | 10 Nov 2026 | Claude |

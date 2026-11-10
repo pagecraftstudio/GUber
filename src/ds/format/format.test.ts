@@ -56,3 +56,17 @@ describe('formatDuration', () => {
   it('ar', () => expect(formatDuration(210, 'ar')).toBe('٣ س ٣٠ د'));
   it('invalid', () => expect(formatDuration(-1, 'en')).toBe(''));
 });
+
+import { formatClock, formatDay, localDigits } from '.';
+describe('stored time and day formatting', () => {
+  it('clock: Latin in English, Arabic-Indic in Arabic, seconds dropped, bad input empty', () => {
+    expect(formatClock('8:30:00', 'en')).toBe('08:30');
+    expect(formatClock('08:30', 'ar')).toBe('٠٨:٣٠');
+    expect(formatClock('nope', 'en')).toBe('');
+  });
+  it('day: no time-zone shift, bad input empty', () => {
+    expect(formatDay('2026-11-10', 'en', 'numeric')).toContain('10');
+    expect(formatDay('2026-11-10x', 'en')).toBe('');
+  });
+  it('localDigits only changes digits', () => expect(localDigits('A1-2', 'ar')).toBe('A١-٢'));
+});

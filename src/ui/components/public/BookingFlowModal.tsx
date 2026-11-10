@@ -7,6 +7,8 @@ import { transportService } from '../../lib/transportService';
 import { BackendError, describeBackendError } from '../../lib/real/customerBackend';
 import { isMockMode } from '../../lib/runtime';
 import { Modal } from '../common/Modal';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { BookingMasarView } from '../masar/BookingMasarView';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import {
@@ -45,6 +47,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   const { locale, t } = useLocale();
   const { currentCompany } = useTenant();
   const { user, profile, isAuthenticated, openAuthModal } = useAuth();
+  const flipped = useDsFlipped();
 
   const [passengerName, setPassengerName] = useState('');
   const [passengerPhone, setPassengerPhone] = useState('');
@@ -216,6 +219,26 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
       });
     }
   };
+
+  if (flipped) {
+    return (
+      <BookingMasarView
+        open={isOpen} onClose={onClose} onSubmit={handleSubmit}
+        routeTitle={`${locale === 'ar' ? route?.originCityAr : route?.originCityEn} → ${locale === 'ar' ? route?.destCityAr : route?.destCityEn}`}
+        departureDate={trip.departureDate} departureTime={trip.departureTime}
+        availableSeats={availableSeats} isFullyBooked={isFullyBooked} loading={loading} guestBlocked={guestBlocked}
+        signedInAs={isAuthenticated && !isBookingForSomeoneElse ? { name: user?.fullName ?? '', ...(user?.email ? { email: user.email } : {}) } : null}
+        onSignIn={() => openAuthModal('login')} {...(isMockMode() ? { onBookForOther: handleResetToGuest } : {})}
+        values={{ name: passengerName, phone: passengerPhone, studentId }}
+        setValues={(v) => { setPassengerName(v.name); setPassengerPhone(v.phone); setStudentId(v.studentId); }}
+        showStudentId={isMockMode()} count={passengerCount} setCount={setPassengerCount}
+        extraNames={extraPassengerNames} setExtraName={handleApplyCompanion} showExtraNames={isMockMode()}
+        offersRoundTrip={offersRoundTrip} roundTrip={roundTrip} setRoundTrip={setRoundTrip} roundTripPrice={roundTripFare}
+        returnOptions={returnOptions} returnsError={returnsError} returnTripId={returnTripId} setReturnTripId={setReturnTripId}
+        oneWayFare={baseFarePerPassenger} saving={saving} discount={discountPerPassenger} total={finalFare} errors={errors}
+      />
+    );
+  }
 
   return (
     <Modal

@@ -7,6 +7,8 @@ import { isMockMode } from '../../lib/runtime';
 import { transportService } from '../../lib/transportService';
 import { describeBackendError } from '../../lib/real/customerBackend';
 import { TicketQrImage } from './TicketQrImage';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { TicketMasarView } from '../masar/TicketMasarView';
 import {
   CheckCircle2,
   QrCode,
@@ -38,6 +40,7 @@ export const DigitalTicketView: React.FC<DigitalTicketViewProps> = ({
 }) => {
   const { locale, t } = useLocale();
   const { currentCompany } = useTenant();
+  const flipped = useDsFlipped();
 
   const route = routes.find((r) => r.id === trip.routeId);
   const bus = buses.find((b) => b.id === trip.busId);
@@ -70,6 +73,20 @@ export const DigitalTicketView: React.FC<DigitalTicketViewProps> = ({
   const handlePrint = () => {
     window.print();
   };
+
+  if (flipped) {
+    const qrNode = !mock && activePassenger?.qrOpaqueToken && activePassenger.status !== 'boarded'
+      ? <TicketQrImage payload={activePassenger.qrOpaqueToken} label={locale === 'ar' ? 'رمز QR للتذكرة' : 'Ticket QR code'} />
+      : null;
+    return (
+      <TicketMasarView
+        booking={booking} trip={trip} route={route} bus={bus} company={currentCompany}
+        passengers={passengers} activeIdx={selectedPassengerIdx} setActiveIdx={setSelectedPassengerIdx}
+        loading={!mock && !live && !ticketsError} error={ticketsError} onRetry={() => setReloadKey((k) => k + 1)}
+        qr={qrNode} onDone={onDone} onPrint={handlePrint}
+      />
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 sm:px-6">

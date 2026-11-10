@@ -1,4 +1,5 @@
 export * from './format';
+export { tenantAccent } from './contrast';
 export { Identifier } from './format/Identifier';
 export { DsLangProvider, useDsLang, useDsText } from './lang';
 export { Button, IconButton, SubmitButton, buttonClass } from './primitives/Button';
@@ -10,7 +11,7 @@ export { AutoSelect, AutoSwitch, AutoInput } from './primitives/auto';
 export { SaveStatus, viewOfInline } from './feedback/SaveStatus';
 export { InlineAlert } from './feedback/InlineAlert';
 export { ToastProvider, useToast } from './feedback/Toast';
-export { ConfirmDialog, Drawer } from './feedback/Dialog';
+export { ConfirmDialog, Drawer, Modal } from './feedback/Dialog';
 export { Tooltip } from './feedback/Tooltip';
 export { EmptyState, ErrorState, Skeleton, SkeletonCard, SkeletonTable, SkeletonRegion } from './feedback/States';
 export { StatusBadge } from './data/StatusBadge';
