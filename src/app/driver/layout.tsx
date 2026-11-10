@@ -1,4 +1,6 @@
 import { DsScope } from '@/ds/shell/DsScope';
+import { DriverShellMasar } from '@/ds/shell/DriverShellMasar';
+import { isSurfaceScoped } from '@/ds/scope';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { logoutAction } from '@/features/auth/actions';
 import { requireDriver } from '@/lib/auth/guards';
@@ -7,6 +9,13 @@ export const metadata = { title: 'Driver' };
 
 export default async function DriverLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireDriver(); // server gate, re-verified per request; board_ticket re-verifies per scan in Postgres
+  if (isSurfaceScoped('driver', ctx.membership.companyId)) {
+    return (
+      <DsScope surface="driver" companyId={ctx.membership.companyId}>
+        <DriverShellMasar companyName={ctx.membership.companyName} driverName={ctx.fullName} logoutAction={logoutAction}>{children}</DriverShellMasar>
+      </DsScope>
+    );
+  }
   return (
     <DsScope surface="driver" companyId={ctx.membership.companyId}>
     <div className="min-h-screen bg-slate-50">

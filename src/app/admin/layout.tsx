@@ -1,4 +1,6 @@
 import { DsScope } from '@/ds/shell/DsScope';
+import { AdminShellMasar } from '@/ds/shell/AdminShellMasar';
+import { isSurfaceScoped } from '@/ds/scope';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { logoutAction } from '@/features/auth/actions';
@@ -7,6 +9,13 @@ import { requirePlatform } from '@/lib/auth/guards';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requirePlatform(); // 404 for anyone who is not active platform staff
+  if (isSurfaceScoped('admin', null)) {
+    return (
+      <DsScope surface="admin">
+        <AdminShellMasar fullName={ctx.fullName} roleLabel={String(ctx.platformRole).replaceAll('_', ' ')} items={navFor(ctx.platformRole).map(({ href, label, available }) => ({ href, label, available }))} logoutAction={logoutAction}>{children}</AdminShellMasar>
+      </DsScope>
+    );
+  }
   return (
     <DsScope surface="admin">
     <div className="min-h-screen bg-slate-50">

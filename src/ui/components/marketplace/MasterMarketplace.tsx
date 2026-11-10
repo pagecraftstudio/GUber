@@ -20,6 +20,10 @@ import { MarketplaceTripCard } from './MarketplaceTripCard';
 import { CompanyProfileModal } from './CompanyProfileModal';
 import { BookingFlowModal } from '../public/BookingFlowModal';
 import { isMockMode } from '../../lib/runtime';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { QuietFooter } from '@/ds/shell/MarketplaceHeaderMasar';
+import { SHELL_TEXT } from '@/ds/shell/text';
+import { formatYear } from '@/ds/format';
 import { DigitalTicketView } from '../public/DigitalTicketView';
 import { Button } from '../common/Button';
 import { Pagination } from '../common/Pagination';
@@ -35,6 +39,7 @@ const initialSearchParams = (): MarketplaceSearchParams => ({
 export const MasterMarketplace: React.FC = () => {
   const { locale, t } = useLocale();
   const { companies, selectCompany, setActiveView } = useTenant();
+  const flipped = useDsFlipped();
 
   const [locations, setLocations] = useState<CanonicalLocation[]>([]);
   const [trips, setTrips] = useState<MarketplaceTripItem[]>([]);
@@ -347,6 +352,9 @@ export const MasterMarketplace: React.FC = () => {
       )}
 
       {/* Footer */}
+      {flipped ? (
+        <QuietFooter>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName} · {isMockMode() ? `${t('demoDataNotice')} · ` : ''}{SHELL_TEXT[locale].poweredBy}</QuietFooter>
+      ) : (
       <footer className="bg-[#14243A] text-slate-400 py-8 border-t border-slate-800 text-xs mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© {new Date().getFullYear()} {t('platformName')} — {t('marketplaceView')}. {t('allRightsReserved')}</p>
@@ -355,6 +363,7 @@ export const MasterMarketplace: React.FC = () => {
           </p>
         </div>
       </footer>
+      )}
 
       {/* Company Profile Modal */}
       <CompanyProfileModal

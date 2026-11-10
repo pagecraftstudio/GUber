@@ -11,8 +11,8 @@ import {
 import { isNavActive, visibleNav } from './nav';
 
 type Props = { initialLang?: 'en' | 'ar'; companyName: string; fullName: string; role: string; permissions: string[]; children: React.ReactNode; logoutAction: () => void };
-const ROLES:Record<string,{en:string;ar:string}>={company_owner:{en:'Company owner',ar:'مالك الشركة'},company_manager:{en:'Company manager',ar:'مدير الشركة'},operations_staff:{en:'Operations staff',ar:'موظف العمليات'},booking_staff:{en:'Booking staff',ar:'موظف الحجوزات'},driver:{en:'Driver',ar:'سائق'}};
-const labels:any = {
+export const ROLES:Record<string,{en:string;ar:string}>={company_owner:{en:'Company owner',ar:'مالك الشركة'},company_manager:{en:'Company manager',ar:'مدير الشركة'},operations_staff:{en:'Operations staff',ar:'موظف العمليات'},booking_staff:{en:'Booking staff',ar:'موظف الحجوزات'},driver:{en:'Driver',ar:'سائق'}};
+export const labels:any = {
   en:{customers:'Customers',settings:'Settings',overview:'Overview',routes:'Routes',buses:'Fleet',drivers:'Drivers',users:'Team',trips:'Trips',bookings:'Bookings',website:'Website',workspace:'WORKSPACE',manage:'Manage your operations',search:'Search anything...',signout:'Sign out',collapse:'Collapse sidebar',expand:'Expand sidebar',language:'العربية',welcome:'Good to see you',operator:'OPERATOR CONSOLE'},
   ar:{customers:'العملاء',settings:'الإعدادات',overview:'نظرة عامة',routes:'المسارات',buses:'أسطول الحافلات',drivers:'السائقون',users:'الفريق',trips:'الرحلات',bookings:'الحجوزات',website:'الموقع الإلكتروني',workspace:'مساحة العمل',manage:'إدارة عمليات شركتك',search:'ابحث هنا...',signout:'تسجيل الخروج',collapse:'تصغير القائمة',expand:'توسيع القائمة',language:'English',welcome:'أهلاً بعودتك',operator:'لوحة تحكم المشغل'}
 };

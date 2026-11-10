@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDateTime, formatDuration, formatMoney, formatNumber, formatPercent, formatTime, integerFromInput, normalizeDigits, parseAmountInput, parseIntegerInput } from '.';
+import { formatDate, formatDateTime, formatDuration, formatMoney, formatNumber, formatPercent, formatTime, formatYear, integerFromInput, normalizeDigits, parseAmountInput, parseIntegerInput } from '.';
 
 const AR = '٠١٢٣٤٥٦٧٨٩';
 describe('normalizeDigits', () => {
@@ -45,6 +45,10 @@ describe('dates and times (company time zone, 24-hour)', () => {
   it('the time zone decides the day', () => expect(formatDate('2026-11-09T23:30:00Z', 'en', { timeZone: 'Africa/Cairo' })).toBe('10/11/2026'));
   it('long style', () => expect(formatDate(t, 'en', { timeZone: 'Africa/Cairo', style: 'long' })).toBe('9 November 2026'));
   it('invalid input is empty', () => { expect(formatDate('nope', 'en')).toBe(''); expect(formatTime('nope', 'ar')).toBe(''); });
+});
+
+describe('formatYear', () => {
+  it('has no thousands separator, follows the language', () => { expect(formatYear('2026-06-01T00:00:00Z', 'en')).toBe('2026'); expect(formatYear('2026-06-01T00:00:00Z', 'ar')).toBe('٢٠٢٦'); });
 });
 
 describe('formatDuration', () => {

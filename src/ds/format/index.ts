@@ -54,6 +54,12 @@ export function formatDate(value: Instant, lang: Lang, opts: { timeZone?: string
   return new Intl.DateTimeFormat(LOCALE[lang], { ...dateStyle, ...(opts.timeZone ? { timeZone: opts.timeZone } : {}) }).format(d);
 }
 
+/** Four-digit year with no thousands separator, in the language's digits (footer copyright). */
+export function formatYear(value: Instant, lang: Lang): string {
+  const d = toDate(value);
+  return valid(d) ? new Intl.DateTimeFormat(LOCALE[lang], { year: 'numeric' }).format(d) : '';
+}
+
 /** 24-hour clock in both languages (O2 b: matches today, no am/pm ambiguity on tickets). */
 export function formatTime(value: Instant, lang: Lang, opts: { timeZone?: string } = {}): string {
   const d = toDate(value);

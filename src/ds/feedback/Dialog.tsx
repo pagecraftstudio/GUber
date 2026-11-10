@@ -65,7 +65,7 @@ export function Drawer({ open, onClose, title, side = 'end', children }: { open:
   const ref = useModal(open, onClose);
   return (
     <dialog ref={ref} aria-labelledby={`${id}-t`} onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      className={cx('m-0 h-dvh max-h-none w-[min(24rem,100vw)] overflow-auto border-line-default bg-surface-card p-0 text-ink-primary shadow-lg backdrop:bg-black/50', side === 'end' ? 'ms-auto border-s' : 'me-auto border-e')}>
+      className={cx('m-0 h-dvh max-h-none w-[min(24rem,100vw)] max-w-none overflow-auto border-line-default bg-surface-card p-0 text-ink-primary shadow-lg backdrop:bg-black/50', side === 'end' ? 'ms-auto border-s' : 'me-auto border-e')}>
       <div className="flex items-center justify-between gap-2 border-b border-line-default p-4">
         <h2 id={`${id}-t`} className="text-lg font-medium">{title}</h2>
         <IconButton label={t.close} icon={<X size={18} strokeWidth={1.5} />} onClick={onClose} />

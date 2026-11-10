@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import '@/ui/ui.css';
 import { DsScope } from '@/ds/shell/DsScope';
 import { isSurfaceScoped } from '@/ds/scope';
+import { DsFlagProvider } from '@/ds/shell/flag';
 
 // Public customer marketplace. This is the only indexable surface; dashboard/admin/driver/operator-login stay noindex (root layout).
 export const metadata: Metadata = {
@@ -29,7 +30,7 @@ export default function MarketplaceLayout({ children }: { children: React.ReactN
           />
         </>
       )}
-      {children}
+      <DsFlagProvider value={flipped}>{children}</DsFlagProvider>
     </DsScope>
   );
 }

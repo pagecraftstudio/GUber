@@ -27,3 +27,6 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | Phase 3 validation change (5.7 rule 6): `normalizeDigits` into amount, seats, student ID, plate, search, form `num()`; phone and amount reuse it | Applied on the instruction "Start Phase 3". Owner to confirm. Files listed in PHASE-3-REPORT.md | 9 Nov 2026 | Claude |
 | Phase 3 `next.config.ts` change: `env.DS_GALLERY` build-time switch so the gallery is not compiled into production | Pending owner approval | 9 Nov 2026 | Claude |
 | Phase 3 dev dependencies: jsdom, @testing-library/react, @testing-library/dom, @testing-library/user-event, axe-core | Pending owner approval (dev only, nothing ships) | 9 Nov 2026 | Claude |
+| Phase 4: old shells kept (not deleted) and chosen per surface by `isSurfaceScoped`; old class-name tests in `rtl.test.ts` left as they are | They still test code that still ships. Convert or delete with the old shells in Phase 6 | 10 Nov 2026 | Claude |
+| Phase 4: fake search box dropped from the dashboard topbar (the product has no search); theme toggle kept on dashboard and marketplace so nobody is stuck in unsigned dark (D4/O4) | Owner to confirm | 10 Nov 2026 | Claude |
+| Phase 4 Arabic footer wording "بدعم من MALAKY Studio" and shell chrome Arabic | Unreviewed until O1 reviewer signs (D10) | 10 Nov 2026 | Claude |
