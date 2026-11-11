@@ -38,3 +38,12 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | Phase 5 J3: new `network` error class in `driverApi` (message: scan was not recorded) and a Try again that re-sends the same code | Additive; coded database errors classify exactly as before. Owner to confirm wording | 10 Nov 2026 | Claude |
 | Phase 5 J3: `/dev/driver-preview` (fake data, dev and Vercel preview only) so the boarding screen can be judged on a real phone without a login | Gated like /dev/design; bundle scan checks the marker | 10 Nov 2026 | Claude |
 | Phase 5 J3: driver screens stay English (no Arabic copy exists), so digits are Latin | Arabic driver UI needs copy and the reviewer (O1) | 10 Nov 2026 | Claude |
+| Phase 5 J4: admin dates shown as "5 October 2026, 09:00 UTC" (long month, explicit UTC), not dd/mm/yyyy | Platform staff read dates across locales; 05/10 is ambiguous. The old admin used ISO | 11 Nov 2026 | Claude |
+| Phase 5 J4: `buttonClass` moved to `ds/primitives/button-class.ts`; `Pagination` takes `hrefBase` + `hrefParams` | A helper exported from a client file crashed server components; a function prop cannot cross server to client. Guard tests added | 11 Nov 2026 | Claude |
+| Phase 5 J4: J2 filter chips now say "Remove filter: X" (was "Clear all: X") | One-chip removal was announced as clear-all | 11 Nov 2026 | Claude |
+| Phase 5 J4: `/dev/admin-preview` (fake data, dev and Vercel preview only) | Same gating as the other dev pages; bundle scan checks the marker | 11 Nov 2026 | Claude |
+| Phase 0 (done late, 12 Nov 2026): safety baseline recorded from the pre-redesign build: `tsc` clean, 45 test files / **787 tests pass**, `next build` passes (27 pages) | See PHASE-0-REPORT.md | 12 Nov 2026 | Claude |
+| Phase 0: "before" screenshots, 158 images, `docs/redesign/baseline/` (README lists what is and is not covered) | Stored | 12 Nov 2026 | Claude |
+| Phase 0: copy and terminology sheet, 907 EN/AR rows, `MASAR-Terminology-Sheet.md` and `.csv` | **NOT APPROVED**: needs the named Arabic reviewer (D10) | 12 Nov 2026 | Claude |
+| N2 footer placement, N5 admin English-only, N6 interim dark toggle | Built as the plan recommended (Phase 4, Phase 5 J4, Phase 4). Owner to confirm | 12 Nov 2026 | Claude |
+| **N4 Arabic reviewer name (hard gate)** | **STILL BLANK. Phase 0 and Phase 1 cannot exit until filled** | | |
