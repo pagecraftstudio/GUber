@@ -2,11 +2,21 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatNumber, type Lang } from '../format';
 import { useDsLang, useDsText } from '../lang';
-import { buttonClass } from '../primitives/Button';
+import { buttonClass } from '../primitives/button-class';
 import { cx, FOCUS } from '../primitives/cx';
 
 /** Links when `hrefFor` is given (server pages with URL filters), buttons when `onPageChange` is. Page numbers follow the language. */
-export function Pagination({ page, pageCount, hrefFor, onPageChange, lang }: { page: number; pageCount: number; hrefFor?: (page: number) => string; onPageChange?: (page: number) => void; lang?: Lang }) {
+/** Builds `base?…&page=n` from plain data, so a SERVER component can render links (a function prop cannot cross from server to client). */
+const hrefFromBase = (base: string, params: Record<string, string | undefined>, n: number) => {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) qs.set(k, v);
+  if (n > 1) qs.set('page', String(n));
+  const s = qs.toString();
+  return s ? `${base}?${s}` : base;
+};
+
+export function Pagination({ page, pageCount, hrefFor: hrefForProp, hrefBase, hrefParams, onPageChange, lang }: { page: number; pageCount: number; hrefFor?: (page: number) => string; /** serialisable alternative to hrefFor, for server components */ hrefBase?: string; hrefParams?: Record<string, string | undefined>; onPageChange?: (page: number) => void; lang?: Lang }) {
+  const hrefFor = hrefForProp ?? (hrefBase ? (n: number) => hrefFromBase(hrefBase, hrefParams ?? {}, n) : undefined);
   const l = useDsLang(lang);
   const t = useDsText(lang);
   if (pageCount <= 1) return null;

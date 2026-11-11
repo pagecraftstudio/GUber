@@ -2,18 +2,10 @@
 import { Loader2 } from 'lucide-react';
 import { useFormStatus } from 'react-dom';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { cx, FOCUS } from './cx';
+import { buttonClass, type ButtonSize, type ButtonVariant } from './button-class';
+import { cx } from './cx';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
-export type ButtonSize = 'md' | 'lg';
-
-const VARIANT: Record<ButtonVariant, string> = {
-  primary: 'bg-action text-on-action hover:bg-action-hover',
-  secondary: 'border border-line-strong bg-surface-card text-ink-primary hover:bg-surface-sunken',
-  ghost: 'text-ink-primary hover:bg-surface-sunken',
-  destructive: 'bg-destructive text-on-destructive hover:bg-destructive-hover',
-};
-const SIZE: Record<ButtonSize, string> = { md: 'h-9 px-4 text-sm', lg: 'h-11 px-5 text-base' };
+export type { ButtonSize, ButtonVariant };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -23,14 +15,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   iconStart?: ReactNode;
   iconEnd?: ReactNode;
-}
-
-export function buttonClass(variant: ButtonVariant, size: ButtonSize, fullWidth?: boolean, extra?: string): string {
-  return cx(
-    'inline-flex items-center justify-center gap-2 rounded-ds-md font-medium whitespace-nowrap transition-colors duration-(--duration-ds-feedback) ease-ds',
-    'aria-disabled:cursor-not-allowed aria-disabled:opacity-60 disabled:cursor-not-allowed disabled:opacity-60',
-    FOCUS, VARIANT[variant], SIZE[size], fullWidth && 'w-full', extra,
-  );
 }
 
 export function Button({ variant = 'primary', size = 'md', loading = false, fullWidth, iconStart, iconEnd, type = 'button', className, children, onClick, disabled, ...rest }: ButtonProps) {

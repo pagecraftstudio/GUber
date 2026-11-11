@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { BusFront, CalendarDays, Globe2, Route, Ticket, Users, type LucideIcon } from 'lucide-react';
-import { buttonClass } from '@/ds/primitives/Button';
+import { buttonClass } from '@/ds/primitives/button-class';
 import { MetricCard } from '@/ds/data/Layout';
 import { StatusBadge } from '@/ds/data/StatusBadge';
 import { EmptyState } from '@/ds/feedback/States';

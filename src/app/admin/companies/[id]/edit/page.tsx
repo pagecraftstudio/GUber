@@ -1,5 +1,9 @@
 import { ROLE_SETS } from '@/features/platform/permissions';
 import Link from 'next/link';
+import { EditCompanyForm as EditCompanyFormMasar } from '@/components/admin/masar/CompanyFormsMasar';
+import { Breadcrumbs } from '@/ds/data/Layout';
+import { ErrorState } from '@/ds/feedback/States';
+import { isSurfaceScoped } from '@/ds/scope';
 import { notFound } from 'next/navigation';
 import { EditCompanyForm } from '@/components/admin/CompanyForms';
 import { AdminErrorState } from '@/components/admin/StateViews';
@@ -25,9 +29,22 @@ export default async function EditCompanyPage({ params }: { params: Promise<{ id
     result = outcome.kind === 'missing' ? { missing: true } : { error: outcome.message };
   }
   if ('missing' in result) notFound();
-  if ('error' in result) return <AdminErrorState message={result.error} />;
+  const masar = isSurfaceScoped('admin', null);
+  if ('error' in result) return masar ? <ErrorState title="Could not load this company" description={result.error} /> : <AdminErrorState message={result.error} />;
 
   const c = result.data.company;
+  if (masar) {
+    return (
+      <div className="max-w-xl space-y-6">
+        <div className="space-y-3">
+          <Breadcrumbs items={[{ label: 'Companies', href: '/admin/companies' }, { label: c.name, href: `/admin/companies/${c.id}` }, { label: 'Edit' }]} />
+          <h1 className="text-2xl font-medium text-ink-primary">Edit company</h1>
+          <p className="text-[13px] text-ink-muted">The slug is fixed.</p>
+        </div>
+        <EditCompanyFormMasar company={{ id: c.id, name: c.name, legalName: c.legalName, taxNumber: c.taxNumber, contactName: c.contactName, contactEmail: c.contactEmail, contactPhone: c.contactPhone, country: c.country }} />
+      </div>
+    );
+  }
   return (
     <div className="max-w-xl space-y-5">
       <div>

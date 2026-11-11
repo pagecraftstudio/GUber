@@ -33,4 +33,5 @@ scan "client bundle: no mock opaque QR token / mock data module markers" 'malaky
 scan "client bundle: no design-token page (dev/preview only)"            'MASAR-DESIGN-PAGE' "${CLIENT[@]}"
 scan "client bundle: no component gallery (dev/preview only)"            'MASAR-DESIGN-GALLERY' "${CLIENT[@]}"
 scan "client bundle: no driver preview with fake data (dev/preview only)" 'MASAR-DRIVER-PREVIEW' "${CLIENT[@]}"
+scan "client bundle: no admin preview with fake data (dev/preview only)"  'MASAR-ADMIN-PREVIEW' "${CLIENT[@]}"
 [ $fail = 0 ] && echo "BUNDLE SCAN: PASS" || echo "BUNDLE SCAN: FAIL"; exit $fail

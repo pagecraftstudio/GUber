@@ -58,7 +58,7 @@ export function DataTable<T>(p: DataTableProps<T>) {
 
   return (
     <>
-      <div className="hidden overflow-x-auto rounded-ds-md border border-line-default bg-surface-card md:block">
+      <div className="relative hidden overflow-x-auto rounded-ds-md border border-line-default bg-surface-card md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">{p.caption}</caption>
           <thead className="sticky top-0 z-10 bg-surface-sunken text-start text-[13px] font-medium text-ink-secondary">

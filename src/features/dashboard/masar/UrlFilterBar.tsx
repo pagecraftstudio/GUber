@@ -44,7 +44,7 @@ export function UrlFilterBar({ fields, keep, quick, chips, clearHref, extra }: {
       ) : null}
       {chips.length > 0 ? (
         <ul className="flex flex-wrap items-center gap-2" aria-label={t.filters}>
-          {chips.map((c) => <li key={c.key} className="inline-flex h-7 items-center gap-1 rounded-ds-sm bg-surface-sunken ps-2 pe-1 text-[13px] text-ink-primary">{c.label}<Link href={c.href} aria-label={`${t.clear}: ${c.label}`} className="inline-flex size-6 items-center justify-center rounded-ds-sm hover:bg-line-default">×</Link></li>)}
+          {chips.map((c) => <li key={c.key} className="inline-flex h-7 items-center gap-1 rounded-ds-sm bg-surface-sunken ps-2 pe-1 text-[13px] text-ink-primary">{c.label}<Link href={c.href} aria-label={`${t.remove}: ${c.label}`} className="inline-flex size-6 items-center justify-center rounded-ds-sm hover:bg-line-default">×</Link></li>)}
           <li><Link href={clearHref} className="text-[13px] text-ink-link underline-offset-2 hover:underline">{t.clear}</Link></li>
         </ul>
       ) : null}

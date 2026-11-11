@@ -36,3 +36,24 @@ describe('src/ds guard', () => {
     });
   }
 });
+
+/** A helper exported from a 'use client' file cannot be called by a server component (it crashed the admin pages in a real browser). Style helpers live in plain modules. */
+describe('server-safe helpers', () => {
+  const SRC = new URL('..', import.meta.url).pathname;
+  const walkAll = (d: string): string[] => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? (n === 'node_modules' ? [] : walkAll(p)) : /\.tsx?$/.test(n) && !/\.test\./.test(n) ? [p] : []; });
+  it('nobody imports buttonClass from the client Button module', () => {
+    const bad = walkAll(SRC).filter((p) => /import\s*\{[^}]*\bbuttonClass\b[^}]*\}\s*from\s*'[^']*\/Button'/.test(readFileSync(p, 'utf8'))).map((p) => relative(SRC, p));
+    expect(bad).toEqual([]);
+  });
+});
+
+/** An absolutely positioned child (sr-only live regions, icons) escapes an overflow container that is not positioned and widens the whole page on phones. */
+describe('scroll containers', () => {
+  it('every overflow-x-auto container in the new system is positioned', () => {
+    const SRC = new URL('..', import.meta.url).pathname;
+    const all = (d: string): string[] => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? (n === 'node_modules' || n === 'ui' ? [] : all(p)) : /\.tsx$/.test(n) && !/\.test\./.test(n) ? [p] : []; });
+    // new-system files only: the old screens are replaced, not repaired
+    const bad = all(SRC).filter((p) => /\/(ds|masar)\//.test(p)).flatMap((p) => readFileSync(p, 'utf8').split('\n').map((l, i) => ({ l, i, p }))).filter(({ l }) => /className="[^"]*\boverflow-x-auto\b/.test(l) && !/\b(relative|absolute|fixed|sticky)\b/.test(l.match(/className="[^"]*"/)?.[0] ?? '')).map(({ p, i }) => `${relative(SRC, p)}:${i + 1}`);
+    expect(bad).toEqual([]);
+  });
+});

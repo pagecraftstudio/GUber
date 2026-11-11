@@ -152,7 +152,7 @@ describe('url filters', () => {
     render(wrap('en', <BookingsMasarView {...bookProps({ f: { ...bookProps().f, pay: 'unpaid', q: 'mona' } })} />));
     const form = document.querySelector('form[method="get"]')!;
     expect((form.querySelector('input[name="view"]') as HTMLInputElement).value).toBe('upcoming');
-    const remove = screen.getByRole('link', { name: /Clear all: Payment: Unpaid/ }) as HTMLAnchorElement;
+    const remove = screen.getByRole('link', { name: 'Remove filter: Payment: Unpaid' }) as HTMLAnchorElement;
     expect(remove.getAttribute('href')).toContain('q=mona');
     expect(remove.getAttribute('href')).not.toContain('pay=');
   });

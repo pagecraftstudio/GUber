@@ -1,5 +1,9 @@
 import { ROLE_SETS } from '@/features/platform/permissions';
 import Link from 'next/link';
+import { CreateCompanyForm as CreateCompanyFormMasar } from '@/components/admin/masar/CompanyFormsMasar';
+import { Breadcrumbs } from '@/ds/data/Layout';
+import { ErrorState } from '@/ds/feedback/States';
+import { isSurfaceScoped } from '@/ds/scope';
 import { AdminErrorState } from '@/components/admin/StateViews';
 import { CreateCompanyForm, type PlanOption } from '@/components/admin/CompanyForms';
 import { subscriptionService } from '@/features/subscriptions/service';
@@ -23,6 +27,14 @@ export default async function NewCompanyPage() {
     error = toClientError(e).message;
   }
 
+  if (isSurfaceScoped('admin', null)) {
+    return (
+      <div className="max-w-xl space-y-6">
+        <div className="space-y-3"><Breadcrumbs items={[{ label: 'Companies', href: '/admin/companies' }, { label: 'New company' }]} /><h1 className="text-2xl font-medium text-ink-primary">New company</h1></div>
+        {error ? <ErrorState title="Could not load plans" description={error} /> : <CreateCompanyFormMasar plans={plans} />}
+      </div>
+    );
+  }
   return (
     <div className="max-w-xl space-y-5">
       <div>

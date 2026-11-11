@@ -2,7 +2,7 @@
 import { Upload } from 'lucide-react';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useDsText } from '../lang';
-import { buttonClass } from './Button';
+import { buttonClass } from './button-class';
 import { useFieldControl } from './Field';
 
 export type RejectReason = 'type' | 'size';

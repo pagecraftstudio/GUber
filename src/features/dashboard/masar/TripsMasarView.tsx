@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { buttonClass } from '@/ds/primitives/Button';
+import { buttonClass } from '@/ds/primitives/button-class';
 import { DataTable, type Column } from '@/ds/data/DataTable';
 import { Pagination } from '@/ds/data/Pagination';
 import { StatusBadge } from '@/ds/data/StatusBadge';

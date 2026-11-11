@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { CompaniesMasarView } from '@/components/admin/masar/CompaniesMasarView';
+import { isSurfaceScoped } from '@/ds/scope';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { AdminEmptyState, AdminErrorState } from '@/components/admin/StateViews';
 import { StatusBadge } from '@/components/admin/StatusBadge';
@@ -28,6 +30,8 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Ra
     result = { error: toClientError(e).message };
   }
   const canCreate = ctx.auth.platformRole === 'super_admin';
+  // Presentation only: the query, the role check and the URL parameters above are the same for both looks.
+  if (isSurfaceScoped('admin', null)) return <CompaniesMasarView query={{ q: query.q, status: query.status }} result={result} canCreate={canCreate} />;
   const filtersActive = Boolean(query.q || query.status);
 
   return (

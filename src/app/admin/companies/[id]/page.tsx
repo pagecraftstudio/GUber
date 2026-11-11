@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { CompanyDetailMasarView } from '@/components/admin/masar/CompanyDetailMasarView';
+import { isSurfaceScoped } from '@/ds/scope';
 import { notFound } from 'next/navigation';
 import { AddNoteForm, InviteOwnerForm } from '@/components/admin/CompanyForms';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -87,6 +89,8 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
   } catch {
     activity = null; // the activity card is secondary: the page still renders without it
   }
+
+  if (isSurfaceScoped('admin', null)) return <CompanyDetailMasarView data={result.data} isSuper={isSuper} canSub={canSub} canNote={canNote} planOptions={planOptions} activity={activity} />;
 
   return (
     <div className="space-y-8">
