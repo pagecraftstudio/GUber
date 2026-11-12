@@ -250,21 +250,17 @@ describe.skipIf(!URL_)('Phase 5: bookings and trips under real concurrency', () 
   });
 
   describe('bus/driver conflicts are decided transactionally', () => {
-    it('5 drafts on the SAME bus and overlapping times, scheduled in parallel: exactly one wins', async () => {
+    // Migration 0027: drafts take part in the exclusion constraints, so a clash is refused when the draft is
+    // created (not when it goes live). The races below are therefore decided by createDraft.
+    it('5 drafts on the SAME bus and overlapping times, created in parallel: exactly one wins', async () => {
       const when = slot(8, 3);
-      const drafts = await Promise.all(Array.from({ length: 5 }, (_, i) => tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId: i % 2 ? driver2Id : driverId, ...when, price: 5, capacity: 10 })));
-      // free the pair for a clean race: only the bus is shared between all five, drivers alternate (they also clash pairwise)
-      const results = await Promise.all(drafts.map((d) => settle(tripService.transition(opsA, { tripId: d.id, to: 'scheduled' }))));
+      const results = await Promise.all(Array.from({ length: 5 }, (_, i) => settle(tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId: i % 2 ? driver2Id : driverId, ...when, price: 5, capacity: 10 }))));
       expect(results.filter((r) => r.ok)).toHaveLength(1);
       for (const r of results) if (!r.ok) expect(r.error).toMatchObject({ code: 'conflict' });
-      const statuses = await Promise.all(drafts.map(async (d) => (await tripService.get(ownerA, d.id)).status));
-      expect(statuses.filter((s) => s === 'scheduled')).toHaveLength(1);
-      expect(statuses.filter((s) => s === 'draft')).toHaveLength(4);
     });
-    it('same DRIVER on two buses at overlapping times: exactly one wins, with driver_conflict', async () => {
+    it('same DRIVER on two buses at overlapping times, created in parallel: exactly one wins, with driver_conflict', async () => {
       const when = slot(8, 3);
-      const [x, y] = await Promise.all([busId, bus2Id].map((b) => tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId: b, driverId, ...when, price: 5, capacity: 10 })));
-      const results = await Promise.all([x!, y!].map((d) => settle(tripService.transition(opsA, { tripId: d.id, to: 'scheduled' }))));
+      const results = await Promise.all([busId, bus2Id].map((b) => settle(tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId: b, driverId, ...when, price: 5, capacity: 10 }))));
       expect(results.filter((r) => r.ok)).toHaveLength(1);
       expect(results.find((r) => !r.ok)).toMatchObject({ error: { code: 'conflict', detail: 'driver_conflict' } });
     });
@@ -274,18 +270,18 @@ describe.skipIf(!URL_)('Phase 5: bookings and trips under real concurrency', () 
       await tripService.transition(opsA, { tripId: t1.id, to: 'scheduled' });
       const day = new Date(first.departureAt); day.setUTCHours(0, 0, 0, 0);
       const mk = (h: number, m: number) => new Date(day.getTime() + h * 3_600_000 + m * 60_000).toISOString();
-      const inside = await tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, departureAt: mk(10, 10), arrivalAt: mk(12, 0), price: 5, capacity: 10 });
-      await expect(tripService.transition(opsA, { tripId: inside.id, to: 'scheduled' })).rejects.toMatchObject({ code: 'conflict' });
+      await expect(tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, departureAt: mk(10, 10), arrivalAt: mk(12, 0), price: 5, capacity: 10 })).rejects.toMatchObject({ code: 'conflict' });
       const outside = await tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, departureAt: mk(10, 31), arrivalAt: mk(12, 0), price: 5, capacity: 10 });
       await expect(tripService.transition(opsA, { tripId: outside.id, to: 'scheduled' })).resolves.toMatchObject({ status: 'scheduled' });
     });
     it('cancelling the holder frees the bus for the loser', async () => {
       const when = slot(8, 2);
-      const [a, b] = await Promise.all([1, 2].map(() => tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, ...when, price: 5, capacity: 10 })));
-      await tripService.transition(opsA, { tripId: a!.id, to: 'scheduled' });
-      await expect(tripService.transition(opsA, { tripId: b!.id, to: 'scheduled' })).rejects.toMatchObject({ code: 'conflict' });
-      await tripService.transition(opsA, { tripId: a!.id, to: 'cancelled' });
-      await expect(tripService.transition(opsA, { tripId: b!.id, to: 'scheduled' })).resolves.toMatchObject({ status: 'scheduled' });
+      const a = await tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, ...when, price: 5, capacity: 10 });
+      await tripService.transition(opsA, { tripId: a.id, to: 'scheduled' });
+      await expect(tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, ...when, price: 5, capacity: 10 })).rejects.toMatchObject({ code: 'conflict' });
+      await tripService.transition(opsA, { tripId: a.id, to: 'cancelled' });
+      const b = await tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, ...when, price: 5, capacity: 10 });
+      await expect(tripService.transition(opsA, { tripId: b.id, to: 'scheduled' })).resolves.toMatchObject({ status: 'scheduled' });
     });
   });
 
