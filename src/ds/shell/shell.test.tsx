@@ -159,6 +159,15 @@ describe('marketplace header and footer', () => {
     expect(reg.className).toContain('bg-action');
     expect(screen.getAllByRole('link', { name: 'Log in' })[0]!.className).not.toContain('bg-action');
   });
+  it('header actions hide below sm with max-sm:hidden, not a hidden/inline-flex pair (the pair kept them visible at 320px)', () => {
+    render(<MarketplaceHeaderMasar lang="en" {...base} />);
+    for (const name of ['Log in', 'Register']) {
+      const cls = screen.getAllByRole('link', { name })[0]!.className;
+      expect(cls).toContain('max-sm:hidden');
+      expect(cls.split(' ')).not.toContain('hidden');
+    }
+    expect(document.querySelector('nav')?.className).toContain('lg:flex');
+  });
   it('signed in: account menu with the student ID as an identifier and a working sign-out', async () => {
     const onSignOut = vi.fn();
     render(<MarketplaceHeaderMasar lang="ar" {...base} onSignOut={onSignOut} user={{ fullName: 'عمر حسن', studentId: '20240123' }} />);
