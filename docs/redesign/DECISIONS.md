@@ -47,3 +47,4 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | Phase 0: copy and terminology sheet, 907 EN/AR rows, `MASAR-Terminology-Sheet.md` and `.csv` | **NOT APPROVED**: needs the named Arabic reviewer (D10) | 12 Nov 2026 | Claude |
 | N2 footer placement, N5 admin English-only, N6 interim dark toggle | Built as the plan recommended (Phase 4, Phase 5 J4, Phase 4). Owner to confirm | 12 Nov 2026 | Claude |
 | **N4 Arabic reviewer name (hard gate)** | **STILL BLANK. Phase 0 and Phase 1 cannot exit until filled** | | |
+| Brand assets (12 Nov 2026): provisional set derived from the uploaded PNGs: SVG (auto-traced), transparent PNG in 3 tones, favicon/PWA/maskable/apple icons, 2 OG images, manifest. In `public/brand`, originals in `docs/brand-source`. favicon, icon, apple-icon wired by Next file convention only | **Not the approved master.** Designer (O6) and Arabic reviewer (O1) still unnamed. 16 px favicon does not read | 12 Nov 2026 | Claude |

@@ -2,6 +2,7 @@ import React from 'react';
 import { useTenant } from '../../context/TenantContext';
 import { useLocale } from '../../context/LocaleContext';
 import { Bus, Phone, Mail, MapPin, Heart } from 'lucide-react';
+import { PoweredByMalaky } from '@/ds/shell/PoweredByMalaky';
 
 export const PublicFooter: React.FC = () => {
   const { currentCompany } = useTenant();
@@ -79,7 +80,7 @@ export const PublicFooter: React.FC = () => {
             © {new Date().getFullYear()} {locale === 'ar' ? currentCompany.nameAr : currentCompany.nameEn}. {t('allRightsReserved')}
           </p>
           <div className="flex items-center gap-2 text-[11px]">
-            <span>{t('poweredByMalaky')}</span>
+            <PoweredByMalaky text={t('poweredByMalaky')} />
           </div>
         </div>
       </div>

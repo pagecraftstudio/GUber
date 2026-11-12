@@ -183,7 +183,7 @@ export const MasterMarketplace: React.FC = () => {
             onBook={handleStartBooking} onOperator={(cid) => setSelectedCompanyId(cid)}
           />
         </div>
-        <QuietFooter>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName} · {isMockMode() ? `${t('demoDataNotice')} · ` : ''}{SHELL_TEXT[locale].poweredBy}</QuietFooter>
+        <QuietFooter credit={SHELL_TEXT[locale].poweredBy}>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName}{isMockMode() ? ' · ' : ''}{isMockMode() ? t('demoDataNotice') : ''}</QuietFooter>
         <CompanyProfileModal isOpen={!!selectedCompanyId} onClose={() => setSelectedCompanyId(null)} company={selectedCompanyObj} companyTrips={companyTrips} onBookTrip={handleStartBooking} />
         <BookingFlowModal
           isOpen={!!bookingTrip} onClose={() => setBookingTrip(null)} trip={bookingTrip} routes={routes} buses={buses} stops={stops}
@@ -381,7 +381,7 @@ export const MasterMarketplace: React.FC = () => {
 
       {/* Footer */}
       {flipped ? (
-        <QuietFooter>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName} · {isMockMode() ? `${t('demoDataNotice')} · ` : ''}{SHELL_TEXT[locale].poweredBy}</QuietFooter>
+        <QuietFooter credit={SHELL_TEXT[locale].poweredBy}>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName}{isMockMode() ? ' · ' : ''}{isMockMode() ? t('demoDataNotice') : ''}</QuietFooter>
       ) : (
       <footer className="bg-[#14243A] text-slate-400 py-8 border-t border-slate-800 text-xs mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">

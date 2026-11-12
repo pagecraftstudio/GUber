@@ -8,6 +8,7 @@ import { Button, IconButton } from '../primitives/Button';
 import { buttonClass } from '../primitives/button-class';
 import { cx, FOCUS } from '../primitives/cx';
 import { AccountMenu, MenuAction } from './AccountMenu';
+import { PoweredByMalaky } from './PoweredByMalaky';
 import { SHELL_TEXT } from './text';
 
 export interface MarketplaceLink { label: string; href?: string; onClick?: () => void; quiet?: boolean }
@@ -41,7 +42,7 @@ export function MarketplaceHeaderMasar(p: MarketplaceHeaderMasarProps) {
     <header className="sticky top-0 z-40 border-b border-line-default bg-surface-card" dir={p.lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <a href="/" aria-label={st.productName} className={cx('rounded-ds-sm', FOCUS)}><Logo size="md" tone="auto" /></a>
-        <nav aria-label={st.mainNav} className="hidden items-center gap-2 md:flex">{p.links.map((l) => <LinkItem key={l.label} l={l} />)}</nav>
+        <nav aria-label={st.mainNav} className="hidden items-center gap-2 lg:flex">{p.links.map((l) => <LinkItem key={l.label} l={l} />)}</nav>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline"><Button variant="ghost" onClick={p.onToggleLang}>{p.langLabel}</Button></span>
           <IconButton label={st.theme} icon={p.isDark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />} onClick={p.onToggleTheme} />
@@ -57,7 +58,7 @@ export function MarketplaceHeaderMasar(p: MarketplaceHeaderMasarProps) {
               <a href="/register" className={cx(buttonClass('primary', 'md'), 'hidden sm:inline-flex')}>{p.text.register}</a>
             </>
           )}
-          <span className="md:hidden"><IconButton label={st.menu} aria-expanded={menu} icon={<Menu size={18} strokeWidth={1.5} />} onClick={() => setMenu(true)} /></span>
+          <span className="lg:hidden"><IconButton label={st.menu} aria-expanded={menu} icon={<Menu size={18} strokeWidth={1.5} />} onClick={() => setMenu(true)} /></span>
         </div>
       </div>
       <Drawer open={menu} onClose={() => setMenu(false)} title={st.menu} side={p.lang === 'ar' ? 'start' : 'end'}>
@@ -73,6 +74,12 @@ export function MarketplaceHeaderMasar(p: MarketplaceHeaderMasarProps) {
 }
 
 /** One quiet line (plan 5.4, O3). MASAR's own pages credit the studio; company sites will credit MASAR only. */
-export function QuietFooter({ children }: { children: ReactNode }) {
-  return <footer className="border-t border-line-default bg-surface-card"><p className="mx-auto max-w-7xl px-4 py-6 text-[13px] text-ink-muted sm:px-6 lg:px-8">{children}</p></footer>;
+export function QuietFooter({ children, credit }: { children: ReactNode; credit?: string }) {
+  return (
+    <footer className="border-t border-line-default bg-surface-card">
+      <p className="mx-auto max-w-7xl px-4 py-6 text-[13px] text-ink-muted sm:px-6 lg:px-8">
+        {children}{credit ? <> · <PoweredByMalaky text={credit} /></> : null}
+      </p>
+    </footer>
+  );
 }
