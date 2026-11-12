@@ -9,6 +9,8 @@ import { customerService } from '@/features/customers/service';
 import { AppError } from '@/lib/errors';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { DataTable } from '@/components/dashboard/DataTable';
+import { isSurfaceScoped } from '@/ds/scope';
+import { CustomersMasarView } from '@/features/dashboard/masar/ListsMasarViews';
 
 const PAGE_SIZE = 25;
 const link = 'inline-flex min-h-8 items-center text-sm font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300';
@@ -25,6 +27,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
     if (e instanceof AppError && e.code === 'validation') page = await customerService.list(ctx, { page: 1, pageSize: PAGE_SIZE, sort: 'created_at', dir: 'desc' });
     else throw e;
   }
+  if (isSurfaceScoped('dashboard', auth.membership.companyId)) return <CustomersMasarView rows={page.items} q={q} page={page.page} pageSize={page.pageSize} total={page.total} />;
   const qs = (n: number) => `/dashboard/customers?${new URLSearchParams({ ...(q ? { q } : {}), page: String(n) })}`;
   const lastPage = Math.max(1, Math.ceil(page.total / page.pageSize));
   return (
