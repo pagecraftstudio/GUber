@@ -57,3 +57,6 @@ Caveat: the English gaps are very wide for header use. I set 0.32em for the inte
 
 ## Open question
 Who is the designer and who is the Arabic reviewer? One name unblocks the rest.
+
+## Addendum, 12 Nov 2026: provisional asset set
+Built from the uploaded images so development is not blocked. See `docs/brand-source/README.md` for the file list, limits and the metadata snippet. Still open: approved vector master, reviewer sign-off, 16 px favicon fallback, "Powered by MALAKY Studio" lockup (needs the MALAKY logo). The exit checklist above is unchanged: **Phase 1 still cannot exit.**

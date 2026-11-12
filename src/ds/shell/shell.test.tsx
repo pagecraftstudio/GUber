@@ -197,3 +197,11 @@ describe('axe on every shell, both languages', () => {
     it(`marketplace header ${lang}`, async () => { expect(await run(<><MarketplaceHeaderMasar lang={lang} {...{ links: [{ label: 'Search', href: '#s' }], langLabel: 'x', onToggleLang() {}, isDark: false, onToggleTheme() {}, onMyBookings() {}, onPortal() {}, onSignOut() {}, text: { logIn: 'a', register: 'b', myBookings: 'c', portal: 'd', signOut: 'e' } }} /><main><h1>Trips</h1></main></>)).toEqual([]); });
   }
 });
+
+describe('QuietFooter credit', () => {
+  it('shows the studio credit with a decorative mark', () => {
+    const { container } = render(<QuietFooter credit="Powered by MALAKY Studio">© 2026 MASAR</QuietFooter>);
+    expect(container.textContent).toContain('Powered by MALAKY Studio');
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+  });
+});
