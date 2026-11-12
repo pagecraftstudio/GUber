@@ -67,6 +67,28 @@ describe.skipIf(!URL_)('Phase 4 services against real Postgres + PostgREST + RLS
       expect((await fails(tripService.update(ownerA, IDS.tripB1, { price: 1 }))).code).toBe('not_found');
       expect((await busService.get(ownerB, IDS.busB1)).name).not.toBe('hacked');
     });
+    it('raw PostgREST delete/update of B rows by A touches nothing (RLS), B rows still exist', async () => {
+      const a = clientFor(U.ownerA);
+      const b = clientFor(U.ownerB);
+      // patch = a column the owner may write directly; bookings are written only through RPCs, so no raw update there
+      const targets: Array<[string, string, Record<string, unknown> | null]> = [['routes', IDS.routeB1, { name: 'x' }], ['trips', IDS.tripB1, { price: 7 }], ['bookings', IDS.bookingB1, null], ['buses', IDS.busB1, { name: 'x' }], ['customers', IDS.customerB1, { full_name: 'x' }]];
+      for (const [table, id, patch] of targets) {
+        const del = await a.from(table).delete().eq('id', id).select('id');
+        expect(del.data ?? [], `${table} delete leaked`).toHaveLength(0);
+        if (patch) {
+          const upd = await a.from(table).update(patch).eq('id', id).select('id');
+          expect(upd.data ?? [], `${table} update leaked`).toHaveLength(0);
+          // control: the same statement works for the owner, so the empty result above is RLS and not a bad column
+          const ctl = await b.from(table).update(patch).eq('id', id).select('id');
+          expect(ctl.error, `${table} control update`).toBeNull();
+          expect(ctl.data ?? [], `${table} control update`).toHaveLength(1);
+        }
+        const read = await a.from(table).select('id').eq('id', id);
+        expect(read.data ?? [], `${table} read leaked`).toHaveLength(0);
+        const own = await b.from(table).select('id').eq('id', id);
+        expect(own.data ?? [], `${table} row vanished for its owner`).toHaveLength(1);
+      }
+    });
     it('a smuggled companyId is rejected by validation; a forged company_id written straight to the DB is rejected by RLS', async () => {
       expect((await fails(busService.create(ownerA, { plateNumber: `X-${rnd()}`, capacity: 5, companyId: IDS.companyB }))).code).toBe('validation');
       // routes (not buses): B is far below its route limit, so this isolates the RLS answer (the F1 regression test below covers the plan-limit case)
@@ -244,15 +266,15 @@ describe.skipIf(!URL_)('Phase 4 services against real Postgres + PostgREST + RLS
     });
 
     it('bus/driver double-booking is stopped by the DB and the error maps to bus_conflict / driver_conflict', async () => {
-      // 0011: status is no longer client-writable. Drafts are inserted, then the state machine RPC applies the
-      // exclusion constraints when they go live. (Parallel version of this test: booking.int.test.ts.)
+      // 0011: status is no longer client-writable. 0027: drafts take part in the exclusion constraints, so a bus or
+      // driver clash is refused when the draft is created. (Parallel version of this test: booking.int.test.ts.)
       const d = day();
       const draft = (driverId: string, busId: string | null, from: number, to: number) =>
         tripService.createDraft(ownerA, { routeId: IDS.routeA1, busId, driverId, departureAt: at(d, from), arrivalAt: at(d, to), price: 10, capacity: 10 });
       const live = (id: string) => tripService.transition(opsA, { tripId: id, to: 'scheduled' });
       await live((await draft(IDS.driverA2, IDS.busA4, 8, 10)).id);
-      await expect(live((await draft(IDS.driverA3, IDS.busA4, 9, 11)).id)).rejects.toMatchObject({ code: 'conflict', detail: 'bus_conflict' });
-      await expect(live((await draft(IDS.driverA2, IDS.busA1, 9, 11)).id)).rejects.toMatchObject({ code: 'conflict', detail: 'driver_conflict' });
+      await expect(draft(IDS.driverA3, IDS.busA4, 9, 11)).rejects.toMatchObject({ code: 'conflict', detail: 'bus_conflict' });
+      await expect(draft(IDS.driverA2, IDS.busA1, 9, 11)).rejects.toMatchObject({ code: 'conflict', detail: 'driver_conflict' });
       await expect(live((await draft(IDS.driverA3, null, 12, 13)).id)).rejects.toMatchObject({ detail: 'bus_and_driver_required' });
     });
 
