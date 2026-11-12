@@ -98,13 +98,13 @@ export function DataTable<T>(p: DataTableProps<T>) {
       <ul className="flex flex-col gap-3 md:hidden" aria-label={p.caption}>
         {p.rows.map((r) => (
           <li key={p.rowId(r)} className="rounded-ds-md border border-line-default bg-surface-card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 text-base font-medium text-ink-primary">{primary.cell(r)}</div>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 basis-40 text-base font-medium text-ink-primary">{primary.cell(r)}</div>
               {p.rowActions ? <div className="shrink-0">{p.rowActions(r)}</div> : null}
             </div>
-            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
               {p.columns.filter((c) => c !== primary && !c.hideOnCard).map((c) => (
-                <div key={c.key} className="contents"><dt className="text-ink-muted">{c.header}</dt><dd className={cx('text-ink-primary', c.numeric && 'tabular-nums')}>{c.cell(r)}</dd></div>
+                <div key={c.key} className="contents"><dt className="text-ink-muted">{c.header}</dt><dd className={cx('min-w-0 break-words text-ink-primary', c.numeric && 'tabular-nums')}>{c.cell(r)}</dd></div>
               ))}
             </dl>
           </li>

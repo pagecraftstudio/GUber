@@ -54,8 +54,8 @@ export function MarketplaceHeaderMasar(p: MarketplaceHeaderMasarProps) {
             </AccountMenu>
           ) : (
             <>
-              <a href="/login" className={cx(linkCls, 'hidden text-ink-primary sm:inline-flex')}>{p.text.logIn}</a>
-              <a href="/register" className={cx(buttonClass('primary', 'md'), 'hidden sm:inline-flex')}>{p.text.register}</a>
+              <a href="/login" className={cx(linkCls, 'max-sm:hidden text-ink-primary')}>{p.text.logIn}</a>
+              <a href="/register" className={cx(buttonClass('primary', 'md'), 'max-sm:hidden')}>{p.text.register}</a>
             </>
           )}
           <span className="lg:hidden"><IconButton label={st.menu} aria-expanded={menu} icon={<Menu size={18} strokeWidth={1.5} />} onClick={() => setMenu(true)} /></span>

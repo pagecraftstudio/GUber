@@ -358,7 +358,7 @@ export const CustomerPortal: React.FC = () => {
         <div className="space-y-4">
           {/* Sub-filter chips */}
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-1.5 bg-slate-200/60 p-1 rounded-xl text-xs">
+            <div className="flex max-w-full flex-wrap items-center gap-1.5 bg-slate-200/60 p-1 rounded-xl text-xs">
               <button
                 onClick={() => setTripFilter('upcoming')}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${

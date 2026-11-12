@@ -33,7 +33,7 @@ export function PaymentCellMasar({ b, canWrite }: { b: Booking; canWrite: boolea
   const cancelled = b.status === 'cancelled';
   const remaining = Math.max(0, b.totalAmount - b.amountPaid);
   return (
-    <div className="flex min-w-52 flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col md:min-w-52 gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge domain="payment" value={b.paymentStatus} />
         <span className="text-[13px] text-ink-primary tabular-nums">{formatMoney(b.amountPaid, b.currency, lang)} / {formatMoney(b.totalAmount, b.currency, lang)}</span>
