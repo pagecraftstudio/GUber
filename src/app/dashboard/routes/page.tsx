@@ -9,6 +9,8 @@ import { PlanLimitNotice } from '@/components/dashboard/FormParts';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { DataTable, StatusPill } from '@/components/dashboard/DataTable';
 import { RouteActiveSwitch } from '@/features/dashboard/InlineControls';
+import { isSurfaceScoped } from '@/ds/scope';
+import { RoutesMasarView } from '@/features/dashboard/masar/ListsMasarViews';
 
 const link = 'inline-flex min-h-11 items-center rounded-xl bg-blue-700 px-4 text-xs font-bold text-white hover:bg-blue-800';
 
@@ -17,6 +19,7 @@ export default async function RoutesPage() {
   const ctx = createTenantServiceContext(await createClient(), auth);
   const canWrite = auth.membership.permissions.includes('routes.write');
   const [page, usage] = await Promise.all([routeService.list(ctx, { page: 1, pageSize: 100 }), canWrite ? planUsageService.getOrNull(ctx) : Promise.resolve(null)]);
+  if (isSurfaceScoped('dashboard', auth.membership.companyId)) return <RoutesMasarView rows={page.items} canWrite={canWrite} usage={usage} />;
   return (
     <>
       <PageHeader eyebrow="Network management" title="Routes & destinations" description="Create and maintain your company's travel corridors and their stops."
