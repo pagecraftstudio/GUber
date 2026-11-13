@@ -1,3 +1,8 @@
+'use client';
+import { Field as DsField } from '@/ds/primitives/Field';
+import { Input } from '@/ds/primitives/Input';
+import { useDsFlipped } from '@/ds/shell/flag';
+
 type FieldProps = {
   label: string;
   name: string;
@@ -11,6 +16,13 @@ type FieldProps = {
 };
 
 export function Field({ label, name, type = 'text', autoComplete, defaultValue, readOnly, minLength, maxLength, hint }: FieldProps) {
+  if (useDsFlipped()) {
+    return (
+      <DsField label={label} hint={hint} required>
+        <Input name={name} type={type} size="lg" autoComplete={autoComplete} defaultValue={defaultValue} readOnly={readOnly} minLength={minLength} maxLength={maxLength} />
+      </DsField>
+    );
+  }
   return (
     <div className="space-y-1.5">
       <label htmlFor={name} className="block text-sm font-medium text-slate-700">

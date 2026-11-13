@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { isSurfaceScoped } from '@/ds/scope';
+import { PlatformOverviewMasar } from '@/components/admin/masar/PlatformMasarViews';
 import { actionLabel } from '@/features/audit/catalog';
 import { AdminEmptyState, AdminErrorState } from '@/components/admin/StateViews';
 import { StatCard } from '@/components/admin/StatCard';
@@ -23,6 +25,7 @@ const fmt = (iso: string) => new Date(iso).toISOString().replace('T', ' ').slice
 
 export default async function AdminOverviewPage() {
   const res = await load();
+  if (isSurfaceScoped('admin', null)) return <PlatformOverviewMasar res={res} />; // presentation only: same load, same guard
   if ('error' in res) {
     return (
       <div className="space-y-4">

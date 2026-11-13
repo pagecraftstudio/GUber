@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { isSurfaceScoped } from '@/ds/scope';
+import { AuditEntryMasar } from '@/components/admin/masar/PlatformMasarViews';
 import { AdminErrorState } from '@/components/admin/StateViews';
 import { fmtDateTime } from '@/components/admin/format';
 import { actionLabel, ACTOR_LABEL, type AuditActorType } from '@/features/audit/catalog';
@@ -19,6 +21,7 @@ export default async function AuditEntryPage({ params }: { params: Promise<{ id:
     const e = await auditService.get(ctx, id);
     const view = buildMetadataView(e.metadata);
     const subject = entityHref(e.entityType, e.entityId, e.companyId);
+    if (isSurfaceScoped('admin', null)) return <AuditEntryMasar e={e} view={view} subject={subject} />;
     return (
       <div className="min-w-0 max-w-full space-y-5">
         <div>

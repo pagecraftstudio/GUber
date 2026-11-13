@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { isSurfaceScoped } from '@/ds/scope';
+import { AuditListMasar } from '@/components/admin/masar/PlatformMasarViews';
 import { AdminEmptyState, AdminErrorState } from '@/components/admin/StateViews';
 import { AuditTable } from '@/components/admin/AuditTable';
 import { ACTOR_LABEL, ACTOR_TYPES, AUDIT_NAMESPACES, NAMESPACE_LABEL } from '@/features/audit/catalog';
@@ -41,6 +43,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Ra
 
   const filtered = Boolean(query.company || query.namespace || query.actorType || query.actor || query.from || query.to);
   const keep = { company: query.company, namespace: query.namespace, actorType: query.actorType, actor: query.actor, from: query.from, to: query.to };
+  if (isSurfaceScoped('admin', null)) return <AuditListMasar query={{ company: query.company, namespace: query.namespace, actorType: query.actorType, actor: query.actor, from: query.from, to: query.to, bat: query.bat }} page={page} summary={summary} days={days} ignored={ignored} />;
   const chip = 'inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700';
   const firstName = 'error' in page ? null : page.data.items.find((i) => i.companyId === query.company)?.companyName;
   const actorName = 'error' in page ? null : page.data.items.find((i) => i.actorId === query.actor)?.actorName;

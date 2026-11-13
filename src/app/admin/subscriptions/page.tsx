@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { isSurfaceScoped } from '@/ds/scope';
+import { SubscriptionsMasar } from '@/components/admin/masar/PlatformMasarViews';
 import { AdminPagination } from '@/components/admin/AdminPagination';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { AdminEmptyState, AdminErrorState } from '@/components/admin/StateViews';
@@ -35,6 +37,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
   }
   const canWrite = ctx.auth.platformRole === 'super_admin' || ctx.auth.platformRole === 'billing';
   const filtersActive = Boolean(query.q || query.state);
+  if (isSurfaceScoped('admin', null)) return <SubscriptionsMasar query={{ q: query.q, state: query.state, sort: query.sort, dir: query.dir }} result={result} canWrite={canWrite} expireAction={expireStaleSubscriptionsAction} />;
 
   return (
     <div className="space-y-5">
