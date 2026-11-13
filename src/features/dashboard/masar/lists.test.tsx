@@ -19,7 +19,7 @@ vi.mock('../autosave-actions', () => ({
 }));
 vi.mock('../form-actions', () => {
   const ok = async () => ({ status: 'success' as const, message: 'created', nonce: 1 });
-  return { createBusFormAction: ok, createDriverFormAction: ok, inviteDriverFormAction: ok, linkDriverFormAction: ok };
+  return { createBusFormAction: ok, createDriverFormAction: ok, inviteDriverFormAction: ok, linkDriverFormAction: ok, setMemberStatusFormAction: ok, setMemberRoleFormAction: ok, revokeInviteFormAction: ok, createInviteFormAction: ok };
 });
 
 import { BusesMasarView, CustomersMasarView, DriversMasarView, RoutesMasarView } from './ListsMasarViews';
@@ -143,5 +143,26 @@ describe('shared dashboard parts follow the flag', () => {
       expect(b.hasAttribute('disabled')).toBe(false);
       unmount();
     }
+  });
+});
+
+describe('row actions are real buttons in the MASAR look', () => {
+  it('suspend / revoke have a border (no bare coloured text); old look keeps the old link style', async () => {
+    const { MemberControls, RevokeInvite } = await import('../UsersPanel');
+    const ui = (
+      <>
+        <MemberControls memberId="m1" name="Sara" roleKey="manager" status="active" roles={[{ key: 'manager', name: 'Manager' }]} isSelf={false} canWrite />
+        <RevokeInvite inviteId="i1" email="a@b.co" />
+      </>
+    );
+    const { unmount } = render(<DsLangProvider value="en"><DsFlagProvider value>{ui}</DsFlagProvider></DsLangProvider>);
+    for (const name of [/Suspend/, /Revoke/]) {
+      const cls = screen.getByRole('button', { name }).className;
+      expect(cls).toContain('border-line-strong');
+      expect(cls).not.toContain('underline');
+    }
+    unmount();
+    render(<DsLangProvider value="en"><DsFlagProvider value={false}>{ui}</DsFlagProvider></DsLangProvider>);
+    expect(screen.getByRole('button', { name: /Suspend/ }).className).toContain('underline');
   });
 });

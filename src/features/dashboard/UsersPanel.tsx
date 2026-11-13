@@ -8,6 +8,7 @@ import { useDashLang } from './lang';
 import { DRIVER_UI, FORM_TEXT, USER_UI } from './messages';
 import { useActionForm } from './useActionForm';
 import { useAutosaveForm } from './useAutosave';
+import { useRowActionSkin } from './skin';
 import { SaveStatus, viewOfForm } from '@/components/dashboard/SaveStatus';
 
 export type RoleOption = { key: string; name: string };
@@ -59,13 +60,13 @@ export function InviteForm({ roles, usage, drivers }: { roles: RoleOption[]; usa
   );
 }
 
-const small = 'min-h-8 text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300';
 
 export function MemberControls({ memberId, name, roleKey, status, roles, isSelf, canWrite }: { memberId: string; name: string; roleKey: string | null; status: 'active' | 'suspended'; roles: RoleOption[]; isSelf: boolean; canWrite: boolean }) {
   const lang = useDashLang();
   const T = USER_UI[lang];
   const role = useAutosaveForm(setMemberRoleFormAction, 0);
   const stat = useActionForm(setMemberStatusFormAction);
+  const skin = useRowActionSkin();
   if (!canWrite) return null;
   if (isSelf) return <p className="text-xs text-slate-600 dark:text-slate-400">{T.self}</p>;
   return (
@@ -73,7 +74,7 @@ export function MemberControls({ memberId, name, roleKey, status, roles, isSelf,
       <div className="flex flex-wrap items-center gap-3">
         <form {...role.formProps} className="flex items-center gap-2">
           <input type="hidden" name="memberId" value={memberId} />
-          <select name="roleKey" aria-label={T.roleFor(name)} defaultValue={roleKey ?? ''} className="rounded-lg border border-slate-300 bg-transparent p-1.5 text-xs dark:border-slate-600">
+          <select name="roleKey" aria-label={T.roleFor(name)} defaultValue={roleKey ?? ''} className={skin.select}>
             {roles.filter((r) => r.key !== 'driver' || roleKey === 'driver').map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
           </select>
           <SaveStatus view={viewOfForm(role.state, role.pending)} />
@@ -81,7 +82,7 @@ export function MemberControls({ memberId, name, roleKey, status, roles, isSelf,
         <form ref={stat.ref} onSubmit={stat.onSubmit}>
           <input type="hidden" name="memberId" value={memberId} />
           <input type="hidden" name="status" value={status === 'active' ? 'suspended' : 'active'} />
-          <button type="submit" aria-disabled={stat.pending} className={small}>{status === 'active' ? T.suspend : T.reactivate}<span className="sr-only"> {name}</span></button>
+          <button type="submit" aria-disabled={stat.pending} className={skin.action}>{status === 'active' ? T.suspend : T.reactivate}<span className="sr-only"> {name}</span></button>
         </form>
       </div>
       <FormResult state={stat.state} />
@@ -93,10 +94,11 @@ export function RevokeInvite({ inviteId, email }: { inviteId: string; email: str
   const lang = useDashLang();
   const T = USER_UI[lang];
   const { state, pending, onSubmit } = useActionForm(revokeInviteFormAction);
+  const skin = useRowActionSkin();
   return (
     <form onSubmit={onSubmit}>
       <input type="hidden" name="inviteId" value={inviteId} />
-      <button type="submit" aria-disabled={pending} className={small}>{T.revoke}<span className="sr-only"> {email}</span></button>
+      <button type="submit" aria-disabled={pending} className={skin.action}>{T.revoke}<span className="sr-only"> {email}</span></button>
       <FormResult state={state} />
     </form>
   );
