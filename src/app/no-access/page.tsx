@@ -12,7 +12,7 @@ export default async function NoAccessPage() {
   const state = accessState(ctx);
   if (state !== 'deactivated') redirect(homePathFor(ctx)); // customers have a portal; only deactivated accounts land here
   return (
-    <AuthCard
+    <AuthCard surface="system"
       title="Account deactivated"
       subtitle="This account has been deactivated. Please contact support or your company administrator."
     >

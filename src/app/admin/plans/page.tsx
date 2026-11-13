@@ -1,3 +1,5 @@
+import { isSurfaceScoped } from '@/ds/scope';
+import { PlansMasar } from '@/components/admin/masar/PlatformMasarViews';
 import { AdminEmptyState, AdminErrorState } from '@/components/admin/StateViews';
 import { subscriptionService } from '@/features/subscriptions/service';
 import type { Plan } from '@/features/subscriptions/types';
@@ -26,6 +28,7 @@ export default async function PlansPage() {
   } catch (e) {
     result = { error: toClientError(e).message };
   }
+  if (isSurfaceScoped('admin', null)) return <PlansMasar result={result} />;
   return (
     <div className="space-y-5">
       <div>

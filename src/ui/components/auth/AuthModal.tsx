@@ -4,6 +4,8 @@ import { useLocale } from '../../context/LocaleContext';
 import { AuthServiceError, describeAuthError } from '../../lib/real/authService.real';
 import { isMockMode } from '../../lib/runtime';
 import { Modal } from '../common/Modal';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { AuthModalMasarView } from '../masar/AuthModalMasarView';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import {
@@ -36,6 +38,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { signIn, signUp, resetPassword } = useAuth();
   const { locale, t } = useLocale();
+  const flipped = useDsFlipped();
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot_password' | 'reset_sent'>(defaultMode);
   const [loading, setLoading] = useState(false);
@@ -157,6 +160,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setError(err instanceof AuthServiceError ? describeAuthError(err, locale) : err.message || 'Error sending reset instructions.');
     }
   };
+
+  const heading = mode === 'login' ? t('signIn') : mode === 'register' ? t('signUp') : t('resetPasswordTitle');
+  const subheading =
+    mode === 'login'
+      ? locale === 'ar'
+        ? (isMockMode() ? 'سجل دخولك لإدارة رحلاتك وتعبئة التذاكر تلقائياً' : 'سجّل دخولك لإدارة حجوزاتك')
+        : isMockMode() ? 'Access your trips, verified student discounts, and saved travel companions' : 'Access and manage your bookings'
+      : mode === 'register'
+      ? locale === 'ar'
+        ? 'أنشئ حساب راكب في منصة ملاكي باص بخطوة واحدة'
+        : 'Create your passenger account for Galala University intercity transit'
+      : locale === 'ar'
+      ? 'استرجع حسابك بإدخال بريدك الإلكتروني المسجل'
+      : 'Enter your registered email to receive reset instructions';
+
+  // Same state, validation and service calls for both looks; only the drawing differs (D9).
+  if (flipped) {
+    return (
+      <AuthModalMasarView
+        isOpen={isOpen} onClose={onClose} title={heading} subtitle={subheading} mode={mode} setMode={setMode} loading={loading}
+        error={error} notice={notice} clearError={() => setError(null)} locale={locale} tr={(k) => t(k as Parameters<typeof t>[0])}
+        login={{ email: loginEmail, password: loginPassword, setEmail: setLoginEmail, setPassword: setLoginPassword, onSubmit: handleLoginSubmit }}
+        register={{ fullName: regFullName, email: regEmail, phone: regPhone, password: regPassword, studentId: regStudentId, setFullName: setRegFullName, setEmail: setRegEmail, setPhone: setRegPhone, setPassword: setRegPassword, setStudentId: setRegStudentId, showStudentId: isMockMode(), onSubmit: handleRegisterSubmit }}
+        reset={{ email: resetEmail, setEmail: setResetEmail, onSubmit: handleResetSubmit }}
+        quickFill={isMockMode() && process.env.NODE_ENV !== 'production' ? handleQuickFill : undefined}
+        onGuestContinue={onGuestContinue}
+      />
+    );
+  }
 
   return (
     <Modal
