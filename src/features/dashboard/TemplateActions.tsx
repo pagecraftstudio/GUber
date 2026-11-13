@@ -4,8 +4,8 @@ import type { FormState } from './form-state';
 import { useDashLang } from './lang';
 import { genericErrorText } from './messages';
 import { useActionForm } from './useActionForm';
+import { useRowActionSkin } from './skin';
 
-const base = 'inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-bold';
 const TXT = {
   en: { generate: 'Generate next 4 weeks', working: 'Working…', pause: 'Pause', resume: 'Resume', created: (n: number) => `${n} trip${n === 1 ? '' : 's'} created.`, returns: (n: number) => `${n} return trip${n === 1 ? '' : 's'} created.`, existed: (n: number) => `${n} already existed.`, conflicts: (n: number) => `${n} skipped: bus or driver already busy.`, limit: 'Stopped: monthly trip limit of your plan reached.' },
   ar: { generate: 'توليد الأسابيع الأربعة القادمة', working: 'جارٍ التنفيذ…', pause: 'إيقاف', resume: 'استئناف', created: (n: number) => `تم إنشاء ${n} رحلة.`, returns: (n: number) => `تم إنشاء ${n} رحلة عودة.`, existed: (n: number) => `${n} موجودة مسبقاً.`, conflicts: (n: number) => `تم تخطي ${n}: الحافلة أو السائق مشغول.`, limit: 'توقف التوليد: تم بلوغ حد الرحلات الشهري في باقتك.' },
@@ -35,6 +35,7 @@ export function TemplateActions({ id, isActive, label }: { id: string; isActive:
   const T = TXT[lang];
   const gen = useActionForm(generateTripTemplateFormAction);
   const act = useActionForm(setTripTemplateActiveFormAction);
+  const skin = useRowActionSkin();
   const err = [gen.state, act.state].find((s) => s.status === 'error');
   const sr = <span className="sr-only"> {label}</span>;
   return (
@@ -42,11 +43,11 @@ export function TemplateActions({ id, isActive, label }: { id: string; isActive:
       <div className="flex flex-wrap items-center gap-2">
         {isActive && (
           <form onSubmit={gen.onSubmit}><input type="hidden" name="id" value={id} />
-            <button type="submit" aria-disabled={gen.pending} className={`${base} bg-blue-700 text-white hover:bg-blue-800`}>{gen.pending ? T.working : T.generate}{sr}</button>
+            <button type="submit" aria-disabled={gen.pending} className={skin.main}>{gen.pending ? T.working : T.generate}{sr}</button>
           </form>
         )}
         <form onSubmit={act.onSubmit}><input type="hidden" name="id" value={id} /><input type="hidden" name="active" value={isActive ? '0' : '1'} />
-          <button type="submit" aria-disabled={act.pending} className={`${base} border border-slate-400`}>{isActive ? T.pause : T.resume}{sr}</button>
+          <button type="submit" aria-disabled={act.pending} className={'oldSecondary' in skin ? skin.oldSecondary : skin.action}>{isActive ? T.pause : T.resume}{sr}</button>
         </form>
       </div>
       <GenerateSummary state={gen.state} />
