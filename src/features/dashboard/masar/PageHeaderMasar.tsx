@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 /** Title names the context (Appendix C): "Trips", "Bookings", not a greeting. One primary action at most, at the end. */
-export function PageHeaderMasar({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+export function PageHeaderMasar({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">

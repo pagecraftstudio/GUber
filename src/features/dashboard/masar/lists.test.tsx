@@ -122,3 +122,26 @@ describe('customers list', () => {
     expect(screen.getByText('No customers yet')).toBeTruthy();
   });
 });
+
+describe('shared dashboard parts follow the flag', () => {
+  it('PageHeader: MASAR header (no eyebrow) when flipped, old header otherwise', async () => {
+    const { PageHeader } = await import('@/components/dashboard/PageHeader');
+    const ui = <PageHeader eyebrow="Network management" title="Routes" description="Corridors." />;
+    const { unmount } = render(<DsLangProvider value="en"><DsFlagProvider value>{ui}</DsFlagProvider></DsLangProvider>);
+    expect(screen.queryByText('Network management')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Routes' })).toBeTruthy();
+    unmount();
+    render(<DsLangProvider value="en"><DsFlagProvider value={false}>{ui}</DsFlagProvider></DsLangProvider>);
+    expect(screen.getByText('Network management')).toBeTruthy();
+  });
+  it('SubmitButton: aria-disabled button stays focusable in both looks', async () => {
+    const { SubmitButton } = await import('@/components/dashboard/FormParts');
+    for (const flipped of [true, false]) {
+      const { unmount } = render(<DsFlagProvider value={flipped}><SubmitButton pending={false} blocked>Save</SubmitButton></DsFlagProvider>);
+      const b = screen.getByRole('button', { name: 'Save' });
+      expect(b.getAttribute('aria-disabled')).toBe('true');
+      expect(b.hasAttribute('disabled')).toBe(false);
+      unmount();
+    }
+  });
+});
