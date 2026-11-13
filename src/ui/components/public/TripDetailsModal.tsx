@@ -3,6 +3,8 @@ import { Trip, Route, Bus, Driver, Stop } from '../../types';
 import { useLocale } from '../../context/LocaleContext';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { TripDetailsMasarView } from '../masar/TripDetailsMasarView';
 import { Clock, MapPin, ShieldCheck, Bus as BusIcon, Wifi, Wind, Zap, Briefcase } from 'lucide-react';
 
 interface TripDetailsModalProps {
@@ -27,6 +29,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
   onBookNow,
 }) => {
   const { locale, t } = useLocale();
+  const flipped = useDsFlipped();
 
   if (!trip) return null;
 
@@ -35,6 +38,8 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
   const driver = drivers.find((d) => d.id === trip.driverId);
   const originStop = stops.find((s) => s.id === route?.originStopId);
   const destStop = stops.find((s) => s.id === route?.destStopId);
+
+  if (flipped) return <TripDetailsMasarView isOpen={isOpen} onClose={onClose} trip={trip} route={route} bus={bus} driver={driver} originStop={originStop} destStop={destStop} onBookNow={onBookNow} />;
 
   return (
     <Modal

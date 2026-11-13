@@ -36,11 +36,17 @@ import {
   Bus as BusIcon,
 } from 'lucide-react';
 import { authService } from '../../lib/authService';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { EmptyState } from '@/ds/feedback/States';
+import { Button as DsButton } from '@/ds/primitives/Button';
+import { CustomerPortalMasarView } from '../masar/CustomerPortalMasarView';
+import { J6C } from '../masar/text6c';
 
 export const CustomerPortal: React.FC = () => {
   const { user, profile, isAuthenticated, signOut, updateProfile, openAuthModal } = useAuth();
   const { locale, t } = useLocale();
   const { companies, setActiveView } = useTenant();
+  const flipped = useDsFlipped();
 
   const [activeTab, setActiveTab] = useState<'trips' | 'profile' | 'companions' | 'security'>('trips');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -110,6 +116,15 @@ export const CustomerPortal: React.FC = () => {
       }
     }
   }, [user?.id, isAuthenticated, profile]);
+
+  if (!isAuthenticated && flipped) {
+    const x = J6C[locale];
+    return (
+      <main className="mx-auto max-w-md px-4 py-20">
+        <EmptyState title={x.signInTitle} description={x.signInText} action={<div className="flex flex-wrap justify-center gap-2"><DsButton onClick={() => openAuthModal('login')}>{t('signIn')}</DsButton><DsButton variant="secondary" onClick={() => openAuthModal('register')}>{t('signUp')}</DsButton></div>} />
+      </main>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -225,7 +240,7 @@ export const CustomerPortal: React.FC = () => {
   // If viewing a digital ticket
   if (viewTicketBooking) {
     return (
-      <div className="py-6">
+      <div className={flipped ? 'bg-surface-page py-6' : 'py-6'}>
         <DigitalTicketView
           booking={viewTicketBooking.booking}
           trip={viewTicketBooking.trip}
@@ -234,6 +249,27 @@ export const CustomerPortal: React.FC = () => {
           onDone={() => setViewTicketBooking(null)}
         />
       </div>
+    );
+  }
+
+  if (flipped) {
+    return (
+      <CustomerPortalMasarView
+        user={user ? { id: user.id, fullName: user.fullName, email: user.email, phone: user.phone, studentId: user.studentId, createdAt: user.createdAt } : null}
+        mock={isMockMode()}
+        stats={{ trips: totalTripsCount, spent: totalSpentEgp }}
+        filter={tripFilter} onFilter={setTripFilter}
+        bookings={filteredBookings} trips={trips} routes={routes} stops={stops} loading={loading}
+        companyOf={(b) => companies.find((c) => c.id === b.companyId)}
+        onBrowse={() => setActiveView('marketplace')}
+        onViewTicket={(booking, trip) => setViewTicketBooking({ booking, trip })}
+        onAskCancel={(b) => { setCancelModalBooking(b); setCancelReason(''); setCancelError(null); }}
+        profile={{ name: editFullName, phone: editPhone, studentId: editStudentId, university: editUniversity, saving: profileSaving, saved: profileSuccess, onName: setEditFullName, onPhone: setEditPhone, onStudentId: setEditStudentId, onUniversity: setEditUniversity, onSubmit: handleProfileSave }}
+        companions={profile?.savedCompanions ?? []} onRemoveCompanion={handleRemoveCompanion} onOpenAddCompanion={() => setIsAddCompanionOpen(true)}
+        onSignOut={() => signOut()}
+        cancel={{ booking: cancelModalBooking, reason: cancelReason, loading: cancelLoading, error: cancelError, onReason: setCancelReason, onClose: () => setCancelModalBooking(null), onConfirm: handleRequestCancellation }}
+        add={{ open: isAddCompanionOpen, name: compName, phone: compPhone, studentId: compStudentId, relationship: compRelationship, saving: companionSaving, onName: setCompName, onPhone: setCompPhone, onStudentId: setCompStudentId, onRelationship: setCompRelationship, onClose: () => setIsAddCompanionOpen(false), onSubmit: handleAddCompanionSubmit }}
+      />
     );
   }
 
