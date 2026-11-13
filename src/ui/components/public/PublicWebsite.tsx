@@ -12,10 +12,13 @@ import { DigitalTicketView } from './DigitalTicketView';
 import { PublicFooter } from './PublicFooter';
 import { CheckCircle2, HelpCircle, PhoneCall, Shield, Wifi, Clock, ArrowRight } from 'lucide-react';
 import { demoDate } from '../../lib/demoDefaults';
+import { useDsFlipped } from '@/ds/shell/flag';
+import { PublicHeaderMasar, PublicFooterMasar, PublicSiteMasarView } from '../masar/PublicSiteMasarView';
 
 export const PublicWebsite: React.FC = () => {
   const { currentCompany } = useTenant();
   const { locale, t } = useLocale();
+  const flipped = useDsFlipped();
 
   const [routes, setRoutes] = useState<Route[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -79,8 +82,8 @@ export const PublicWebsite: React.FC = () => {
 
   if (activeTicket) {
     return (
-      <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between">
-        <PublicHeader onBookClick={() => setActiveTicket(null)} />
+      <div className={flipped ? 'flex min-h-screen flex-col justify-between bg-surface-page' : 'min-h-screen bg-[#F5F7FA] flex flex-col justify-between'}>
+        {flipped ? <PublicHeaderMasar onBook={() => setActiveTicket(null)} /> : <PublicHeader onBookClick={() => setActiveTicket(null)} />}
         <main className="flex-1">
           <DigitalTicketView
             booking={activeTicket.booking}
@@ -90,7 +93,57 @@ export const PublicWebsite: React.FC = () => {
             onDone={() => setActiveTicket(null)}
           />
         </main>
-        <PublicFooter />
+        {flipped ? <PublicFooterMasar /> : <PublicFooter />}
+      </div>
+    );
+  }
+
+  const openFirst = () => {
+    if (displayedTrips.length > 0) setBookingTrip(displayedTrips[0] ?? null);
+    else if (trips.length > 0) setBookingTrip(trips[0] ?? null);
+  };
+
+  const modals = (
+    <>
+      <TripDetailsModal
+        isOpen={!!inspectTrip}
+        onClose={() => setInspectTrip(null)}
+        trip={inspectTrip}
+        routes={routes}
+        buses={buses}
+        drivers={drivers}
+        stops={stops}
+        onBookNow={(trip) => setBookingTrip(trip)}
+      />
+      <BookingFlowModal
+        isOpen={!!bookingTrip}
+        onClose={() => setBookingTrip(null)}
+        trip={bookingTrip}
+        routes={routes}
+        buses={buses}
+        stops={stops}
+        onBookingSuccess={(booking, trip) => {
+          setBookingTrip(null);
+          setActiveTicket({ booking, trip });
+          loadData();
+        }}
+      />
+    </>
+  );
+
+  if (flipped) {
+    return (
+      <div className="flex min-h-screen flex-col justify-between bg-surface-page">
+        <div>
+          <PublicHeaderMasar onBook={openFirst} />
+          <PublicSiteMasarView
+            routes={routes} trips={displayedTrips} buses={buses} stops={stops}
+            origin={selectedOrigin} dest={selectedDest} date={selectedDate}
+            onSearch={handleSearch} onSelectTrip={(trip) => setBookingTrip(trip)} onViewDetails={(trip) => setInspectTrip(trip)}
+          />
+        </div>
+        <PublicFooterMasar />
+        {modals}
       </div>
     );
   }
