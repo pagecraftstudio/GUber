@@ -26,7 +26,7 @@ const linkCls = cx('inline-flex h-9 items-center rounded-ds-sm px-2 text-sm whit
 function CompanyMark({ company, size = 'md' }: { company: Company; size?: 'md' | 'lg' }) {
   const tint = tenantAccent(company.primaryColor);
   return (
-    <span aria-hidden="true" className={cx('flex shrink-0 items-center justify-center rounded-ds-sm font-medium', size === 'lg' ? 'size-10 text-sm' : 'size-8 text-[13px]')} style={{ background: tint?.accent ?? 'var(--ds-action-primary)', color: tint?.onAccent ?? 'var(--ds-action-primary-fg, #fff)' }}>
+    <span aria-hidden="true" className={cx('flex shrink-0 items-center justify-center rounded-ds-sm font-medium', size === 'lg' ? 'size-10 text-sm' : 'size-8 text-[13px]')} style={{ background: tint?.accent ?? 'var(--ds-action-primary)', color: tint?.onAccent ?? 'var(--ds-action-on-primary)' }}>
       {(company.logoText || company.nameEn).slice(0, 2).toUpperCase()}
     </span>
   );
