@@ -24,6 +24,9 @@ out += `}\n\n/* Unscoped default = Tailwind's original value, so surfaces that a
 for (const f of Object.keys(fams)) for (const s of shades) out += `  --bridge-${f}-${s}: ${orig(f, s)};\n`;
 out += `}\n\n[data-ds="masar"] {\n`;
 for (const [f, map] of Object.entries(fams)) for (const s of shades) out += `  --bridge-${f}-${s}: ${map[s]};\n`;
+// A custom property holding var() is resolved where it is DECLARED (:root), so changing --bridge-* here is not enough:
+// the --color-* aliases must be declared again inside the scope or every plain bg-slate-900 keeps Tailwind's original navy.
+for (const f of Object.keys(fams)) for (const s of shades) out += `  --color-${f}-${s}: var(--bridge-${f}-${s});\n`;
 out += `}\n`;
 writeFileSync(new URL('../../src/styles/bridge.css', import.meta.url), out);
 console.log('bridge.css written');
