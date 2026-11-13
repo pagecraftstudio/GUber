@@ -77,4 +77,26 @@
   --bridge-blue-800: #0b3d2e;
   --bridge-blue-900: #082b21;
   --bridge-blue-950: #04170f;
+  --color-slate-50: var(--bridge-slate-50);
+  --color-slate-100: var(--bridge-slate-100);
+  --color-slate-200: var(--bridge-slate-200);
+  --color-slate-300: var(--bridge-slate-300);
+  --color-slate-400: var(--bridge-slate-400);
+  --color-slate-500: var(--bridge-slate-500);
+  --color-slate-600: var(--bridge-slate-600);
+  --color-slate-700: var(--bridge-slate-700);
+  --color-slate-800: var(--bridge-slate-800);
+  --color-slate-900: var(--bridge-slate-900);
+  --color-slate-950: var(--bridge-slate-950);
+  --color-blue-50: var(--bridge-blue-50);
+  --color-blue-100: var(--bridge-blue-100);
+  --color-blue-200: var(--bridge-blue-200);
+  --color-blue-300: var(--bridge-blue-300);
+  --color-blue-400: var(--bridge-blue-400);
+  --color-blue-500: var(--bridge-blue-500);
+  --color-blue-600: var(--bridge-blue-600);
+  --color-blue-700: var(--bridge-blue-700);
+  --color-blue-800: var(--bridge-blue-800);
+  --color-blue-900: var(--bridge-blue-900);
+  --color-blue-950: var(--bridge-blue-950);
 }
