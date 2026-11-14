@@ -36,7 +36,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
   if ('error' in result) {
     return (
       <div className="space-y-4">
-        <Link href="/admin/companies" className="text-xs text-slate-500 underline">Companies</Link>
+        <Link href="/admin/companies" className="text-xs text-ink-muted underline">Companies</Link>
         <AdminErrorState message={result.error} />
       </div>
     );

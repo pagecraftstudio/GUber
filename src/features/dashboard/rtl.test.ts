@@ -30,20 +30,18 @@ describe('RTL: no physical-direction styling in the company dashboard', () => {
       expect(hit?.[0] ?? null).toBeNull();
     });
   }
-  it('only the shell slides the drawer with translate-x, and it picks the sign from the language', () => {
-    const users = DASH_FILES.filter((f) => /translate-x/.test(read(f)));
-    expect(users).toEqual(['src/components/dashboard/DashboardShell.tsx']);
-    expect(read(users[0]!)).toMatch(/lang==='ar'\?'translate-x-full/);
+  it('no dashboard file hard-codes a sliding drawer direction', () => {
+    expect(DASH_FILES.filter((f) => /translate-x/.test(read(f)))).toEqual([]);
   });
-  it('the shell anchors with start-0/border-e and offsets content with ms-', () => {
-    const s = read('src/components/dashboard/DashboardShell.tsx');
-    expect(s).toContain('start-0 border-e');
-    expect(s).toContain('lg:ms-[264px]');
+  it('the shell frame anchors with start-0/border-e and flips its arrow in RTL', () => {
+    const s = read('src/ds/shell/ShellFrame.tsx');
+    expect(s).toContain('start-0');
+    expect(s).toContain('border-e');
     expect(s).toContain('rtl:-scale-x-100');
   });
   it('the server renders the saved direction from a cookie (no left-to-right flash)', () => {
     expect(read('src/app/dashboard/layout.tsx')).toContain("malaky-dashboard-language");
-    expect(read('src/components/dashboard/DashboardShell.tsx')).toContain('document.cookie=');
+    expect(read('src/ds/shell/DashboardShellMasar.tsx')).toContain('document.cookie');
   });
 });
 

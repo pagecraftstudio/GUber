@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { polyfillDialog } from '@/ds/test-setup';
 import { DsLangProvider } from '@/ds/lang';
-import { DsFlagProvider } from '@/ds/shell/flag';
 import type { Route } from '@/features/routes/types';
 import type { Bus } from '@/features/buses/types';
 import type { Driver } from '@/features/drivers/types';
@@ -33,7 +32,7 @@ const bad = async (el: HTMLElement) => {
   return r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join('|')}`);
 };
 const table = () => within(document.querySelector('table') as HTMLElement);
-const wrap = (lang: 'en' | 'ar', ui: React.ReactElement) => <DsLangProvider value={lang}><DsFlagProvider value>{ui}</DsFlagProvider></DsLangProvider>;
+const wrap = (lang: 'en' | 'ar', ui: React.ReactElement) => <DsLangProvider value={lang}>{ui}</DsLangProvider>;
 
 const route = (o: Partial<Route> = {}): Route => ({ id: 'r1', name: 'Cairo to Galala', originName: 'Cairo', destinationName: 'Galala', isActive: true, ...o } as Route);
 const bus = (o: Partial<Bus> = {}): Bus => ({ id: 'b1', plateNumber: 'ABC 1234', name: null, capacity: 40, make: 'Mercedes', model: 'Tourismo', year: 2022, status: 'active', notes: null, createdAt: '', updatedAt: '', ...o });
@@ -123,46 +122,35 @@ describe('customers list', () => {
   });
 });
 
-describe('shared dashboard parts follow the flag', () => {
-  it('PageHeader: MASAR header (no eyebrow) when flipped, old header otherwise', async () => {
+describe('shared dashboard parts', () => {
+  it('PageHeader: MASAR header without an eyebrow', async () => {
     const { PageHeader } = await import('@/components/dashboard/PageHeader');
-    const ui = <PageHeader eyebrow="Network management" title="Routes" description="Corridors." />;
-    const { unmount } = render(<DsLangProvider value="en"><DsFlagProvider value>{ui}</DsFlagProvider></DsLangProvider>);
+    render(<DsLangProvider value="en"><PageHeader eyebrow="Network management" title="Routes" description="Corridors." /></DsLangProvider>);
     expect(screen.queryByText('Network management')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Routes' })).toBeTruthy();
-    unmount();
-    render(<DsLangProvider value="en"><DsFlagProvider value={false}>{ui}</DsFlagProvider></DsLangProvider>);
-    expect(screen.getByText('Network management')).toBeTruthy();
   });
-  it('SubmitButton: aria-disabled button stays focusable in both looks', async () => {
+  it('SubmitButton: aria-disabled button stays focusable', async () => {
     const { SubmitButton } = await import('@/components/dashboard/FormParts');
-    for (const flipped of [true, false]) {
-      const { unmount } = render(<DsFlagProvider value={flipped}><SubmitButton pending={false} blocked>Save</SubmitButton></DsFlagProvider>);
-      const b = screen.getByRole('button', { name: 'Save' });
-      expect(b.getAttribute('aria-disabled')).toBe('true');
-      expect(b.hasAttribute('disabled')).toBe(false);
-      unmount();
-    }
+    render(<SubmitButton pending={false} blocked>Save</SubmitButton>);
+    const b = screen.getByRole('button', { name: 'Save' });
+    expect(b.getAttribute('aria-disabled')).toBe('true');
+    expect(b.hasAttribute('disabled')).toBe(false);
   });
 });
 
-describe('row actions are real buttons in the MASAR look', () => {
-  it('suspend / revoke have a border (no bare coloured text); old look keeps the old link style', async () => {
+describe('row actions are real buttons', () => {
+  it('suspend / revoke have a border (no bare coloured text)', async () => {
     const { MemberControls, RevokeInvite } = await import('../UsersPanel');
-    const ui = (
-      <>
+    render(
+      <DsLangProvider value="en">
         <MemberControls memberId="m1" name="Sara" roleKey="manager" status="active" roles={[{ key: 'manager', name: 'Manager' }]} isSelf={false} canWrite />
         <RevokeInvite inviteId="i1" email="a@b.co" />
-      </>
+      </DsLangProvider>,
     );
-    const { unmount } = render(<DsLangProvider value="en"><DsFlagProvider value>{ui}</DsFlagProvider></DsLangProvider>);
     for (const name of [/Suspend/, /Revoke/]) {
       const cls = screen.getByRole('button', { name }).className;
       expect(cls).toContain('border-line-strong');
       expect(cls).not.toContain('underline');
     }
-    unmount();
-    render(<DsLangProvider value="en"><DsFlagProvider value={false}>{ui}</DsFlagProvider></DsLangProvider>);
-    expect(screen.getByRole('button', { name: /Suspend/ }).className).toContain('underline');
   });
 });

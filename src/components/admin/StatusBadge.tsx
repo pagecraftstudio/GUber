@@ -1,13 +1,13 @@
 const STYLES: Record<string, string> = {
-  active: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  trial: 'border-amber-200 bg-amber-50 text-amber-700',
-  trialing: 'border-amber-200 bg-amber-50 text-amber-700',
-  past_due: 'border-orange-200 bg-orange-50 text-orange-700',
-  suspended: 'border-red-200 bg-red-50 text-red-700',
-  cancelled: 'border-slate-200 bg-slate-100 text-slate-600',
-  expired: 'border-slate-200 bg-slate-100 text-slate-600',
-  live: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  stale: 'border-red-200 bg-red-50 text-red-700',
+  active: 'border-status-success-fg bg-status-success-bg text-status-success-fg',
+  trial: 'border-status-warning-fg bg-status-warning-bg text-status-warning-fg',
+  trialing: 'border-status-warning-fg bg-status-warning-bg text-status-warning-fg',
+  past_due: 'border-status-warning-fg bg-status-warning-bg text-status-warning-fg',
+  suspended: 'border-status-error-fg bg-status-error-bg text-status-error-fg',
+  cancelled: 'border-line-default bg-surface-sunken text-ink-secondary',
+  expired: 'border-line-default bg-surface-sunken text-ink-secondary',
+  live: 'border-status-success-fg bg-status-success-bg text-status-success-fg',
+  stale: 'border-status-error-fg bg-status-error-bg text-status-error-fg',
 };
 
 export function StatusBadge({ status }: { status: string }) {

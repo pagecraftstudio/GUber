@@ -66,8 +66,8 @@ export function QrScanner({ active, onToken }: Props) {
 
   return (
     <div className="space-y-2">
-      <video ref={video} playsInline muted className={`aspect-square w-full rounded-lg bg-slate-900 object-cover ${active ? '' : 'hidden'}`} />
-      {error ? <p role="alert" className="text-sm text-red-600">{error}</p> : null}
+      <video ref={video} playsInline muted className={`aspect-square w-full rounded-lg bg-action object-cover ${active ? '' : 'hidden'}`} />
+      {error ? <p role="alert" className="text-sm text-status-error-fg">{error}</p> : null}
     </div>
   );
 }

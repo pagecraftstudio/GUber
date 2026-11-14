@@ -27,19 +27,19 @@ export const Pagination: React.FC<PaginationProps> = ({
   const NextIcon = dir === 'rtl' ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border-t border-slate-100 text-xs text-slate-500">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-surface-card border-t border-line-hairline text-xs text-ink-muted">
       <div className="tabular-nums">
         {locale === 'ar' ? (
           <span>
-            عرض <strong className="text-slate-900 font-semibold">{startIdx}</strong> إلى{' '}
-            <strong className="text-slate-900 font-semibold">{endIdx}</strong> من إجمالي{' '}
-            <strong className="text-slate-900 font-semibold">{totalItems}</strong>
+            عرض <strong className="text-ink-primary font-semibold">{startIdx}</strong> إلى{' '}
+            <strong className="text-ink-primary font-semibold">{endIdx}</strong> من إجمالي{' '}
+            <strong className="text-ink-primary font-semibold">{totalItems}</strong>
           </span>
         ) : (
           <span>
-            Showing <strong className="text-slate-900 font-semibold">{startIdx}</strong> to{' '}
-            <strong className="text-slate-900 font-semibold">{endIdx}</strong> of{' '}
-            <strong className="text-slate-900 font-semibold">{totalItems}</strong>
+            Showing <strong className="text-ink-primary font-semibold">{startIdx}</strong> to{' '}
+            <strong className="text-ink-primary font-semibold">{endIdx}</strong> of{' '}
+            <strong className="text-ink-primary font-semibold">{totalItems}</strong>
           </span>
         )}
       </div>
@@ -48,20 +48,20 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+          className="p-1.5 rounded-md border border-line-default text-ink-secondary hover:bg-surface-page disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
           aria-label="Previous Page"
         >
           <PrevIcon className="w-3.5 h-3.5" />
         </button>
 
-        <span className="px-2 text-xs font-semibold text-slate-700 tabular-nums">
+        <span className="px-2 text-xs font-semibold text-ink-secondary tabular-nums">
           {currentPage} / {totalPages}
         </span>
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+          className="p-1.5 rounded-md border border-line-default text-ink-secondary hover:bg-surface-page disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
           aria-label="Next Page"
         >
           <NextIcon className="w-3.5 h-3.5" />

@@ -18,7 +18,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium transition-colors cursor-pointer select-none whitespace-nowrap shrink-0 disabled:opacity-50 disabled:pointer-events-none rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3563E9] focus-visible:ring-offset-2';
+    'inline-flex items-center justify-center font-medium transition-colors cursor-pointer select-none whitespace-nowrap shrink-0 disabled:opacity-50 disabled:pointer-events-none rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
@@ -27,11 +27,11 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const variantStyles = {
-    primary: 'bg-[#3563E9] text-white hover:bg-[#2752D8] active:bg-[#1E40AF] shadow-xs',
-    secondary: 'bg-[#14243A] text-white hover:bg-[#1B2E48] active:bg-[#0E1A2B]',
-    outline: 'border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 active:bg-slate-100',
-    ghost: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
-    danger: 'bg-[#DC2626] text-white hover:bg-red-700 active:bg-red-800 shadow-xs',
+    primary: 'bg-action text-on-action hover:bg-action-hover active:bg-action-hover shadow-xs',
+    secondary: 'bg-action text-on-action hover:bg-action-hover active:bg-action-hover',
+    outline: 'border border-line-strong text-ink-secondary bg-surface-card hover:bg-surface-page active:bg-surface-sunken',
+    ghost: 'text-ink-secondary hover:text-ink-primary hover:bg-surface-sunken',
+    danger: 'bg-destructive text-on-action hover:bg-destructive-hover active:bg-destructive-hover shadow-xs',
   };
 
   return (

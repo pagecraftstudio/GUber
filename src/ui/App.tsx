@@ -91,7 +91,7 @@ const AppContent: React.FC<AppEntry> = ({ authPage, nextAfterAuth }) => {
   }, [authPage, nextAfterAuth, loading, isAuthenticated, isAuthModalOpen]);
 
   return (
-    <div className="min-h-screen bg-[var(--surface-page)] text-[var(--text-primary)] transition-colors duration-200">
+    <div className="min-h-screen bg-surface-page text-ink-primary transition-colors duration-200">
       {/* Developer-only Preview Switcher */}
       {isMockMode() && <PreviewBar />}
 

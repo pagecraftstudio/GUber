@@ -79,9 +79,9 @@ export default async function InvitePage({
         <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={10} maxLength={72} hint="10–72 characters." />
         <SubmitButton>Create account</SubmitButton>
       </form>
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-ink-muted">
         Already have an account?{' '}
-        <Link href={`/company/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="underline underline-offset-2 hover:text-slate-800">
+        <Link href={`/company/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="underline underline-offset-2 hover:text-ink-primary">
           Sign in
         </Link>
       </p>

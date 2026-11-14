@@ -62,19 +62,19 @@ export function TripDraftForm({ routes, buses, drivers, usage }: { routes: Route
     if (!blocked) setTimeout(() => ref.current && state.status === 'success' && reset(), 0);
   };
   const noticeId = `${uid}-limit`;
-  const lbl = 'block text-xs font-semibold text-slate-700 dark:text-slate-300';
-  const errText = 'mt-1 block text-xs font-semibold text-red-700 dark:text-red-300';
+  const lbl = 'block text-xs font-semibold text-ink-secondary';
+  const errText = 'mt-1 block text-xs font-semibold text-status-error-fg';
 
   return (
-    <form ref={ref} onSubmit={submit} aria-labelledby={`${uid}-t`} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2 xl:grid-cols-4">
+    <form ref={ref} onSubmit={submit} aria-labelledby={`${uid}-t`} className="grid gap-3 rounded-2xl border border-line-default bg-surface-card p-5 sm:grid-cols-2 xl:grid-cols-4">
       <div className="space-y-2 sm:col-span-2 xl:col-span-4">
         <h2 id={`${uid}-t`} className="font-bold">{T.title}</h2>
-        <p className="text-xs text-slate-600 dark:text-slate-400">{T.intro}</p>
+        <p className="text-xs text-ink-secondary">{T.intro}</p>
         <PlanLimitNotice usage={current} resource="max_trips_per_month" month={month} id={noticeId} />
       </div>
 
       <div>
-        <label htmlFor={`${uid}-route`} className={lbl}>{T.route}<span aria-hidden="true" className="text-red-600"> *</span></label>
+        <label htmlFor={`${uid}-route`} className={lbl}>{T.route}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
         <select id={`${uid}-route`} required name="routeId" value={routeId} onChange={(e) => { setRouteId(e.target.value); setRetRoute(reverseOf(e.target.value)); }} className={inputClass(false)}>
           <option value="" disabled>{T.pick}</option>
           {routes.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
@@ -95,46 +95,46 @@ export function TripDraftForm({ routes, buses, drivers, usage }: { routes: Route
         </select>
       </div>
       <div>
-        <label htmlFor={`${uid}-price`} className={lbl}>{roundTrip ? T.priceGo : T.price}<span aria-hidden="true" className="text-red-600"> *</span></label>
+        <label htmlFor={`${uid}-price`} className={lbl}>{roundTrip ? T.priceGo : T.price}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
         <input id={`${uid}-price`} required name="price" type="number" min={0} step="any" inputMode="decimal" className={inputClass(false)} />
       </div>
       <div>
-        <label htmlFor={`${uid}-cap`} className={lbl}>{T.capacity}<span aria-hidden="true" className="text-red-600"> *</span></label>
+        <label htmlFor={`${uid}-cap`} className={lbl}>{T.capacity}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
         <input id={`${uid}-cap`} required name="capacity" type="number" min={1} max={capacityLimit} step={1} inputMode="numeric" value={capacity}
           onChange={(e) => { setCapacityTouched(true); setCapacity(e.target.value); }}
           aria-invalid={capacityInvalid || undefined} aria-describedby={`${uid}-cap-h${capacityInvalid ? ` ${uid}-cap-e` : ''}`} className={inputClass(capacityInvalid)} />
-        <span id={`${uid}-cap-h`} className="mt-1 block text-xs text-slate-600 dark:text-slate-400">{selectedBus ? T.seatsFor(selectedBus.capacity) : T.seatsNoBus}</span>
+        <span id={`${uid}-cap-h`} className="mt-1 block text-xs text-ink-secondary">{selectedBus ? T.seatsFor(selectedBus.capacity) : T.seatsNoBus}</span>
         {capacityInvalid && <span id={`${uid}-cap-e`} role="alert" className={errText}>{T.capErr(capacityLimit)}</span>}
       </div>
       <div>
-        <label htmlFor={`${uid}-dep`} className={lbl}>{T.dep}<span aria-hidden="true" className="text-red-600"> *</span></label>
+        <label htmlFor={`${uid}-dep`} className={lbl}>{T.dep}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
         <input id={`${uid}-dep`} required name="departureAt" type="datetime-local" value={departureAt} onChange={(e) => setDepartureAt(e.target.value)} className={inputClass(false)} />
       </div>
       <div>
-        <label htmlFor={`${uid}-arr`} className={lbl}>{T.arr}<span aria-hidden="true" className="text-red-600"> *</span></label>
+        <label htmlFor={`${uid}-arr`} className={lbl}>{T.arr}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
         <input id={`${uid}-arr`} required name="arrivalAt" type="datetime-local" min={departureAt || undefined} value={arrivalAt} onChange={(e) => setArrivalAt(e.target.value)}
           aria-invalid={arrivalInvalid || undefined} aria-describedby={arrivalInvalid ? `${uid}-arr-e` : undefined} className={inputClass(arrivalInvalid)} />
         {arrivalInvalid && <span id={`${uid}-arr-e`} role="alert" className={errText}>{T.arrErr}</span>}
       </div>
-      <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700 sm:col-span-2 xl:col-span-4">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-bold"><input type="checkbox" name="roundTrip" checked={roundTrip} onChange={(e) => setRoundTrip(e.target.checked)} className="accent-blue-700" />{T.rt}</label>
+      <div className="space-y-3 rounded-xl border border-line-default p-3 sm:col-span-2 xl:col-span-4">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-bold"><input type="checkbox" name="roundTrip" checked={roundTrip} onChange={(e) => setRoundTrip(e.target.checked)} className="accent-ink-link" />{T.rt}</label>
         {roundTrip && (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <p className="text-xs text-slate-600 dark:text-slate-400 sm:col-span-2 xl:col-span-4">{T.rtHint} {T.retInherit}</p>
-            <div><label htmlFor={`${uid}-rr`} className={lbl}>{T.retRoute}<span aria-hidden="true" className="text-red-600"> *</span></label>
+            <p className="text-xs text-ink-secondary sm:col-span-2 xl:col-span-4">{T.rtHint} {T.retInherit}</p>
+            <div><label htmlFor={`${uid}-rr`} className={lbl}>{T.retRoute}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
               <select id={`${uid}-rr`} required name="returnRouteId" value={retRoute} onChange={(e) => setRetRoute(e.target.value)} className={inputClass(false)}><option value="" disabled>{T.pick}</option>{routes.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select></div>
-            <div><label htmlFor={`${uid}-rp`} className={lbl}>{T.priceRet}<span aria-hidden="true" className="text-red-600"> *</span></label><input id={`${uid}-rp`} required name="returnPrice" type="number" min={0} step="any" inputMode="decimal" className={inputClass(false)} /></div>
-            <div><label htmlFor={`${uid}-bp`} className={lbl}>{T.priceBoth}<span aria-hidden="true" className="text-red-600"> *</span></label><input id={`${uid}-bp`} required name="roundTripPrice" type="number" min={0} step="any" inputMode="decimal" className={inputClass(false)} /></div>
+            <div><label htmlFor={`${uid}-rp`} className={lbl}>{T.priceRet}<span aria-hidden="true" className="text-status-error-fg"> *</span></label><input id={`${uid}-rp`} required name="returnPrice" type="number" min={0} step="any" inputMode="decimal" className={inputClass(false)} /></div>
+            <div><label htmlFor={`${uid}-bp`} className={lbl}>{T.priceBoth}<span aria-hidden="true" className="text-status-error-fg"> *</span></label><input id={`${uid}-bp`} required name="roundTripPrice" type="number" min={0} step="any" inputMode="decimal" className={inputClass(false)} /></div>
             <fieldset className="space-y-2 sm:col-span-2 xl:col-span-4">
               <legend className={lbl}>{T.retTimes}</legend>
               {retRows.map((row, i) => (
                 <div key={i} className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
                   <div><label className={lbl}>{T.retDep}<input name="retDep" type="datetime-local" required={i === 0} value={row.dep} min={arrivalAt || undefined} onChange={(e) => onRetDep(i, e.target.value)} className={inputClass(false)} /></label></div>
                   <div><label className={lbl}>{T.retArr}<input name="retArr" type="datetime-local" required={i === 0} value={row.arr} min={row.dep || undefined} onChange={(e) => setRow(i, { arr: e.target.value })} className={inputClass(false)} /></label></div>
-                  {retRows.length > 1 && <button type="button" onClick={() => setRetRows((r) => r.filter((_, k) => k !== i))} className="inline-flex min-h-10 items-center rounded-lg border border-slate-400 px-3 text-xs font-bold">{T.removeRet}</button>}
+                  {retRows.length > 1 && <button type="button" onClick={() => setRetRows((r) => r.filter((_, k) => k !== i))} className="inline-flex min-h-10 items-center rounded-lg border border-line-strong px-3 text-xs font-bold">{T.removeRet}</button>}
                 </div>
               ))}
-              {retRows.length < 10 && <button type="button" onClick={() => setRetRows((r) => [...r, { dep: '', arr: '' }])} className="inline-flex min-h-9 items-center rounded-lg border border-blue-700 px-3 text-xs font-bold text-blue-700 dark:text-blue-300">+ {T.addRet}</button>}
+              {retRows.length < 10 && <button type="button" onClick={() => setRetRows((r) => [...r, { dep: '', arr: '' }])} className="inline-flex min-h-9 items-center rounded-lg border border-line-strong px-3 text-xs font-bold text-ink-link">+ {T.addRet}</button>}
               {retInvalid && <span role="alert" className={errText}>{T.retErr}</span>}
               {retMissing && <span role="alert" className={errText}>{T.retNone}</span>}
             </fieldset>
@@ -143,7 +143,7 @@ export function TripDraftForm({ routes, buses, drivers, usage }: { routes: Route
       </div>
       <div className="flex flex-col justify-end gap-2">
         <SubmitButton pending={pending} blocked={blocked} describedBy={noticeId}>{T.create}</SubmitButton>
-        {blocked && <p className="text-xs font-semibold text-red-700 dark:text-red-300">{FORM_TEXT[lang].limitBlocked}</p>}
+        {blocked && <p className="text-xs font-semibold text-status-error-fg">{FORM_TEXT[lang].limitBlocked}</p>}
       </div>
       <div className="sm:col-span-2 xl:col-span-4"><FormResult state={state} resource="max_trips_per_month" /></div>
     </form>

@@ -21,22 +21,22 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
       {toasts.map((toast) => {
         const styles = {
           success: {
-            border: 'border-emerald-200',
-            bg: 'bg-white',
-            icon: <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />,
-            title: 'text-slate-900',
+            border: 'border-status-success-fg',
+            bg: 'bg-surface-card',
+            icon: <CheckCircle2 className="w-4 h-4 text-status-success-fg shrink-0" />,
+            title: 'text-ink-primary',
           },
           error: {
-            border: 'border-red-200',
-            bg: 'bg-white',
-            icon: <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />,
-            title: 'text-slate-900',
+            border: 'border-status-error-fg',
+            bg: 'bg-surface-card',
+            icon: <AlertCircle className="w-4 h-4 text-status-error-fg shrink-0" />,
+            title: 'text-ink-primary',
           },
           info: {
-            border: 'border-blue-200',
-            bg: 'bg-white',
-            icon: <Info className="w-4 h-4 text-[#3563E9] shrink-0" />,
-            title: 'text-slate-900',
+            border: 'border-line-strong',
+            bg: 'bg-surface-card',
+            icon: <Info className="w-4 h-4 text-status-info-fg shrink-0" />,
+            title: 'text-ink-primary',
           },
         };
 
@@ -53,13 +53,13 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
               <div>
                 <p className={`text-xs font-semibold ${config.title}`}>{toast.title}</p>
                 {toast.message && (
-                  <p className="text-[11px] text-slate-500 mt-0.5">{toast.message}</p>
+                  <p className="text-[11px] text-ink-muted mt-0.5">{toast.message}</p>
                 )}
               </div>
             </div>
             <button
               onClick={() => onDismiss(toast.id)}
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+              className="text-ink-muted hover:text-ink-secondary p-0.5 rounded cursor-pointer"
               aria-label="Dismiss"
             >
               <X className="w-3.5 h-3.5" />

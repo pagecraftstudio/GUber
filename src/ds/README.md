@@ -14,7 +14,7 @@ One component library. Tokens in `src/styles/tokens.css`; components use only se
 9. **RouteLine** renders only from real stop data (2 or more).
 
 ## Shells (`shell/`)
-`ShellFrame` (sidebar 264/72, 36px rows, topbar, drawer, skip link) is shared by `DashboardShellMasar` and `AdminShellMasar`. `DriverShellMasar` is a top bar only. `MarketplaceHeaderMasar` + `QuietFooter` serve the marketplace. Layouts pick the shell with `isSurfaceScoped(...)`, so an unflipped surface still renders the old shell untouched. Client components learn the flag from `DsFlagProvider` (marketplace layout). The old shells and their class-name tests stay until Phase 6.
+`ShellFrame` (sidebar 264/72, 36px rows, topbar, drawer, skip link) is shared by `DashboardShellMasar` and `AdminShellMasar`. `DriverShellMasar` is a top bar only. `MarketplaceHeaderMasar` + `QuietFooter` serve the marketplace.
 
 ## Try it
 `/dev/design` (dev and preview only) renders every component and state in English and Arabic (`gallery/Gallery.tsx`). The same gallery is what `a11y.test.tsx` runs axe on.

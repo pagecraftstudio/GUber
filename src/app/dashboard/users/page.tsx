@@ -30,24 +30,24 @@ export default async function UsersPage() {
   return (
     <>
       <PageHeader eyebrow="Workspace" title="Team members" description="People who can sign in to this company, their roles, and pending invitations." />
-      {!canWrite && <p role="status" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-100"><T>You can see the team, but only the company owner can change it.</T></p>}
+      {!canWrite && <p role="status" className="mb-5 rounded-xl border border-line-strong bg-status-info-bg px-3.5 py-3 text-sm text-ink-link"><T>You can see the team, but only the company owner can change it.</T></p>}
       <div className={`grid gap-6 ${canWrite ? 'xl:grid-cols-[minmax(0,1fr)_360px]' : ''}`}>
         <div className="min-w-0 space-y-6">
           <section aria-labelledby="members-h">
             <h2 id="members-h" className="mb-3 font-bold"><T>Members</T></h2>
             <DataTable rows={members.items} columns={[
-              { key: 'name', label: 'Name', render: (m) => <div><p className="font-bold">{m.fullName ?? m.email}{m.userId === auth.userId && <span className="ms-2 text-xs font-semibold text-slate-600 dark:text-slate-400"><T>(you)</T></span>}</p><p className="text-xs text-slate-600 dark:text-slate-400">{m.email && <Ltr>{m.email}</Ltr>}</p></div> },
-              { key: 'role', label: 'Role', render: (m) => <div>{m.roleName ?? '—'}{m.roleKey === 'driver' && <p className="text-xs text-slate-600 dark:text-slate-400">{driverByUser.get(m.userId) ? `Driver record: ${driverByUser.get(m.userId)}` : 'No driver record linked'}</p>}</div> },
+              { key: 'name', label: 'Name', render: (m) => <div><p className="font-bold">{m.fullName ?? m.email}{m.userId === auth.userId && <span className="ms-2 text-xs font-semibold text-ink-secondary"><T>(you)</T></span>}</p><p className="text-xs text-ink-secondary">{m.email && <Ltr>{m.email}</Ltr>}</p></div> },
+              { key: 'role', label: 'Role', render: (m) => <div>{m.roleName ?? '—'}{m.roleKey === 'driver' && <p className="text-xs text-ink-secondary">{driverByUser.get(m.userId) ? `Driver record: ${driverByUser.get(m.userId)}` : 'No driver record linked'}</p>}</div> },
               { key: 'status', label: 'Status', render: (m) => <StatusPill value={m.status === 'active' ? 'active' : 'inactive'} /> },
               ...(canWrite ? [{ key: 'manage', label: 'Manage', render: (m: (typeof members.items)[number]) => <MemberControls memberId={m.id} name={m.fullName ?? m.email ?? 'member'} roleKey={m.roleKey} status={m.status} roles={roleOptions} isSelf={m.userId === auth.userId} canWrite /> }] : []),
             ]} />
           </section>
           <section aria-labelledby="invites-h">
             <h2 id="invites-h" className="mb-3 font-bold"><T>Pending invitations</T></h2>
-            {invites.items.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-400"><T>No pending invitations.</T></p> : (
+            {invites.items.length === 0 ? <p className="text-sm text-ink-secondary"><T>No pending invitations.</T></p> : (
               <DataTable rows={invites.items} columns={[
                 { key: 'email', label: 'Email', render: (i) => <Ltr>{i.email}</Ltr> },
-                { key: 'role', label: 'Role', render: (i) => <div>{i.roleName ?? '—'}{i.driverId && <p className="text-xs text-slate-600 dark:text-slate-400">{`Driver record: ${drivers.items.find((d) => d.id === i.driverId)?.fullName ?? '—'}`}</p>}</div> },
+                { key: 'role', label: 'Role', render: (i) => <div>{i.roleName ?? '—'}{i.driverId && <p className="text-xs text-ink-secondary">{`Driver record: ${drivers.items.find((d) => d.id === i.driverId)?.fullName ?? '—'}`}</p>}</div> },
                 { key: 'expires', label: 'Expires', render: (i) => <Dt value={i.expiresAt} /> },
                 ...(canWrite ? [{ key: 'manage', label: 'Manage', render: (i: (typeof invites.items)[number]) => <RevokeInvite inviteId={i.id} email={i.email} /> }] : []),
               ]} />

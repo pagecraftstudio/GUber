@@ -22,12 +22,12 @@ export function DriverLogin({ driverId, driverName, driverActive, linked, pendin
   const link = useActionForm(linkDriverFormAction);
   const skin = useRowActionSkin();
   if (linked)
-    return <div><p className="text-xs font-semibold text-slate-800 dark:text-slate-100">{T.linked(linked.name)}</p><p className="text-xs text-slate-600 dark:text-slate-400">{linked.email}{linked.suspended ? ` · ${T.suspendedNote}` : ''}</p></div>;
-  if (pendingExpires) return <p className="text-xs text-slate-700 dark:text-slate-300">{T.pending(new Date(pendingExpires).toLocaleDateString())}</p>;
-  if (!canManage || !driverActive) return <p className="text-xs text-slate-600 dark:text-slate-400">{T.none}</p>;
+    return <div><p className="text-xs font-semibold text-ink-primary">{T.linked(linked.name)}</p><p className="text-xs text-ink-secondary">{linked.email}{linked.suspended ? ` · ${T.suspendedNote}` : ''}</p></div>;
+  if (pendingExpires) return <p className="text-xs text-ink-secondary">{T.pending(new Date(pendingExpires).toLocaleDateString())}</p>;
+  if (!canManage || !driverActive) return <p className="text-xs text-ink-secondary">{T.none}</p>;
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-600 dark:text-slate-400">{T.none}</p>
+      <p className="text-xs text-ink-secondary">{T.none}</p>
       <form ref={invite.ref} onSubmit={invite.onSubmit} aria-label={T.inviteFor(driverName)} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="driverId" value={driverId} />
         <div className="min-w-44 flex-1"><FormField name="email" label={T.email} type="email" autoComplete="off" required error={fieldErr(invite.state, lang, 'email')} /></div>
@@ -35,7 +35,7 @@ export function DriverLogin({ driverId, driverName, driverActive, linked, pendin
       </form>
       <FormResult state={invite.state} />
       {invite.state.status === 'success' && invite.state.invite && (
-        <div className="space-y-1 rounded-xl border border-slate-300 p-2 dark:border-slate-600">
+        <div className="space-y-1 rounded-xl border border-line-strong p-2">
           <label htmlFor={`${uid}-l`} className="block text-xs font-semibold">{T.linkLink}</label>
           <input id={`${uid}-l`} readOnly value={invite.state.invite.url} onFocus={(e) => e.currentTarget.select()} className={inputClass(false)} />
         </div>
@@ -44,7 +44,7 @@ export function DriverLogin({ driverId, driverName, driverActive, linked, pendin
         <form ref={link.ref} onSubmit={link.onSubmit} aria-label={T.linkFor(driverName)} className="flex flex-wrap items-end gap-2">
           <input type="hidden" name="driverId" value={driverId} />
           <div className="min-w-44 flex-1">
-            <label htmlFor={`${uid}-m`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{T.member}</label>
+            <label htmlFor={`${uid}-m`} className="block text-xs font-semibold text-ink-secondary">{T.member}</label>
             <select id={`${uid}-m`} name="memberId" required defaultValue="" className={inputClass(false)}>
               <option value="" disabled>{T.pick}</option>
               {members.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}

@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/dashboard/PageHeader';
 import { DataTable, StatusPill } from '@/components/dashboard/DataTable';
 
 const row = (label: string, value: React.ReactNode) => (
-  <div key={label}><dt className="text-xs font-semibold text-slate-600 dark:text-slate-400"><T>{label}</T></dt><dd className="mt-0.5 text-sm font-medium">{value || '—'}</dd></div>
+  <div key={label}><dt className="text-xs font-semibold text-ink-secondary"><T>{label}</T></dt><dd className="mt-0.5 text-sm font-medium">{value || '—'}</dd></div>
 );
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,9 +33,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   return (
     <>
       <PageHeader eyebrow="Passenger operations" title={customer.fullName} description="Customer details and booking history."
-        action={<Link href="/dashboard/customers" className="text-xs font-bold text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"><T>Back to customers</T></Link>} />
+        action={<Link href="/dashboard/customers" className="text-xs font-bold text-ink-link underline-offset-2 hover:underline"><T>Back to customers</T></Link>} />
       <div className="max-w-4xl space-y-6">
-        <section aria-labelledby="cust-h" className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <section aria-labelledby="cust-h" className="rounded-2xl border border-line-default bg-surface-card p-5">
           <h2 id="cust-h" className="font-bold"><T>Details</T></h2>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">
             {row('Phone', customer.phone && <Ltr>{customer.phone}</Ltr>)}{row('Email', customer.email && <Ltr>{customer.email}</Ltr>)}{row('University', customer.university)}{row('Student number', customer.studentId)}

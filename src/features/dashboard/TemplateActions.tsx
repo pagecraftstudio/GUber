@@ -18,12 +18,12 @@ export function GenerateSummary({ state }: { state: FormState }) {
   return (
     <div aria-live="polite" aria-atomic="true">
       {g && (
-        <ul role="status" className="space-y-0.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+        <ul role="status" className="space-y-0.5 text-xs font-semibold text-ink-primary">
           <li>{T.created(g.created)}</li>
           {g.returnTripsCreated > 0 && <li>{T.returns(g.returnTripsCreated)}</li>}
           {g.alreadyExisted > 0 && <li>{T.existed(g.alreadyExisted)}</li>}
-          {g.conflicts > 0 && <li className="text-amber-800 dark:text-amber-300">{T.conflicts(g.conflicts)}</li>}
-          {g.limitReached && <li className="text-red-700 dark:text-red-300">{T.limit}</li>}
+          {g.conflicts > 0 && <li className="text-status-warning-fg">{T.conflicts(g.conflicts)}</li>}
+          {g.limitReached && <li className="text-status-error-fg">{T.limit}</li>}
         </ul>
       )}
     </div>
@@ -51,7 +51,7 @@ export function TemplateActions({ id, isActive, label }: { id: string; isActive:
         </form>
       </div>
       <GenerateSummary state={gen.state} />
-      <div aria-live="polite">{err && err.status === 'error' && <p role="alert" className="text-xs font-semibold text-red-700 dark:text-red-300">{genericErrorText(lang, err.code, err.detail)}</p>}</div>
+      <div aria-live="polite">{err && err.status === 'error' && <p role="alert" className="text-xs font-semibold text-status-error-fg">{genericErrorText(lang, err.code, err.detail)}</p>}</div>
     </div>
   );
 }

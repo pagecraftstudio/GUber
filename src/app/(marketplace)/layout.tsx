@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import '@/ui/ui.css';
-import { DsScope } from '@/ds/shell/DsScope';
 
 // Public customer marketplace. This is the only indexable surface; dashboard/admin/driver/operator-login stay noindex (root layout).
 export const metadata: Metadata = {
@@ -11,8 +9,6 @@ export const metadata: Metadata = {
 
 export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DsScope surface="marketplace">
-      {children}
-    </DsScope>
+    <>{children}</>
   );
 }
