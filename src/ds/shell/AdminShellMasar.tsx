@@ -27,7 +27,7 @@ export function AdminShellMasar({ fullName, roleLabel, items, logoutAction, chil
       <ShellFrame
         dir="ltr"
         text={st}
-        scopeBand={<div className="flex h-8 items-center gap-2 bg-ink-primary px-4 text-[13px] text-surface-card"><ShieldCheck size={14} strokeWidth={1.5} aria-hidden="true" /><span className="font-medium">{st.platform}</span><span aria-hidden="true">·</span><span className="truncate">{st.platformNote}</span></div>}
+        scopeBand={<div className="flex h-8 items-center gap-2 bg-ink-primary px-4 text-[13px] text-surface-card dark:border-b dark:border-line-default dark:bg-surface-sunken dark:text-ink-primary"><ShieldCheck size={14} strokeWidth={1.5} aria-hidden="true" /><span className="font-medium">{st.platform}</span><span aria-hidden="true">·</span><span className="truncate">{st.platformNote}</span></div>}
         brand={<span className="flex items-center gap-2"><Logo size="md" tone="auto" /><span className="text-[13px] text-ink-muted">Admin</span></span>}
         items={nav}
         topbarStart={<p className="truncate text-base font-medium text-ink-primary">{current ?? 'Admin'}</p>}

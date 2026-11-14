@@ -8,7 +8,7 @@ Phase 0 and Phase 1 cannot exit while they are empty.
 | D1 Product name | Rename to MASAR. "Powered by MALAKY Studio" quiet footer only | 9 Nov 2026 | Owner |
 | D2 Logo master | Stacked bilingual lockup, reference `Minimalist Masar Bilingual Logo.png` | 9 Nov 2026 | Owner |
 | D3 Fonts | IBM Plex Sans Arabic + IBM Plex Sans | 9 Nov 2026 | Owner |
-| D4 Dark mode | After light-mode approval | 9 Nov 2026 | Owner |
+| D4 Dark mode | After light-mode approval. Built in Phase 7 (14 Nov 2026), owner to review | 9 Nov 2026 | Owner |
 | D5 Company branding | Public site, company tile, ticket accent only. MASAR chrome stays MASAR | 9 Nov 2026 | Owner |
 | D6 Numerals | Localised by language, identifiers stay Latin | 9 Nov 2026 | Owner |
 | D7 Browsers | Evergreen (current and previous major) | 9 Nov 2026 | Owner |
