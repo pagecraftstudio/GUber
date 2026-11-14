@@ -11,7 +11,6 @@ import { AuthProvider, useAuth, type AuthModalMode } from './context/AuthContext
 import { PreviewBar } from './components/dev/PreviewBar';
 import { MasterMarketplace } from './components/marketplace/MasterMarketplace';
 import { PublicWebsite } from './components/public/PublicWebsite';
-import { SuperAdminPortal } from './components/superadmin/SuperAdminPortal';
 import { CustomerPortal } from './components/customer/CustomerPortal';
 import { AuthModal } from './components/auth/AuthModal';
 import { isMockMode } from './lib/runtime';
@@ -23,11 +22,11 @@ const NotAvailableYet: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const ar = locale === 'ar';
   return (
     <main role="status" className="max-w-xl mx-auto px-4 py-24 text-center space-y-4">
-      <h1 className="text-xl font-bold">{ar ? 'هذه الصفحة غير متاحة بعد' : 'This area is not available yet'}</h1>
-      <p className="text-sm text-slate-500">
+      <h1 className="text-xl font-medium">{ar ? 'هذه الصفحة غير متاحة بعد' : 'This area is not available yet'}</h1>
+      <p className="text-sm text-ink-secondary">
         {ar ? 'لم يتم ربط هذه اللوحة بالنظام بعد.' : 'This section has not been connected to the platform yet.'}
       </p>
-      <button type="button" onClick={onBack} className="px-4 py-2 rounded-lg bg-[#14243A] text-white text-sm font-medium">
+      <button type="button" onClick={onBack} className="inline-flex h-10 items-center rounded-ds-sm bg-action px-4 text-sm font-medium text-on-action hover:bg-action-hover">
         {ar ? 'العودة إلى الحجز' : 'Back to trip search'}
       </button>
     </main>
@@ -40,15 +39,15 @@ const DashboardMoved: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const ar = locale === 'ar';
   return (
     <main role="status" className="max-w-xl mx-auto px-4 py-24 text-center space-y-4">
-      <h1 className="text-xl font-bold">{ar ? 'لوحة الشركة في صفحة مستقلة' : 'The company dashboard has its own page'}</h1>
-      <p className="text-sm text-slate-500">
+      <h1 className="text-xl font-medium">{ar ? 'لوحة الشركة في صفحة مستقلة' : 'The company dashboard has its own page'}</h1>
+      <p className="text-sm text-ink-secondary">
         {ar ? 'سجّل الدخول من صفحة الشركة لفتح لوحة التحكم.' : 'Sign in from the company page to open the dashboard.'}
       </p>
       <div className="flex justify-center gap-3">
-        <a href="/dashboard" className="px-4 py-2 rounded-lg bg-[#14243A] text-white text-sm font-medium">
+        <a href="/dashboard" className="inline-flex h-10 items-center rounded-ds-sm bg-action px-4 text-sm font-medium text-on-action hover:bg-action-hover">
           {ar ? 'فتح لوحة التحكم' : 'Open the dashboard'}
         </a>
-        <button type="button" onClick={onBack} className="px-4 py-2 rounded-lg border border-slate-300 text-sm font-medium">
+        <button type="button" onClick={onBack} className="inline-flex h-10 items-center rounded-ds-sm border border-line-strong px-4 text-sm font-medium text-ink-primary hover:bg-surface-sunken">
           {ar ? 'العودة إلى الحجز' : 'Back to trip search'}
         </button>
       </div>
@@ -101,7 +100,7 @@ const AppContent: React.FC<AppEntry> = ({ authPage, nextAfterAuth }) => {
       {activeView === 'public' && <PublicWebsite />}
       {activeView === 'customer' && <CustomerPortal />}
       {activeView === 'dashboard' && <DashboardMoved onBack={() => setActiveView('marketplace')} />}
-      {activeView === 'superadmin' && (isMockMode() ? <SuperAdminPortal /> : <NotAvailableYet onBack={() => setActiveView('marketplace')} />)}
+      {activeView === 'superadmin' && <NotAvailableYet onBack={() => setActiveView('marketplace')} />}
 
       {/* Global Customer Auth Modal */}
       <AuthModal

@@ -2,21 +2,11 @@
 
 import { useFormStatus } from 'react-dom';
 import { buttonClass } from '@/ds/primitives/button-class';
-import { useDsFlipped } from '@/ds/shell/flag';
 
 export function SubmitButton({ children, variant = 'primary' }: { children: React.ReactNode; variant?: 'primary' | 'ghost' }) {
   const { pending } = useFormStatus();
-  const flipped = useDsFlipped();
-  const styles =
-    variant === 'primary'
-      ? 'bg-slate-900 text-white hover:bg-slate-700'
-      : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100';
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={flipped ? buttonClass(variant === 'primary' ? 'primary' : 'secondary', 'lg', true) : `inline-flex w-full items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${styles}`}
-    >
+    <button type="submit" disabled={pending} className={buttonClass(variant === 'primary' ? 'primary' : 'secondary', 'lg', true)}>
       {pending ? 'Please wait…' : children}
     </button>
   );

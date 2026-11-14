@@ -47,7 +47,7 @@ export function TemplateActions({ id, isActive, label }: { id: string; isActive:
           </form>
         )}
         <form onSubmit={act.onSubmit}><input type="hidden" name="id" value={id} /><input type="hidden" name="active" value={isActive ? '0' : '1'} />
-          <button type="submit" aria-disabled={act.pending} className={'oldSecondary' in skin ? skin.oldSecondary : skin.action}>{isActive ? T.pause : T.resume}{sr}</button>
+          <button type="submit" aria-disabled={act.pending} className={skin.action}>{isActive ? T.pause : T.resume}{sr}</button>
         </form>
       </div>
       <GenerateSummary state={gen.state} />
