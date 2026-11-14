@@ -1,4 +1,5 @@
 'use client';
+import { applyThemeFade } from '@/ds/theme/fade';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -34,6 +35,7 @@ export function DashboardShellMasar({ initialLang = 'en', companyName, fullName,
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    if (document.documentElement.classList.contains('dark') !== (theme === 'dark')) applyThemeFade();
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('malaky-dashboard-language', lang);
     document.cookie = `malaky-dashboard-language=${lang};path=/;max-age=31536000;samesite=lax`; // the server renders the right direction on the next load

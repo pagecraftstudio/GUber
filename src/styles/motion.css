@@ -1,0 +1,41 @@
+/*
+ * MASAR motion (Phase 8). Only motion that answers something the person did, or confirms something that just happened:
+ * a dialog or drawer opening, a toast arriving, a booking confirmed, a boarding scan result, the theme switching.
+ * No entrance effects on page sections, no hover motion on cards. Durations and easing come from tokens.css.
+ * Everything sits inside `no-preference`, so people who ask for less motion get none (not a shortened version).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ds-pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+  @keyframes ds-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ds-slide-in { from { transform: translateX(var(--ds-slide-from, 100%)); } to { transform: none; } }
+  @keyframes ds-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes ds-draw { from { stroke-dashoffset: 64; } to { stroke-dashoffset: 0; } }
+  @keyframes ds-settle { 0% { opacity: 0; transform: scale(0.96); } 60% { opacity: 1; transform: scale(1.015); } 100% { transform: none; } }
+
+  /* Dialogs: a short rise on open, and a fade on the backdrop. Closing is immediate so focus returns without waiting. */
+  dialog[open] { animation: ds-pop var(--duration-ds-enter) var(--ease-ds); }
+  dialog[open]::backdrop { animation: ds-fade var(--duration-ds-enter) var(--ease-ds); }
+
+  /* Drawers slide from their own edge; the edge is logical, so it flips in RTL. */
+  dialog[data-side='start'][open] { --ds-slide-from: -100%; animation: ds-slide-in var(--duration-ds-large) var(--ease-ds); }
+  dialog[data-side='end'][open] { --ds-slide-from: 100%; animation: ds-slide-in var(--duration-ds-large) var(--ease-ds); }
+  [dir='rtl'] dialog[data-side='start'][open] { --ds-slide-from: 100%; }
+  [dir='rtl'] dialog[data-side='end'][open] { --ds-slide-from: -100%; }
+
+  .ds-toast-in { animation: ds-rise var(--duration-ds-enter) var(--ease-ds); }
+
+  /* Booking confirmed: the check draws itself, then the heading and text follow once. This is the one orchestrated moment. */
+  .ds-check circle, .ds-check path { stroke-dasharray: 64; stroke-dashoffset: 0; animation: ds-draw var(--duration-ds-large) var(--ease-ds) both; }
+  .ds-check path { animation-delay: 160ms; }
+  .ds-confirm-copy > * { animation: ds-rise var(--duration-ds-enter) var(--ease-ds) both; }
+  .ds-confirm-copy > :nth-child(2) { animation-delay: 80ms; }
+  .ds-confirm-copy > :nth-child(3) { animation-delay: 140ms; }
+
+  /* A boarding scan result settles into place so the driver sees that something changed. */
+  .ds-outcome { animation: ds-settle var(--duration-ds-enter) var(--ease-ds); }
+
+  /* Theme switch: colours cross-fade once, instead of jumping. The class is added for a moment by applyThemeFade(). */
+  html.ds-theme-fade, html.ds-theme-fade *, html.ds-theme-fade *::before, html.ds-theme-fade *::after {
+    transition: background-color var(--duration-ds-enter) var(--ease-ds), border-color var(--duration-ds-enter) var(--ease-ds), color var(--duration-ds-enter) var(--ease-ds), fill var(--duration-ds-enter) var(--ease-ds), stroke var(--duration-ds-enter) var(--ease-ds) !important;
+  }
+}

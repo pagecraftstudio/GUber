@@ -50,9 +50,11 @@ export function TicketMasarView(p: TicketMasarViewProps) {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10 sm:px-6">
       <header className="flex flex-col items-center gap-2 text-center print:hidden">
-        <CheckCircle2 size={32} strokeWidth={1.5} className="text-status-success-fg" aria-hidden="true" />
-        <h1 className="text-2xl font-medium">{t('ticketIssuedSuccess')}</h1>
-        <p className="max-w-md text-sm text-ink-secondary">{t('ticketSub')}</p>
+        <CheckCircle2 size={32} strokeWidth={1.5} className="ds-check text-status-success-fg" aria-hidden="true" />
+        <div className="ds-confirm-copy flex flex-col items-center gap-2">
+          <h1 className="text-2xl font-medium">{t('ticketIssuedSuccess')}</h1>
+          <p className="max-w-md text-sm text-ink-secondary">{t('ticketSub')}</p>
+        </div>
       </header>
 
       {p.passengers.length > 1 ? (

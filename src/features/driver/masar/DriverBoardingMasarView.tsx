@@ -117,7 +117,7 @@ export function DriverBoardingMasarView(p: DriverBoardingViewProps) {
       </section>
 
       {p.outcome ? (
-        <div data-testid="scan-outcome">
+        <div key={`${p.outcome.kind}:${p.outcome.text}`} data-testid="scan-outcome" className="ds-outcome">
           <InlineAlert
             tone={p.outcome.kind === 'ok' ? 'success' : p.outcome.kind === 'dup' ? 'warning' : 'error'}
           >

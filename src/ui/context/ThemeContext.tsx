@@ -1,3 +1,4 @@
+import { applyThemeFade } from '@/ds/theme/fade';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -29,6 +30,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setResolvedTheme(resolved);
 
       const root = document.documentElement;
+      if (root.classList.contains('dark') !== (resolved === 'dark')) applyThemeFade(root);
       if (resolved === 'dark') {
         root.classList.add('dark');
         root.setAttribute('data-theme', 'dark');
