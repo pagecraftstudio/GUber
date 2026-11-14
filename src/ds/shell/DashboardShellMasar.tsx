@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { isNavActive, visibleNav } from '@/components/dashboard/nav';
 import { FlashNotice } from '@/components/dashboard/FlashNotice';
-import { labels, ROLES } from '@/components/dashboard/DashboardShell';
+import { labels, ROLES } from './dashboardLabels';
 import { DashboardLangProvider } from '@/features/dashboard/lang';
 import { DsLangProvider } from '../lang';
 import { Logo } from '../brand/Logo';

@@ -10,16 +10,16 @@ import { useDashLang } from './lang';
 
 type Values = { titleEn: string; titleAr: string; primaryColor: string; secondaryColor: string; footerEn: string; footerAr: string; contactEmail: string; contactPhone: string; contactWhatsapp: string };
 
-const card = 'space-y-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900';
+const card = 'space-y-4 rounded-2xl border border-line-default bg-surface-card p-6';
 
 function Field({ name, label, defaultValue, dir, state }: { name: string; label: string; defaultValue: string; dir?: 'ltr'; state: FormState }) {
   const lang = useDashLang();
   const err = fieldErr(state, lang, name);
   return (
-    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400"><T>{label}</T>
+    <label className="block text-xs font-semibold text-ink-secondary"><T>{label}</T>
       <input name={name} dir={dir} defaultValue={defaultValue} aria-invalid={err ? true : undefined}
-        className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
-      {err && <span className="mt-1 block text-xs font-semibold text-red-700 dark:text-red-300">{err}</span>}
+        className="mt-1.5 w-full rounded-xl border border-line-default bg-surface-page px-3 py-2.5 text-sm text-ink-primary outline-none focus:border-line-strong" />
+      {err && <span className="mt-1 block text-xs font-semibold text-status-error-fg">{err}</span>}
     </label>
   );
 }
@@ -47,7 +47,7 @@ export function WebsiteForm({ v }: { v: Values }) {
         <Field state={state} dir="ltr" name="contactEmail" label="Email address" defaultValue={v.contactEmail} />
         <Field state={state} dir="ltr" name="contactPhone" label="Phone number" defaultValue={v.contactPhone} />
         <Field state={state} dir="ltr" name="contactWhatsapp" label="WhatsApp number" defaultValue={v.contactWhatsapp} />
-        <div className="rounded-xl bg-slate-50 p-4 text-xs leading-5 text-slate-600 dark:bg-slate-800 dark:text-slate-400"><T>Publishing, custom domains, logo uploads and multi-page content editing are separate workflows and are not enabled by this settings form.</T></div>
+        <div className="rounded-xl bg-surface-page p-4 text-xs leading-5 text-ink-secondary"><T>Publishing, custom domains, logo uploads and multi-page content editing are separate workflows and are not enabled by this settings form.</T></div>
       </section>
     </form>
   );

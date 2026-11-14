@@ -28,14 +28,14 @@ export default async function LoginPage({ searchParams }: { searchParams: RawSea
         <Field label="Password" name="password" type="password" autoComplete="current-password" maxLength={72} />
         <SubmitButton>Sign in</SubmitButton>
       </form>
-      <p className="text-center text-sm text-slate-500">
-        <Link href="/forgot-password?from=operator" className="underline underline-offset-2 hover:text-slate-800">
+      <p className="text-center text-sm text-ink-muted">
+        <Link href="/forgot-password?from=operator" className="underline underline-offset-2 hover:text-ink-primary">
           Forgot your password?
         </Link>
       </p>
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-ink-muted">
         Booking a trip?{' '}
-        <Link href={CUSTOMER_LOGIN_PATH} className="underline underline-offset-2 hover:text-slate-800">
+        <Link href={CUSTOMER_LOGIN_PATH} className="underline underline-offset-2 hover:text-ink-primary">
           Passenger sign in
         </Link>
       </p>

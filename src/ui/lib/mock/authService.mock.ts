@@ -313,7 +313,6 @@ export class MockAuthService {
     await new Promise((resolve) => setTimeout(resolve, 300));
     const target = email.trim().toLowerCase();
     const accounts = getStoredAccounts();
-    const exists = accounts.some((a) => a.user.email.toLowerCase() === target);
     // Security best practice: Always return true so user enumeration is prevented
     return true;
   }

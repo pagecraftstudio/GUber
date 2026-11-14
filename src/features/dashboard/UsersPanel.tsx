@@ -25,12 +25,12 @@ export function InviteForm({ roles, usage, drivers }: { roles: RoleOption[]; usa
   const current = liveUsage(usage, state);
   const blocked = blocksSubmit(allowanceFor(current, 'max_users'));
   return (
-    <form ref={ref} onSubmit={onSubmit} aria-labelledby={`${uid}-t`} className="h-fit space-y-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <form ref={ref} onSubmit={onSubmit} aria-labelledby={`${uid}-t`} className="h-fit space-y-3 rounded-2xl border border-line-default bg-surface-card p-5">
       <h2 id={`${uid}-t`} className="font-bold">{T.invite}</h2>
       <PlanLimitNotice usage={current} resource="max_users" id={`${uid}-limit`} />
       <FormField name="email" label={T.email} dir="ltr" type="email" autoComplete="off" required error={fieldErr(state, lang, 'email')} />
       <div>
-        <label htmlFor={`${uid}-role`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{T.role}<span aria-hidden="true" className="text-red-600"> *</span></label>
+        <label htmlFor={`${uid}-role`} className="block text-xs font-semibold text-ink-secondary">{T.role}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
         <select id={`${uid}-role`} name="roleKey" required value={role} onChange={(e) => setRole(e.target.value)} className={inputClass(!!fieldErr(state, lang, 'roleKey'))}>
           <option value="" disabled>—</option>
           {roles.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
@@ -38,22 +38,22 @@ export function InviteForm({ roles, usage, drivers }: { roles: RoleOption[]; usa
       </div>
       {role === 'driver' && (
         <div>
-          <label htmlFor={`${uid}-drv`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{D.needRecord}<span aria-hidden="true" className="text-red-600"> *</span></label>
+          <label htmlFor={`${uid}-drv`} className="block text-xs font-semibold text-ink-secondary">{D.needRecord}<span aria-hidden="true" className="text-status-error-fg"> *</span></label>
           <select id={`${uid}-drv`} name="driverId" required defaultValue="" aria-describedby={`${uid}-drv-h`} className={inputClass(!!fieldErr(state, lang, 'driverId'))}>
             <option value="" disabled>—</option>
             {drivers.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
           </select>
-          <p id={`${uid}-drv-h`} className="mt-1 text-xs text-slate-600 dark:text-slate-400">{drivers.length === 0 ? D.noRecords : D.driverHint}</p>
+          <p id={`${uid}-drv-h`} className="mt-1 text-xs text-ink-secondary">{drivers.length === 0 ? D.noRecords : D.driverHint}</p>
         </div>
       )}
       <SubmitButton pending={pending} blocked={blocked || (role === 'driver' && drivers.length === 0)} describedBy={`${uid}-limit`}>{T.send}</SubmitButton>
-      {blocked && <p className="text-xs font-semibold text-red-700 dark:text-red-300">{FORM_TEXT[lang].limitBlocked}</p>}
+      {blocked && <p className="text-xs font-semibold text-status-error-fg">{FORM_TEXT[lang].limitBlocked}</p>}
       <FormResult state={state} resource="max_users" />
       {state.status === 'success' && state.invite && (
-        <div className="space-y-1 rounded-xl border border-slate-300 p-3 dark:border-slate-600">
+        <div className="space-y-1 rounded-xl border border-line-strong p-3">
           <label htmlFor={`${uid}-link`} className="block text-xs font-semibold">{T.link}</label>
           <input id={`${uid}-link`} readOnly value={state.invite.url} onFocus={(e) => e.currentTarget.select()} dir="ltr" className={inputClass(false)} />
-          <p className="text-xs text-slate-600 dark:text-slate-400">{T.expires}: <time dateTime={state.invite.expiresAt} dir="ltr">{new Date(state.invite.expiresAt).toLocaleString(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB')}</time></p>
+          <p className="text-xs text-ink-secondary">{T.expires}: <time dateTime={state.invite.expiresAt} dir="ltr">{new Date(state.invite.expiresAt).toLocaleString(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB')}</time></p>
         </div>
       )}
     </form>
@@ -68,7 +68,7 @@ export function MemberControls({ memberId, name, roleKey, status, roles, isSelf,
   const stat = useActionForm(setMemberStatusFormAction);
   const skin = useRowActionSkin();
   if (!canWrite) return null;
-  if (isSelf) return <p className="text-xs text-slate-600 dark:text-slate-400">{T.self}</p>;
+  if (isSelf) return <p className="text-xs text-ink-secondary">{T.self}</p>;
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap items-center gap-3">

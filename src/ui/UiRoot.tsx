@@ -9,7 +9,7 @@ import type { AppEntry } from './App';
  */
 const App = dynamic(() => import('./App'), {
   ssr: false,
-  loading: () => <div className="min-h-screen bg-[var(--surface-page)]" aria-busy="true" />,
+  loading: () => <div className="min-h-screen bg-surface-page" aria-busy="true" />,
 });
 
 export function UiRoot(props: AppEntry) {

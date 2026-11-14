@@ -27,13 +27,13 @@ function CreateForm({ resource, usage, title, action, submitLabel, children }: {
   const current = liveUsage(usage, state);
   const blocked = blocksSubmit(allowanceFor(current, resource));
   return (
-    <form ref={ref} onSubmit={onSubmit} aria-labelledby={`${reasonId}-t`} className="h-fit space-y-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <form ref={ref} onSubmit={onSubmit} aria-labelledby={`${reasonId}-t`} className="h-fit space-y-3 rounded-2xl border border-line-default bg-surface-card p-5">
       <h2 id={`${reasonId}-t`} className="font-bold">{title}</h2>
       <PlanLimitNotice usage={current} resource={resource} id={noticeId} />
-      <p className="text-xs text-slate-600 dark:text-slate-400">{LABELS[lang].required}</p>
+      <p className="text-xs text-ink-secondary">{LABELS[lang].required}</p>
       {children((n) => fieldErr(state, lang, n))}
       <SubmitButton pending={pending} blocked={blocked} describedBy={noticeId}>{submitLabel}</SubmitButton>
-      {blocked && <p className="text-xs font-semibold text-red-700 dark:text-red-300">{FORM_TEXT[lang].limitBlocked}</p>}
+      {blocked && <p className="text-xs font-semibold text-status-error-fg">{FORM_TEXT[lang].limitBlocked}</p>}
       <FormResult state={state} resource={resource} />
     </form>
   );

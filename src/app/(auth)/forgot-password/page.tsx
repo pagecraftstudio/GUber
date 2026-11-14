@@ -21,8 +21,8 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
         <Field label="Email" name="email" type="email" autoComplete="email" maxLength={254} />
         <SubmitButton>Send reset link</SubmitButton>
       </form>
-      <p className="text-center text-sm text-slate-500">
-        <Link href={loginPathForAudience(audience)} className="underline underline-offset-2 hover:text-slate-800">
+      <p className="text-center text-sm text-ink-muted">
+        <Link href={loginPathForAudience(audience)} className="underline underline-offset-2 hover:text-ink-primary">
           Back to sign in
         </Link>
       </p>

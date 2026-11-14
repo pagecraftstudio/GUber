@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { polyfillDialog } from '@/ds/test-setup';
 import { DsLangProvider } from '@/ds/lang';
-import { DsFlagProvider } from '@/ds/shell/flag';
 import { LocaleProvider } from '../../context/LocaleContext';
 
 const auth = vi.hoisted(() => ({ signIn: vi.fn(async () => undefined), signUp: vi.fn(async () => undefined), resetPassword: vi.fn(async () => undefined) }));
@@ -21,7 +20,7 @@ const bad = async (el: HTMLElement) => {
 };
 const open = (lang: 'en' | 'ar', mode: 'login' | 'register' | 'forgot_password' = 'login', onClose = vi.fn()) => {
   localStorage.setItem('malaky_locale', lang);
-  return render(<LocaleProvider><DsLangProvider value={lang}><DsFlagProvider value><AuthModal isOpen onClose={onClose} defaultMode={mode} /></DsFlagProvider></DsLangProvider></LocaleProvider>);
+  return render(<LocaleProvider><DsLangProvider value={lang}><AuthModal isOpen onClose={onClose} defaultMode={mode} /></DsLangProvider></LocaleProvider>);
 };
 
 describe('passenger sign-in dialog, MASAR look', () => {

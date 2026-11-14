@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import axe from 'axe-core';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-dom', async (orig) => ({ ...(await orig<typeof import('react-dom')>()), useFormStatus: () => ({ pending: false }) }));
 
@@ -26,22 +26,14 @@ const page = (surface?: 'auth' | 'system') => (
   </AuthCard>
 );
 
-beforeEach(() => { delete process.env.DS_SURFACES; });
-afterEach(() => { cleanup(); delete process.env.DS_SURFACES; });
+afterEach(() => cleanup());
 
-describe('auth pages follow the allow-list', () => {
-  it('off by default: the old card, no MASAR scope', () => {
+describe('auth pages', () => {
+  it('MASAR frame, wordmark, quiet studio line, and the same form fields', async () => {
     const { container } = render(page());
-    expect(container.querySelector('[data-ds="masar"]')).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'Operator sign in' })).toBeTruthy();
-    expect(container.textContent).not.toContain('Powered by MALAKY Studio');
-  });
-  it('on: MASAR frame, wordmark, quiet studio line, and the same form fields', async () => {
-    process.env.DS_SURFACES = 'auth';
-    const { container } = render(page());
-    expect(container.querySelector('[data-ds="masar"]')).toBeTruthy();
-    expect(screen.getByText('MASAR')).toBeTruthy();
     expect(container.textContent).toContain('Powered by MALAKY Studio');
+    expect(screen.getByRole('heading', { level: 1, name: 'Operator sign in' })).toBeTruthy();
+    expect(screen.getByText('MASAR')).toBeTruthy();
     const email = screen.getByLabelText(/Email/) as HTMLInputElement;
     expect([email.name, email.type, email.autocomplete, email.maxLength, email.required]).toEqual(['email', 'email', 'email', 254, true]);
     const pw = screen.getByLabelText(/Password/) as HTMLInputElement;
@@ -52,19 +44,7 @@ describe('auth pages follow the allow-list', () => {
     expect(screen.getByRole('button', { name: 'Sign in' }).getAttribute('type')).toBe('submit');
     expect(await bad(container)).toEqual([]);
   });
-  it('"auth" does not flip the account-state pages, "system" does', () => {
-    process.env.DS_SURFACES = 'auth';
-    const a = render(page('system'));
-    expect(a.container.querySelector('[data-ds="masar"]')).toBeNull();
-    cleanup();
-    process.env.DS_SURFACES = 'system';
-    const b = render(page('system'));
-    expect(b.container.querySelector('[data-ds="masar"]')).toBeTruthy();
-  });
-  it('"all" flips both', () => {
-    process.env.DS_SURFACES = 'all';
-    expect(render(page('system')).container.querySelector('[data-ds="masar"]')).toBeTruthy();
-    cleanup();
-    expect(render(page()).container.querySelector('[data-ds="masar"]')).toBeTruthy();
+  it('the account-state variant renders the same frame', () => {
+    expect(render(page('system')).container.textContent).toContain('Powered by MALAKY Studio');
   });
 });

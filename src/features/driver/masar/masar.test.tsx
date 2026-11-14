@@ -3,7 +3,6 @@ import axe from 'axe-core';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DsFlagProvider } from '@/ds/shell/flag';
 import type { BoardingStats, DriverTrip } from '../driverApi';
 
 const api = { myTrips: vi.fn(), stats: vi.fn(), board: vi.fn() };
@@ -12,13 +11,12 @@ vi.mock('../driverApi', async (orig) => ({ ...(await orig<typeof import('../driv
 vi.mock('../QrScanner', () => ({ QrScanner: ({ active, onToken }: { active: boolean; onToken: (t: string) => void }) => (active ? <button onClick={() => onToken('SCANNED')}>fake-camera-hit</button> : null) }));
 
 import { DriverBoarding } from '../DriverBoarding';
-import { PageTitle } from '../PageTitle';
 import { BoardError } from '../driverApi';
 
 const trip = (n: number, over: Partial<DriverTrip> = {}): DriverTrip => ({ trip_id: `t${n}`, company_name: 'Delta Express', origin_name: n === 1 ? 'Cairo' : 'Tanta', destination_name: 'Alexandria', departure_at: '2026-11-09T06:30:00Z', arrival_at: '2026-11-09T10:00:00Z', status: 'boarding', expected: 10, boarded: 2, remaining: 8, ...over });
 const stats = (b: number): BoardingStats => ({ expected: 10, boarded: b, remaining: 10 - b });
 const ok = (i: number, b: number) => ({ result: 'boarded' as const, ticket_index: i, boarded_at: '2026-11-09T06:40:00Z', ...stats(b) });
-const mount = (flipped = true) => render(<DsFlagProvider value={flipped}><PageTitle /><DriverBoarding /></DsFlagProvider>);
+const mount = () => render(<DriverBoarding />);
 const enter = async (code: string) => { await userEvent.type(await screen.findByLabelText('Or enter the code'), code); await userEvent.click(screen.getByRole('button', { name: 'Board passenger' })); };
 
 beforeEach(() => {
@@ -54,14 +52,9 @@ describe('driver boarding (MASAR look)', () => {
     await waitFor(() => expect(api.stats).toHaveBeenCalledWith('t1'));
   });
 
-  it('exactly one heading, and the old screen is untouched when the surface is not flipped', async () => {
+  it('exactly one heading', async () => {
     mount();
     await screen.findByRole('region', { name: 'Assigned trips' });
-    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    cleanup();
-    mount(false);
-    expect(await screen.findByRole('combobox')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Scan ticket with camera' })).toBeTruthy();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 

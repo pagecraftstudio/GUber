@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${plexLatin.variable} ${plexArabic.variable}`}>
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">{children}</body>
+      <body data-ds="masar" className="min-h-screen bg-surface-page text-ink-primary antialiased">{children}</body>
     </html>
   );
 }

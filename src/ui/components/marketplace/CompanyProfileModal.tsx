@@ -1,10 +1,13 @@
-import React from 'react';
-import { Company, MarketplaceTripItem } from '../../types';
+'use client';
+import { ExternalLink, MapPin, Phone } from 'lucide-react';
+import { Button } from '@/ds/primitives/Button';
+import { Modal } from '@/ds/feedback/Dialog';
+import { EmptyState } from '@/ds/feedback/States';
+import { formatMoney, formatNumber } from '@/ds/format';
+import { tenantAccent } from '@/ds/contrast';
 import { useLocale } from '../../context/LocaleContext';
 import { useTenant } from '../../context/TenantContext';
-import { Modal } from '../common/Modal';
-import { Button } from '../common/Button';
-import { Phone, Mail, MapPin, Star, ShieldCheck, Bus, ExternalLink, Calendar } from 'lucide-react';
+import type { Company, MarketplaceTripItem } from '../../types';
 
 interface CompanyProfileModalProps {
   isOpen: boolean;
@@ -14,132 +17,56 @@ interface CompanyProfileModalProps {
   onBookTrip: (trip: MarketplaceTripItem) => void;
 }
 
-export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
-  isOpen,
-  onClose,
-  company,
-  companyTrips,
-  onBookTrip,
-}) => {
+/** A company's card on the marketplace: contact details and its published departures. */
+export function CompanyProfileModal({ isOpen, onClose, company, companyTrips, onBookTrip }: CompanyProfileModalProps) {
   const { locale, t } = useLocale();
   const { navigateToCompanyPublicSite } = useTenant();
-
   if (!company) return null;
-
-  const brandName = locale === 'ar' ? company.nameAr : company.nameEn;
-  const tagline = locale === 'ar' ? company.taglineAr : company.taglineEn;
-  const address = locale === 'ar' ? company.supportAddressAr : company.supportAddressEn;
-
+  const ar = locale === 'ar';
+  const brand = ar ? company.nameAr : company.nameEn;
+  const tint = tenantAccent(company.primaryColor);
+  const initials = (company.logoText || company.nameEn).slice(0, 2).toUpperCase();
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={brandName}
-      subtitle={tagline}
-      maxWidth="lg"
-      footer={
-        <div className="flex items-center justify-between w-full">
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<ExternalLink className="w-3.5 h-3.5" />}
-            onClick={() => {
-              onClose();
-              navigateToCompanyPublicSite(company.id);
-            }}
-          >
-            {t('viewCompanyPortal')}
-          </Button>
-          <Button size="sm" onClick={onClose}>
-            {t('close')}
-          </Button>
-        </div>
-      }
+      open={isOpen} onClose={onClose} title={brand} subtitle={ar ? company.taglineAr : company.taglineEn} size="lg"
+      footer={<>
+        <Button variant="secondary" iconStart={<ExternalLink size={16} strokeWidth={1.5} />} onClick={() => { onClose(); navigateToCompanyPublicSite(company.id); }}>{t('viewCompanyPortal')}</Button>
+        <Button onClick={onClose}>{t('close')}</Button>
+      </>}
     >
-      <div className="space-y-6">
-        {/* Company Header Card */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-base font-bold shadow-xs shrink-0"
-              style={{ backgroundColor: company.primaryColor }}
-            >
-              <Bus className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-slate-900">{brandName}</h4>
-                <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-600">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  <span>{company.rating || 4.8}</span>
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">{company.email}</p>
-            </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-ds-md border border-line-default bg-surface-sunken p-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-ds-sm text-sm font-medium" style={{ background: tint?.accent ?? 'var(--ds-action-primary)', color: tint?.onAccent ?? 'var(--ds-action-on-primary)' }}>{initials}</span>
+            <div className="min-w-0"><p className="truncate text-sm font-medium">{brand}</p><p className="truncate text-[13px] text-ink-secondary" dir="ltr">{company.email}</p></div>
           </div>
-
-          <div className="text-xs text-slate-600 space-y-1 sm:text-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-            <div className="flex sm:justify-end items-center gap-1.5">
-              <Phone className="w-3 h-3 text-slate-400" />
-              <span dir="ltr" className="font-mono tabular-nums">{company.phone}</span>
-            </div>
-            <div className="flex sm:justify-end items-center gap-1.5 text-slate-500 text-[11px]">
-              <MapPin className="w-3 h-3 text-slate-400" />
-              <span>{address}</span>
-            </div>
-          </div>
+          <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
+            <li className="flex items-center gap-2"><Phone size={14} strokeWidth={1.5} aria-hidden="true" /><span dir="ltr" className="tabular-nums">{company.phone}</span></li>
+            <li className="flex items-center gap-2"><MapPin size={14} strokeWidth={1.5} aria-hidden="true" /><span>{ar ? company.supportAddressAr : company.supportAddressEn}</span></li>
+          </ul>
         </div>
-
-        {/* Operating Departures */}
-        <div>
-          <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-            {t('publishedDepartures')} ({companyTrips.length})
-          </h4>
-
+        <section aria-labelledby="cp-d">
+          <h3 id="cp-d" className="mb-3 text-base font-medium">{t('publishedDepartures')} ({formatNumber(companyTrips.length, locale)})</h3>
           {companyTrips.length === 0 ? (
-            <p className="text-xs text-slate-500 p-4 text-center bg-white rounded-lg border border-slate-200">
-              {t('noActiveDepartures')}
-            </p>
+            <EmptyState title={t('noActiveDepartures')} />
           ) : (
-            <div className="space-y-2.5 max-h-60 overflow-y-auto pe-1">
+            <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
               {companyTrips.map((tr) => (
-                <div
-                  key={tr.id}
-                  className="p-3 bg-white rounded-lg border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300"
-                >
-                  <div>
-                    <div className="font-semibold text-slate-900">
-                      {locale === 'ar' ? tr.originLocationNameAr : tr.originLocationNameEn} →{' '}
-                      {locale === 'ar' ? tr.destLocationNameAr : tr.destLocationNameEn}
-                    </div>
-                    <div className="text-slate-500 text-[11px] mt-0.5 flex items-center gap-1.5">
-                      <span>{tr.departureTime} - {tr.arrivalTime}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="tabular-nums">{tr.availableSeats} {t('seatsLeft')}</span>
-                    </div>
+                <li key={tr.id} className="flex flex-wrap items-center justify-between gap-3 rounded-ds-md border border-line-default p-3">
+                  <div className="min-w-0 text-sm">
+                    <p className="font-medium">{ar ? tr.originLocationNameAr : tr.originLocationNameEn} {ar ? '←' : '→'} {ar ? tr.destLocationNameAr : tr.destLocationNameEn}</p>
+                    <p className="text-[13px] text-ink-secondary tabular-nums">{tr.departureTime} – {tr.arrivalTime} · {formatNumber(tr.availableSeats, locale)} {t('seatsLeft')}</p>
                   </div>
-
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-slate-900 tabular-nums">
-                      {tr.priceEgp} {t('egp')}
-                    </span>
-                    <Button
-                      size="sm"
-                      disabled={tr.isFullyBooked}
-                      onClick={() => {
-                        onClose();
-                        onBookTrip(tr);
-                      }}
-                    >
-                      {tr.isFullyBooked ? t('fullyBooked') : t('bookNow')}
-                    </Button>
+                    <span className="text-sm font-medium tabular-nums">{formatMoney(tr.priceEgp, 'EGP', locale)}</span>
+                    <Button disabled={tr.isFullyBooked} onClick={() => { onClose(); onBookTrip(tr); }}>{tr.isFullyBooked ? t('fullyBooked') : t('bookNow')}</Button>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </div>
+        </section>
       </div>
     </Modal>
   );
-};
+}

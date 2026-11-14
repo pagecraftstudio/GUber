@@ -6,14 +6,14 @@ import { fmtDateTime } from './format';
 export function InviteLinkPanel({ url, expiresAt }: { url: string; expiresAt?: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div role="status" className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-      <p className="text-sm font-semibold text-emerald-900">Owner invite link</p>
-      <p className="text-xs text-emerald-800">
+    <div role="status" className="space-y-2 rounded-xl border border-status-success-fg bg-status-success-bg p-4">
+      <p className="text-sm font-semibold text-status-success-fg">Owner invite link</p>
+      <p className="text-xs text-status-success-fg">
         Copy it now and send it to the owner yourself. It is not stored and cannot be shown again
         {expiresAt ? `; it expires ${fmtDateTime(expiresAt)}` : ''}.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input readOnly value={url} aria-label="Invite link" onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-md border border-emerald-300 bg-white px-3 py-2 text-xs" />
+        <input readOnly value={url} aria-label="Invite link" onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-md border border-status-success-fg bg-surface-card px-3 py-2 text-xs" />
         <button
           type="button"
           onClick={async () => {
@@ -24,7 +24,7 @@ export function InviteLinkPanel({ url, expiresAt }: { url: string; expiresAt?: s
               setCopied(false); // clipboard blocked: the field is selectable, so the link can still be copied by hand
             }
           }}
-          className="rounded-md border border-emerald-300 bg-white px-3 py-2 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
+          className="rounded-md border border-status-success-fg bg-surface-card px-3 py-2 text-xs font-medium text-status-success-fg hover:bg-status-success-bg"
         >
           {copied ? 'Copied' : 'Copy'}
         </button>

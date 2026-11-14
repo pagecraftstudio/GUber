@@ -3,8 +3,8 @@
  * Reconciles frontend transport/auth service with PostgreSQL/Supabase implementation.
  */
 
-import { Booking, PassengerTicket, Trip, WebsiteConfig } from './index';
-import { CustomerUser, CustomerProfile, SignUpData } from './auth';
+import { Booking, PassengerTicket, WebsiteConfig } from './index';
+import { CustomerUser, SignUpData } from './auth';
 
 // --- AUTHENTICATION CONTRACTS (/api/auth/v1) ---
 export interface AuthSignUpRequest extends SignUpData {}

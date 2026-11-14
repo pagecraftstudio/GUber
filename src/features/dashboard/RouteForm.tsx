@@ -68,14 +68,14 @@ export function RouteForm({ route, stops, usage, readOnly = false }: { route?: R
       <h2 id={`${uid}-t`} className="sr-only">{creating ? L.addRoute : L.editRoute}</h2>
       {route && <input type="hidden" name="id" value={route.id} />}
       {creating && <PlanLimitNotice usage={current} resource="max_routes" id={`${uid}-limit`} />}
-      {readOnly && <p role="status" className="rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-100">{L.readOnly}</p>}
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-2">
+      {readOnly && <p role="status" className="rounded-xl border border-line-strong bg-status-info-bg px-3.5 py-3 text-sm text-ink-link">{L.readOnly}</p>}
+      <div className="grid gap-3 rounded-2xl border border-line-default bg-surface-card p-4 sm:grid-cols-2">
         <FormField name="name" label={L.name} required defaultValue={route?.name} error={fieldErr('name')} />
         <FormField name="code" label={L.code} defaultValue={route?.code ?? ''} error={fieldErr('code')} />
         <FormField name="originName" label={L.origin} required defaultValue={route?.originName} error={fieldErr('originName')} />
         <FormField name="destinationName" label={L.destination} required defaultValue={route?.destinationName} error={fieldErr('destinationName')} />
         <div className="sm:col-span-2">
-          <label htmlFor={`${uid}-d`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{L.description}</label>
+          <label htmlFor={`${uid}-d`} className="block text-xs font-semibold text-ink-secondary">{L.description}</label>
           <textarea id={`${uid}-d`} name="description" rows={2} maxLength={1000} defaultValue={route?.description ?? ''} className={inputClass(false)} />
         </div>
       </div>
@@ -85,7 +85,7 @@ export function RouteForm({ route, stops, usage, readOnly = false }: { route?: R
       {!readOnly && (
         <div className="space-y-3">
           <SubmitButton pending={pending} blocked={blocked} describedBy={`${uid}-limit`}>{creating ? L.create : L.save}</SubmitButton>
-          {blocked && <p className="text-xs font-semibold text-red-700 dark:text-red-300">{FORM_TEXT[lang].limitBlocked}</p>}
+          {blocked && <p className="text-xs font-semibold text-status-error-fg">{FORM_TEXT[lang].limitBlocked}</p>}
         </div>
       )}
       <FormResult state={state} resource={creating ? 'max_routes' : undefined} />
