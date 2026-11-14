@@ -21,6 +21,7 @@ export { DataTable, type Column, type SortState } from './data/DataTable';
 export { Pagination } from './data/Pagination';
 export { FilterBar, MetricCard, KeyValue, Breadcrumbs, Tabs } from './data/Layout';
 export { RouteLine, OccupancyBar } from './domain/RouteLine';
+export { ConfirmedRoute } from './domain/ConfirmedRoute';
 export { TripCard } from './domain/Trip';
 export { BookingSummary, PaymentSummary, PassengerForm, VehicleDriverCard, ManifestRow } from './domain/Booking';
 export { Ticket } from './domain/Ticket';

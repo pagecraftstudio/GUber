@@ -17,6 +17,25 @@ const ROWS: Row[] = [{ id: '1', ref: 'MB-7K3Q9X', name: SAMPLE.en.person, seats:
 const labels = { saving: 'Saving', saved: 'Saved', error: () => 'Could not save' };
 const ok = async () => ({ ok: true as const });
 
+/** Replays the confirmation sequence (remounts it). With reduced motion it is a still image: that is the intended fallback. */
+function ConfirmedRouteDemo({ lang }: { lang: Lang }) {
+  const [n, setN] = useState(0);
+  const from = SAMPLE[lang].stops[0] ?? '';
+  const to = SAMPLE[lang].stops[SAMPLE[lang].stops.length - 1] ?? '';
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-ds-md border border-line-default bg-surface-card p-6">
+      <header key={n} className="flex w-full flex-col items-center gap-2 text-center">
+        <ds.ConfirmedRoute origin={from} destination={to} />
+        <div className="ds-confirm-copy flex flex-col items-center gap-2">
+          <h3 className="text-2xl font-medium">{lang === 'ar' ? '\u062a\u0645 \u062a\u0623\u0643\u064a\u062f \u062d\u062c\u0632\u0643' : 'Your booking is confirmed'}</h3>
+          <p className="text-sm text-ink-secondary">{lang === 'ar' ? '\u062a\u0630\u0643\u0631\u062a\u0643 \u062c\u0627\u0647\u0632\u0629.' : 'Your ticket is ready.'}</p>
+        </div>
+      </header>
+      <ds.Button variant="secondary" onClick={() => setN((x) => x + 1)}>{lang === 'ar' ? '\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0634\u063a\u064a\u0644' : 'Replay'}</ds.Button>
+    </div>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return <section aria-label={title} className="flex flex-col gap-4 border-t border-line-default py-8"><h2 className="text-xl font-medium">{title}</h2>{children}</section>;
 }
@@ -106,6 +125,10 @@ function Inner({ lang }: { lang: Lang }) {
         <div className="grid gap-4 sm:grid-cols-3"><ds.MetricCard label="Bookings today" value={formatNumber(48, lang)} comparison="+12 vs last week" /><ds.MetricCard label="Seats sold" value={formatPercent(0.82, lang)} /></div>
         <ds.Breadcrumbs items={[{ label: 'Trips', href: '#' }, { label: s.trip }]} />
         <ds.Tabs label="Trip" dir={lang === 'ar' ? 'rtl' : 'ltr'} tabs={[{ id: 'a', label: 'Manifest', panel: 'Manifest' }, { id: 'b', label: 'Details', panel: 'Details' }]} />
+      </Section>
+
+      <Section title="Motion: booking confirmed">
+        <ConfirmedRouteDemo lang={lang} />
       </Section>
 
       <Section title="Domain">

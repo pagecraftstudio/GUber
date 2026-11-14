@@ -4,7 +4,7 @@ export interface RouteStop { name: string; time?: string }
 
 /**
  * The signature (plan 2.4, D8): a thin line with stop dots, drawn ONLY from real stop data.
- * Fewer than two stops renders nothing. Never decoration, never animated. Logical layout, so it mirrors in RTL.
+ * Fewer than two stops renders nothing. Never decoration, never animated (the one exception is ConfirmedRoute, the booking-confirmed page). Logical layout, so it mirrors in RTL.
  */
 export function RouteLine({ stops, size = 'full' }: { stops: RouteStop[]; size?: 'compact' | 'full' }) {
   const first = stops[0], last = stops[stops.length - 1];

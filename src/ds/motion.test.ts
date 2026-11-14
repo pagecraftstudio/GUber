@@ -26,6 +26,26 @@ describe('motion.css', () => {
   });
 });
 
+describe('route-draw confirmation', () => {
+  const rule = (sel: string) => new RegExp(`${sel.replace(/[.[\]()*+?^$|]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+  it('the line moves with transform only (no width, left or layout properties)', () => {
+    const kf = /@keyframes ds-route-draw\s*\{([\s\S]*?\})\s*\}/.exec(css)?.[1] ?? '';
+    expect(kf).toMatch(/transform:\s*scaleX\(0\)/);
+    expect(kf).not.toMatch(/\b(?:width|height|left|right|top|bottom|margin|padding|stroke)/);
+  });
+  it('draws in the reading direction: starts at the left in LTR and at the right in RTL', () => {
+    expect(rule('.ds-route-line')).toMatch(/transform-origin:\s*left/);
+    expect(rule("[dir='rtl'] .ds-route-line")).toMatch(/transform-origin:\s*right/);
+  });
+  it('the check waits for the line, and the copy waits for the check (one ordered sequence)', () => {
+    expect(rule('.ds-route-confirm .ds-check circle')).toMatch(/animation-delay:\s*calc\(/);
+    expect(rule('.ds-route-confirm + .ds-confirm-copy > *')).toMatch(/animation-delay:\s*calc\(/);
+  });
+  it('line duration is built from the large token, not a literal', () => {
+    expect(rule('.ds-route-line')).toMatch(/calc\(var\(--duration-ds-large\) \* 2\)/);
+  });
+});
+
 describe('applyThemeFade', () => {
   afterEach(() => vi.useRealTimers());
   it('adds the class for one cross-fade, then removes it', () => {
