@@ -25,7 +25,7 @@ function ToastView({ item, onDone }: { item: ToastItem; onDone: (id: number) => 
   const tone = { info: 'border-line-default', success: 'border-status-success-fg', warning: 'border-status-warning-fg', error: 'border-status-error-fg' }[item.tone];
   return (
     <li onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}
-      className={cx('pointer-events-auto flex items-start gap-3 rounded-ds-md border bg-surface-card p-3 text-sm text-ink-primary shadow-md', tone)}>
+      className={cx('ds-toast-in pointer-events-auto flex items-start gap-3 rounded-ds-md border bg-surface-card p-3 text-sm text-ink-primary shadow-md', tone)}>
       <div className="min-w-0 flex-1">{item.message}</div>
       <IconButton label={t.close} size="md" icon={<X size={16} strokeWidth={1.5} />} onClick={() => onDone(item.id)} className="-my-1 !size-8" />
     </li>
