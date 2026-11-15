@@ -71,12 +71,12 @@
      screen fades away. Once per session (splashScript adds ds-splash-off otherwise). Not defined outside no-preference, so with reduced
      motion it stays hidden. */
   @keyframes ds-splash-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-  @keyframes ds-splash-out { to { opacity: 0; visibility: hidden; } }
-  .ds-splash { --write: calc(var(--duration-ds-large) * 5); }
-  .ds-splash.hidden { display: flex; animation: ds-splash-out var(--duration-ds-large) var(--ease-ds) calc(var(--write) + var(--duration-ds-large)) both; }
+  @keyframes ds-splash-out { to { opacity: 0; transform: scale(1.02); visibility: hidden; } }
+  .ds-splash { --write: calc(var(--duration-ds-large) * 5); --lead: calc(var(--duration-ds-feedback) * 0.6); }
+  .ds-splash.hidden { display: flex; animation: ds-splash-out var(--duration-ds-large) var(--ease-ds) calc(var(--lead) + var(--write) + var(--duration-ds-large)) both; }
   html.ds-splash-off .ds-splash.hidden { display: none; }
-  .ds-splash-pen { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ds-splash-draw calc(var(--write) * var(--share)) var(--ease-ds-write) calc(var(--write) * var(--at)) both; }
-  .ds-splash-lag { animation-delay: calc(var(--write) * var(--at) + var(--duration-ds-feedback) * 0.2); }
+  .ds-splash-pen { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ds-splash-draw calc(var(--write) * var(--share)) var(--ease-ds-write) calc(var(--lead) + var(--write) * var(--at)) both; }
+  .ds-splash-lag { animation-delay: calc(var(--lead) + var(--write) * var(--at) + var(--duration-ds-feedback) * 0.2); }
 
   /* Theme switch: colours cross-fade once, instead of jumping. The class is added for a moment by applyThemeFade(). */
   html.ds-theme-fade, html.ds-theme-fade *, html.ds-theme-fade *::before, html.ds-theme-fade *::after {

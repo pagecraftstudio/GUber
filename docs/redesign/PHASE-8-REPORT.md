@@ -24,7 +24,7 @@ tsc, full suite (1,380 passing), `next build`, bundle scan. In a real browser: t
 The check-draw on the ticket, the drawer slide (including RTL), toast arrival and the theme cross-fade were not watched in a browser; they follow the same CSS but only the dialog and driver result were measured. Mobile Safari not tested. Exit animations were left out on purpose.
 
 ## Loading reveal (15 Nov 2026)
-The Arabic mark is written on right to left, like a pen: loop, teeth, tall stem, then the last letter with its tail. A thin mint edge travels at the pen tip. Constant pen speed (`--ease-ds-write: linear`), about 1.4 s of writing, a short hold, then a fade: about 2 s. `src/ds/splash`, `motion.css`, wired in the root layout. Pen strokes come from `scripts/brand/trace-pen-path.py` (skeleton of the glyph, 0 uncovered pixels).
+The Arabic mark is written on right to left, like a pen: loop, teeth, tall stem, then the last letter with its tail. A thin mint edge travels at the pen tip. Constant pen speed (`--ease-ds-write: linear`), a brief lead-in (about 70 ms), about 1.4 s of writing, a short hold, then a fade with a slight push-out: about 2 s. `src/ds/splash`, `motion.css`, wired in the root layout. Pen strokes come from `scripts/brand/trace-pen-path.py` (skeleton of the glyph, 0 uncovered pixels).
 - Plays once per browser session (`sessionStorage`), decided before first paint. Never on `/dashboard`, `/admin`, `/driver`, and never when storage is blocked.
 - Never plays with reduced motion (the element stays hidden). Ignores pointer input and is hidden from assistive tech.
 - Uses the provisional traced mark (`src/ds/brand/arabicMarkProvisional.ts`); swap `d` and `viewBox` when the approved master exists.
