@@ -9,7 +9,7 @@ S=4
 im=Image.open(SRC).convert('L')
 big=im.resize((im.width*S,im.height*S),Image.LANCZOS)
 from PIL import ImageFilter
-big=big.filter(ImageFilter.GaussianBlur(8))
+big=big.filter(ImageFilter.GaussianBlur(4))
 a=np.array(big)>127           # white mark on black
 ys,xs=np.where(a); x0,x1,y0,y1=xs.min(),xs.max(),ys.min(),ys.max()
 pad=8*S
