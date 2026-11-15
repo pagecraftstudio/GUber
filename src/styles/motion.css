@@ -62,14 +62,17 @@
   .ds-logo-clip { display: inline-block; overflow: hidden; vertical-align: bottom; }
   .ds-logo-letter { display: inline-block; animation: ds-logo-rise var(--duration-ds-large) var(--ease-ds) both; animation-delay: calc(var(--i) * 50ms); }
 
-  /* Loading reveal (Splash): the mark draws as an outline, fills, holds a beat, then the whole screen fades away. About 1.6 s, once per
-     session (splashScript adds ds-splash-off otherwise). Not defined outside no-preference, so with reduced motion it stays hidden. */
+  /* Loading reveal (Splash): the mark is written on right to left, one stroke after another at a steady pen speed (each stroke's duration
+     and start come from its share of the total length), with a thin accent edge at the pen tip. About 2 s of writing, a short hold, then the
+     screen fades away. Once per session (splashScript adds ds-splash-off otherwise). Not defined outside no-preference, so with reduced
+     motion it stays hidden. */
   @keyframes ds-splash-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-  @keyframes ds-splash-fill { from { fill-opacity: 0; } to { fill-opacity: 1; } }
   @keyframes ds-splash-out { to { opacity: 0; visibility: hidden; } }
-  .ds-splash.hidden { display: flex; animation: ds-splash-out var(--duration-ds-large) var(--ease-ds) calc(var(--duration-ds-large) * 3 + var(--duration-ds-enter) + 300ms) both; }
+  .ds-splash { --write: calc(var(--duration-ds-large) * 7); }
+  .ds-splash.hidden { display: flex; animation: ds-splash-out var(--duration-ds-large) var(--ease-ds) calc(var(--write) + var(--duration-ds-large) * 1.5) both; }
   html.ds-splash-off .ds-splash.hidden { display: none; }
-  .ds-splash-mark { fill: currentColor; fill-opacity: 0; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ds-splash-draw calc(var(--duration-ds-large) * 3) var(--ease-ds-draw) both, ds-splash-fill var(--duration-ds-enter) var(--ease-ds) calc(var(--duration-ds-large) * 3) both; }
+  .ds-splash-pen { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ds-splash-draw calc(var(--write) * var(--share)) var(--ease-ds-write) calc(var(--write) * var(--at)) both; }
+  .ds-splash-lag { animation-delay: calc(var(--write) * var(--at) + var(--duration-ds-feedback) * 0.2); }
 
   /* Theme switch: colours cross-fade once, instead of jumping. The class is added for a moment by applyThemeFade(). */
   html.ds-theme-fade, html.ds-theme-fade *, html.ds-theme-fade *::before, html.ds-theme-fade *::after {
