@@ -10,7 +10,7 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
     <>
         <DsLangProvider value="en">
           <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-surface-page px-4 py-12 text-ink-primary">
-            <Logo size="lg" tone="onLight" />
+            <Logo size="lg" tone="auto" reveal />
             <div className="w-full max-w-md space-y-6 rounded-ds-md border border-line-default bg-surface-card p-6 sm:p-8">
               <header className="space-y-1.5">
                 <h1 className="text-2xl font-medium text-ink-primary">{title}</h1>

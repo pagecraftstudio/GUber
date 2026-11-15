@@ -1,5 +1,6 @@
 'use client';
 /** Every component and state, in one language. Rendered by /dev/design (dev and preview only) and by the axe test. */
+import { Logo } from '../brand/Logo';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { Lang } from '../format';
@@ -53,6 +54,17 @@ function LiveNumbersDemo({ lang }: { lang: Lang }) {
         <ds.Button variant="ghost" onClick={() => setBoarded((x) => Math.max(0, x - 1))}>{lang === 'ar' ? '\u22121' : 'Undo one'}</ds.Button>
         <ds.Button variant="ghost" onClick={() => setBoarded((x) => (x >= 30 ? 8 : 38))}>{lang === 'ar' ? '\u0625\u0639\u0627\u062f\u0629' : 'Jump'}</ds.Button>
       </div>
+    </div>
+  );
+}
+
+/** Replays the logo reveal (remounts it). With reduced motion it is the plain wordmark: that is the intended fallback. */
+function LogoRevealDemo() {
+  const [n, setN] = useState(0);
+  return (
+    <div className="mt-4 flex items-center gap-4 rounded-ds-md border border-line-default bg-surface-card p-6">
+      <Logo key={n} size="lg" reveal />
+      <ds.Button variant="secondary" onClick={() => setN((x) => x + 1)}>Replay</ds.Button>
     </div>
   );
 }
@@ -151,6 +163,7 @@ function Inner({ lang }: { lang: Lang }) {
       <Section title="Motion: booking confirmed">
         <ConfirmedRouteDemo lang={lang} />
         <LiveNumbersDemo lang={lang} />
+        <LogoRevealDemo />
       </Section>
 
       <Section title="Domain">
