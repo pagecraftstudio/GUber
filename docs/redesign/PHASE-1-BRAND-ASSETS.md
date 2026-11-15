@@ -60,3 +60,6 @@ Who is the designer and who is the Arabic reviewer? One name unblocks the rest.
 
 ## Addendum, 12 Nov 2026: provisional asset set
 Built from the uploaded images so development is not blocked. See `docs/brand-source/README.md` for the file list, limits and the metadata snippet. Still open: approved vector master, reviewer sign-off, 16 px favicon fallback, "Powered by MALAKY Studio" lockup (needs the MALAKY logo). The exit checklist above is unchanged: **Phase 1 still cannot exit.**
+
+## Update 15 Nov 2026: cleaner trace of the Arabic mark (provisional)
+`public/brand/svg/arabic-mark-clean.svg`, made by `scripts/brand/trace-arabic-mark.py` from the white-on-black compact mark (variant E). The source is blurred slightly before tracing, so the outline has 73 curve segments instead of about 226 from a raw trace, with the same shape to the eye. It is still a trace of an AI raster: **not the approved master**, Arabic spelling not reviewed (O1), and the seven supplied variants do not share one construction (the cream version differs in curves and terminals). The app does not use this file. The Logo component is still the text wordmark.
