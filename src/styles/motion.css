@@ -68,8 +68,8 @@
      motion it stays hidden. */
   @keyframes ds-splash-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
   @keyframes ds-splash-out { to { opacity: 0; visibility: hidden; } }
-  .ds-splash { --write: calc(var(--duration-ds-large) * 7); }
-  .ds-splash.hidden { display: flex; animation: ds-splash-out var(--duration-ds-large) var(--ease-ds) calc(var(--write) + var(--duration-ds-large) * 1.5) both; }
+  .ds-splash { --write: calc(var(--duration-ds-large) * 5); }
+  .ds-splash.hidden { display: flex; animation: ds-splash-out var(--duration-ds-large) var(--ease-ds) calc(var(--write) + var(--duration-ds-large)) both; }
   html.ds-splash-off .ds-splash.hidden { display: none; }
   .ds-splash-pen { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ds-splash-draw calc(var(--write) * var(--share)) var(--ease-ds-write) calc(var(--write) * var(--at)) both; }
   .ds-splash-lag { animation-delay: calc(var(--write) * var(--at) + var(--duration-ds-feedback) * 0.2); }

@@ -77,6 +77,6 @@ describe('splash motion', () => {
     expect(css).toMatch(/\.ds-splash\.hidden\s*\{\s*display:\s*flex;/);
     expect(css).toMatch(/\.ds-splash-pen\s*\{[^}]*var\(--ease-ds-write\)/);
   });
-  it('writing time comes from the large token', () => expect(css).toMatch(/--write:\s*calc\(var\(--duration-ds-large\) \* 7\)/));
+  it('writing time comes from the large token', () => expect(css).toMatch(/--write:\s*calc\(var\(--duration-ds-large\) \* 5\)/));
   it('is off when the script says so', () => expect(css).toMatch(/html\.ds-splash-off \.ds-splash\.hidden\s*\{\s*display:\s*none/));
 });
