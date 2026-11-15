@@ -3,6 +3,7 @@ import { WifiOff } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { StatusBadge } from '@/ds/data/StatusBadge';
 import { RouteLine } from '@/ds/domain/RouteLine';
+import { RollingNumber } from '@/ds/data/RollingNumber';
 import { OccupancyBar } from '@/ds/domain/RouteLine';
 import { EmptyState, ErrorState, Skeleton, SkeletonRegion } from '@/ds/feedback/States';
 import { InlineAlert } from '@/ds/feedback/InlineAlert';
@@ -41,7 +42,7 @@ function Stat({ label, value, id }: { label: string; value: number | undefined; 
   return (
     <div className="rounded-ds-md border border-line-default bg-surface-card p-3 text-center">
       <dt className="text-[13px] text-ink-secondary">{label}</dt>
-      <dd className="mt-1 text-[32px] leading-none font-medium text-ink-primary tabular-nums" data-testid={`stat-${id}`}>{value === undefined ? '–' : formatNumber(value, 'en')}</dd>
+      <dd className="mt-1 text-[32px] leading-none font-medium text-ink-primary tabular-nums" data-testid={`stat-${id}`}>{value === undefined ? '–' : <RollingNumber value={value} lang="en" />}</dd>
     </div>
   );
 }

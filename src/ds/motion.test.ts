@@ -46,6 +46,24 @@ describe('route-draw confirmation', () => {
   });
 });
 
+describe('live numbers', () => {
+  const rule = (sel: string) => new RegExp(`${sel.replace(/[.[\]()*+?^$|]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+  it('digit roll moves with transform only, in both directions', () => {
+    for (const k of ['ds-roll-up', 'ds-roll-down']) {
+      const kf = new RegExp(`@keyframes ${k}\\s*\\{([\\s\\S]*?\\})\\s*\\}`).exec(css)?.[1] ?? '';
+      expect(kf).toMatch(/translateY/);
+      expect(kf).not.toMatch(/\b(?:width|height|top|bottom|margin|padding)/);
+    }
+  });
+  it('roll and bar use the large token and the shared easing', () => {
+    expect(rule('.ds-roll-col')).toMatch(/var\(--duration-ds-large\) var\(--ease-ds\)/);
+    expect(rule('.ds-fill')).toMatch(/transition:\s*transform var\(--duration-ds-large\) var\(--ease-ds\)/);
+  });
+  it('the outgoing digit is drawn from data-d, never from text', () => {
+    expect(rule('.ds-roll-old::before')).toMatch(/content:\s*attr\(data-d\)/);
+  });
+});
+
 describe('applyThemeFade', () => {
   afterEach(() => vi.useRealTimers());
   it('adds the class for one cross-fade, then removes it', () => {

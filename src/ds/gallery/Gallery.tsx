@@ -36,6 +36,27 @@ function ConfirmedRouteDemo({ lang }: { lang: Lang }) {
   );
 }
 
+/** Numbers that change while you look: boarded count rolls, the bar follows. Buttons change the value so the motion can be reviewed. */
+function LiveNumbersDemo({ lang }: { lang: Lang }) {
+  const [boarded, setBoarded] = useState(38);
+  const expected = 42;
+  return (
+    <div className="mt-4 flex flex-col gap-3 rounded-ds-md border border-line-default bg-surface-card p-6">
+      <dl className="grid grid-cols-3 gap-3 text-center">
+        {[[lang === 'ar' ? '\u0627\u0644\u0645\u062a\u0648\u0642\u0639' : 'Expected', expected], [lang === 'ar' ? '\u0635\u0639\u062f\u0648\u0627' : 'Boarded', boarded], [lang === 'ar' ? '\u0627\u0644\u0645\u062a\u0628\u0642\u064a' : 'Remaining', expected - boarded]].map(([l, v]) => (
+          <div key={String(l)} className="rounded-ds-md border border-line-default p-3"><dt className="text-[13px] text-ink-secondary">{l}</dt><dd className="mt-1 text-[32px] leading-none font-medium"><ds.RollingNumber value={v as number} lang={lang} /></dd></div>
+        ))}
+      </dl>
+      <ds.OccupancyBar tone="action" booked={boarded} capacity={expected} label={lang === 'ar' ? '\u0627\u0644\u062a\u0642\u062f\u0645' : 'Boarding progress'} figures={`${formatNumber(boarded, lang)} / ${formatNumber(expected, lang)}`} />
+      <div className="flex gap-2">
+        <ds.Button variant="secondary" onClick={() => setBoarded((x) => Math.min(expected, x + 1))}>{lang === 'ar' ? '+1' : 'Board one'}</ds.Button>
+        <ds.Button variant="ghost" onClick={() => setBoarded((x) => Math.max(0, x - 1))}>{lang === 'ar' ? '\u22121' : 'Undo one'}</ds.Button>
+        <ds.Button variant="ghost" onClick={() => setBoarded((x) => (x >= 30 ? 8 : 38))}>{lang === 'ar' ? '\u0625\u0639\u0627\u062f\u0629' : 'Jump'}</ds.Button>
+      </div>
+    </div>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return <section aria-label={title} className="flex flex-col gap-4 border-t border-line-default py-8"><h2 className="text-xl font-medium">{title}</h2>{children}</section>;
 }
@@ -129,6 +150,7 @@ function Inner({ lang }: { lang: Lang }) {
 
       <Section title="Motion: booking confirmed">
         <ConfirmedRouteDemo lang={lang} />
+        <LiveNumbersDemo lang={lang} />
       </Section>
 
       <Section title="Domain">

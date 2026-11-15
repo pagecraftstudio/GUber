@@ -22,6 +22,7 @@ export { Pagination } from './data/Pagination';
 export { FilterBar, MetricCard, KeyValue, Breadcrumbs, Tabs } from './data/Layout';
 export { RouteLine, OccupancyBar } from './domain/RouteLine';
 export { ConfirmedRoute } from './domain/ConfirmedRoute';
+export { RollingNumber } from './data/RollingNumber';
 export { TripCard } from './domain/Trip';
 export { BookingSummary, PaymentSummary, PassengerForm, VehicleDriverCard, ManifestRow } from './domain/Booking';
 export { Ticket } from './domain/Ticket';
