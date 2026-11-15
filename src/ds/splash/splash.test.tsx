@@ -77,6 +77,10 @@ describe('splash motion', () => {
     expect(css).toMatch(/\.ds-splash\.hidden\s*\{\s*display:\s*flex;/);
     expect(css).toMatch(/\.ds-splash-pen\s*\{[^}]*var\(--ease-ds-write\)/);
   });
+  it('a short lead-in (feedback token) before the pen starts, and a gentle push-out on leaving', () => {
+    expect(css).toMatch(/--lead:\s*calc\(var\(--duration-ds-feedback\) \* 0\.6\)/);
+    expect(css).toMatch(/@keyframes ds-splash-out\s*\{\s*to\s*\{[^}]*opacity:\s*0;[^}]*transform:\s*scale\(1\.02\)/);
+  });
   it('writing time comes from the large token', () => expect(css).toMatch(/--write:\s*calc\(var\(--duration-ds-large\) \* 5\)/));
   it('is off when the script says so', () => expect(css).toMatch(/html\.ds-splash-off \.ds-splash\.hidden\s*\{\s*display:\s*none/));
 });
