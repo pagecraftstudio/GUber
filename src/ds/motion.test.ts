@@ -59,6 +59,10 @@ describe('live numbers', () => {
     expect(rule('.ds-roll-col')).toMatch(/var\(--duration-ds-large\) var\(--ease-ds\)/);
     expect(rule('.ds-fill')).toMatch(/transition:\s*transform var\(--duration-ds-large\) var\(--ease-ds\)/);
   });
+  it('bar grows in from empty on mount, without a fill mode that would freeze later updates', () => {
+    expect(css).toMatch(/@keyframes ds-fill-in\s*\{\s*from\s*\{\s*transform:\s*scaleX\(0\)/);
+    expect(rule('.ds-fill')).toMatch(/animation:\s*ds-fill-in var\(--duration-ds-large\) var\(--ease-ds\);/);
+  });
   it('the outgoing digit is drawn from data-d, never from text', () => {
     expect(rule('.ds-roll-old::before')).toMatch(/content:\s*attr\(data-d\)/);
   });

@@ -55,7 +55,8 @@
   .ds-roll-col { animation: ds-roll-up var(--duration-ds-large) var(--ease-ds) both; }
   .ds-roll-col[data-dir='down'] { animation-name: ds-roll-down; }
   .ds-roll-in { animation: ds-fade var(--duration-ds-feedback) var(--ease-ds) both; }
-  .ds-fill { transition: transform var(--duration-ds-large) var(--ease-ds); }
+  @keyframes ds-fill-in { from { transform: scaleX(0); } }
+  .ds-fill { transition: transform var(--duration-ds-large) var(--ease-ds); animation: ds-fill-in var(--duration-ds-large) var(--ease-ds); }
 
   /* Logo reveal (Logo reveal): each letter rises into place from behind a clip, left to right, once on mount. Transform only. */
   @keyframes ds-logo-rise { from { transform: translateY(105%); } to { transform: none; } }
