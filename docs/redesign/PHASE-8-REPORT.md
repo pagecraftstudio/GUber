@@ -22,3 +22,10 @@ tsc, full suite (1,380 passing), `next build`, bundle scan. In a real browser: t
 
 ## Not checked
 The check-draw on the ticket, the drawer slide (including RTL), toast arrival and the theme cross-fade were not watched in a browser; they follow the same CSS but only the dialog and driver result were measured. Mobile Safari not tested. Exit animations were left out on purpose.
+
+## Loading reveal (15 Nov 2026)
+The Arabic mark draws as an outline (840 ms, even-paced `--ease-ds-draw`), fills (200 ms), holds 300 ms, and the screen fades away (280 ms): about 1.6 s. `src/ds/splash`, `motion.css`, wired in the root layout.
+- Plays once per browser session (`sessionStorage`), decided before first paint. Never on `/dashboard`, `/admin`, `/driver`, and never when storage is blocked.
+- Never plays with reduced motion (the element stays hidden). Ignores pointer input and is hidden from assistive tech.
+- Uses the provisional traced mark (`src/ds/brand/arabicMarkProvisional.ts`); swap `d` and `viewBox` when the approved master exists.
+- It is a deliberate wait of about 1.6 s on the first visit, on top of load time. It does not hide a slow load (it ends on a timer, not when the page is ready).

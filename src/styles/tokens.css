@@ -37,6 +37,7 @@
   --radius-ds-xl: 20px;
 
   --ease-ds: cubic-bezier(0.2, 0, 0, 1);
+  --ease-ds-draw: cubic-bezier(0.45, 0, 0.25, 1); /* even pace for lines that draw themselves; --ease-ds front-loads the movement */
   --duration-ds-feedback: 120ms;
   --duration-ds-enter: 200ms;
   --duration-ds-large: 280ms;
