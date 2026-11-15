@@ -33,7 +33,7 @@ describe('auth pages', () => {
     const { container } = render(page());
     expect(container.textContent).toContain('Powered by MALAKY Studio');
     expect(screen.getByRole('heading', { level: 1, name: 'Operator sign in' })).toBeTruthy();
-    expect(screen.getByText('MASAR')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'MASAR' })).toBeTruthy();
     const email = screen.getByLabelText(/Email/) as HTMLInputElement;
     expect([email.name, email.type, email.autocomplete, email.maxLength, email.required]).toEqual(['email', 'email', 'email', 254, true]);
     const pw = screen.getByLabelText(/Password/) as HTMLInputElement;

@@ -64,6 +64,19 @@ describe('live numbers', () => {
   });
 });
 
+describe('logo reveal', () => {
+  const rule = (sel: string) => new RegExp(`${sel.replace(/[.[\]()*+?^$|]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+  it('letters move with transform only and use the large token and shared easing', () => {
+    const kf = /@keyframes ds-logo-rise\s*\{([\s\S]*?\})\s*\}/.exec(css)?.[1] ?? '';
+    expect(kf).toMatch(/translateY/);
+    expect(kf).not.toMatch(/\b(?:width|height|left|right|top|bottom|margin|padding|letter-spacing)/);
+    expect(rule('.ds-logo-letter')).toMatch(/var\(--duration-ds-large\) var\(--ease-ds\)/);
+  });
+  it('letters start in reading order with a per-letter delay', () => {
+    expect(rule('.ds-logo-letter')).toMatch(/animation-delay:\s*calc\(var\(--i\) \* 50ms\)/);
+  });
+});
+
 describe('applyThemeFade', () => {
   afterEach(() => vi.useRealTimers());
   it('adds the class for one cross-fade, then removes it', () => {

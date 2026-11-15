@@ -57,6 +57,11 @@
   .ds-roll-in { animation: ds-fade var(--duration-ds-feedback) var(--ease-ds) both; }
   .ds-fill { transition: transform var(--duration-ds-large) var(--ease-ds); }
 
+  /* Logo reveal (Logo reveal): each letter rises into place from behind a clip, left to right, once on mount. Transform only. */
+  @keyframes ds-logo-rise { from { transform: translateY(105%); } to { transform: none; } }
+  .ds-logo-clip { display: inline-block; overflow: hidden; vertical-align: bottom; }
+  .ds-logo-letter { display: inline-block; animation: ds-logo-rise var(--duration-ds-large) var(--ease-ds) both; animation-delay: calc(var(--i) * 50ms); }
+
   /* Theme switch: colours cross-fade once, instead of jumping. The class is added for a moment by applyThemeFade(). */
   html.ds-theme-fade, html.ds-theme-fade *, html.ds-theme-fade *::before, html.ds-theme-fade *::after {
     transition: background-color var(--duration-ds-enter) var(--ease-ds), border-color var(--duration-ds-enter) var(--ease-ds), color var(--duration-ds-enter) var(--ease-ds), fill var(--duration-ds-enter) var(--ease-ds), stroke var(--duration-ds-enter) var(--ease-ds) !important;

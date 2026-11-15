@@ -36,6 +36,12 @@ export interface LogoProps {
   /** onLight = deep green, onDark = white, auto = inherit currentColor. */
   tone?: LogoTone;
   className?: string;
+  /**
+   * Play the reveal once when this mounts: each letter rises into place from behind a clip, left to right (the wordmark is Latin and
+   * always LTR). For the sign-in and account-state pages only; headers never animate. The motion lives in src/styles/motion.css
+   * inside `prefers-reduced-motion: no-preference`, so with reduced motion this is the plain wordmark. Same name, same text, same size.
+   */
+  reveal?: boolean;
 }
 
 const TONE_COLOR: Record<LogoTone, string> = {
@@ -44,7 +50,7 @@ const TONE_COLOR: Record<LogoTone, string> = {
   onDark: '#FFFFFF',
 };
 
-export function Logo({ size = 'md', tone = 'auto', className }: LogoProps) {
+export function Logo({ size = 'md', tone = 'auto', className, reveal = false }: LogoProps) {
   const style: CSSProperties = {
     fontFamily: WORDMARK.fontFamily,
     fontWeight: WORDMARK.weight,
@@ -62,7 +68,13 @@ export function Logo({ size = 'md', tone = 'auto', className }: LogoProps) {
   };
   return (
     <span role="img" aria-label="MASAR" className={className} style={style}>
-      <span aria-hidden="true">{WORDMARK.text}</span>
+      {reveal ? (
+        <span aria-hidden="true">
+          {[...WORDMARK.text].map((c, i) => (
+            <span key={i} className="ds-logo-clip"><span className="ds-logo-letter" style={{ '--i': i } as CSSProperties}>{c}</span></span>
+          ))}
+        </span>
+      ) : <span aria-hidden="true">{WORDMARK.text}</span>}
     </span>
   );
 }
