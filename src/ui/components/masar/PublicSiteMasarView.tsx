@@ -11,6 +11,7 @@ import { EmptyState } from '@/ds/feedback/States';
 import { Identifier } from '@/ds/format/Identifier';
 import { formatClock, formatMoney, formatNumber, formatYear } from '@/ds/format';
 import { TripCard } from '@/ds/domain/Trip';
+import { morphOpen } from '@/ds/motion/morph';
 import { AccountMenu, MenuAction } from '@/ds/shell/AccountMenu';
 import { QuietFooter } from '@/ds/shell/MarketplaceHeaderMasar';
 import { useLocale } from '../../context/LocaleContext';
@@ -158,7 +159,7 @@ export function PublicSiteMasarView(p: PublicSiteMasarViewProps) {
                       note={bus?.model}
                       seatsLeftLabel={(n) => `${n} ${t('seatsLeft')}`}
                       soldOutLabel={t('fullyBooked')}
-                      action={<div className="flex gap-2"><Button variant="ghost" onClick={() => p.onViewDetails(trip)}>{t('viewDetails')}</Button><Button disabled={left <= 0} onClick={() => p.onSelectTrip(trip)}>{left <= 0 ? t('fullyBooked') : t('bookNow')}</Button></div>}
+                      action={<div className="flex gap-2"><Button variant="ghost" onClick={(e) => morphOpen(e.currentTarget.closest('article'), () => p.onViewDetails(trip))}>{t('viewDetails')}</Button><Button disabled={left <= 0} onClick={() => p.onSelectTrip(trip)}>{left <= 0 ? t('fullyBooked') : t('bookNow')}</Button></div>}
                     />
                   </li>
                 );

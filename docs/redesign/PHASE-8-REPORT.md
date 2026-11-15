@@ -29,3 +29,9 @@ The Arabic mark is written on right to left, like a pen: loop, teeth, tall stem,
 - Never plays with reduced motion (the element stays hidden). Ignores pointer input and is hidden from assistive tech.
 - Uses the provisional traced mark (`src/ds/brand/arabicMarkProvisional.ts`); swap `d` and `viewBox` when the approved master exists.
 - It is a deliberate wait of about 2 s on the first visit, on top of load time. It does not hide a slow load (it ends on a timer, not when the page is ready).
+
+## Trip card to details morph (15 Nov 2026)
+"View details" on the public site's trip card grows the card into the details dialog using the browser's View Transitions API (`src/ds/motion/morph.ts`, a few lines in `motion.css`). No new dependency.
+- Opening only. Closing stays immediate so focus returns without waiting.
+- Where the browser has no View Transitions, or the person asks for reduced motion, the dialog opens exactly as before.
+- Applies to the public site only; the marketplace trip card has no details step.

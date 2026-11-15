@@ -17,7 +17,7 @@ describe('motion.css', () => {
   });
   it('durations and easing come from tokens, never literals', () => {
     expect(css).not.toMatch(/\b\d+(?:\.\d+)?m?s\b(?![^{]*\{)/); // no bare times outside delays
-    const uses = [...css.matchAll(/animation:\s*([^;]+);/g)].map((m) => m[1]!);
+    const uses = [...css.matchAll(/animation:\s*([^;]+);/g)].map((m) => m[1]!).filter((u) => u !== 'none');
     for (const u of uses) { expect(u).toMatch(/var\(--(?:duration-ds-(?:enter|large|feedback)|write)\)/); expect(u).toMatch(/var\(--ease-ds(?:-write)?\)/); }
   });
   it('no section entrances or card hover motion', () => {
@@ -62,6 +62,10 @@ describe('live numbers', () => {
   it('bar grows in from empty on mount, without a fill mode that would freeze later updates', () => {
     expect(css).toMatch(/@keyframes ds-fill-in\s*\{\s*from\s*\{\s*transform:\s*scaleX\(0\)/);
     expect(rule('.ds-fill')).toMatch(/animation:\s*ds-fill-in var\(--duration-ds-large\) var\(--ease-ds\);/);
+  });
+  it('card to details morph: shared name, token timing, and the dialog pop is switched off while morphing', () => {
+    expect(rule('html[data-morphing] dialog[open]')).toMatch(/view-transition-name:\s*ds-morph;\s*animation:\s*none/);
+    expect(rule('::view-transition-group(ds-morph)')).toMatch(/animation-duration:\s*var\(--duration-ds-large\);\s*animation-timing-function:\s*var\(--ease-ds\)/);
   });
   it('the outgoing digit is drawn from data-d, never from text', () => {
     expect(rule('.ds-roll-old::before')).toMatch(/content:\s*attr\(data-d\)/);
