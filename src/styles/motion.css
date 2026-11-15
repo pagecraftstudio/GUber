@@ -14,6 +14,9 @@
 
   /* Dialogs: a short rise on open, and a fade on the backdrop. Closing is immediate so focus returns without waiting. */
   dialog[open] { animation: ds-pop var(--duration-ds-enter) var(--ease-ds); }
+  /* Card to details: the pressed card and the opening dialog share one view-transition name (src/ds/motion/morph.ts), so the browser grows one into the other. */
+  html[data-morphing] dialog[open] { view-transition-name: ds-morph; animation: none; }
+  ::view-transition-group(ds-morph) { animation-duration: var(--duration-ds-large); animation-timing-function: var(--ease-ds); }
   dialog[open]::backdrop { animation: ds-fade var(--duration-ds-enter) var(--ease-ds); }
 
   /* Drawers slide from their own edge; the edge is logical, so it flips in RTL. */
