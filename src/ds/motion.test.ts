@@ -18,7 +18,7 @@ describe('motion.css', () => {
   it('durations and easing come from tokens, never literals', () => {
     expect(css).not.toMatch(/\b\d+(?:\.\d+)?m?s\b(?![^{]*\{)/); // no bare times outside delays
     const uses = [...css.matchAll(/animation:\s*([^;]+);/g)].map((m) => m[1]!);
-    for (const u of uses) { expect(u).toMatch(/var\(--duration-ds-(?:enter|large|feedback)\)/); expect(u).toMatch(/var\(--ease-ds\)/); }
+    for (const u of uses) { expect(u).toMatch(/var\(--duration-ds-(?:enter|large|feedback)\)/); expect(u).toMatch(/var\(--ease-ds(?:-draw)?\)/); }
   });
   it('no section entrances or card hover motion', () => {
     expect(css).not.toMatch(/:hover/);
