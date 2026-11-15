@@ -34,6 +34,29 @@
   /* A boarding scan result settles into place so the driver sees that something changed. */
   .ds-outcome { animation: ds-settle var(--duration-ds-enter) var(--ease-ds); }
 
+  /* Booking confirmed, with the booked route (ConfirmedRoute): the origin dot appears, the line draws toward the destination in the
+     reading direction, the check draws as the line arrives, then the copy follows. The line moves with transform only. */
+  @keyframes ds-route-draw { from { transform: scaleX(0); } to { transform: none; } }
+  .ds-route-origin { animation: ds-fade var(--duration-ds-feedback) var(--ease-ds) both; }
+  .ds-route-line { transform-origin: left center; animation: ds-route-draw calc(var(--duration-ds-large) * 2) var(--ease-ds) var(--duration-ds-feedback) both; }
+  [dir='rtl'] .ds-route-line { transform-origin: right center; }
+  .ds-route-confirm .ds-check circle { animation-delay: calc(var(--duration-ds-large) * 2 + var(--duration-ds-feedback)); }
+  .ds-route-confirm .ds-check path { animation-delay: calc(var(--duration-ds-large) * 2 + var(--duration-ds-feedback) + 160ms); }
+  .ds-route-confirm + .ds-confirm-copy > * { animation-delay: calc(var(--duration-ds-large) * 2 + var(--duration-ds-feedback)); }
+  .ds-route-confirm + .ds-confirm-copy > :nth-child(2) { animation-delay: calc(var(--duration-ds-large) * 2 + var(--duration-ds-feedback) + 80ms); }
+  .ds-route-confirm + .ds-confirm-copy > :nth-child(3) { animation-delay: calc(var(--duration-ds-large) * 2 + var(--duration-ds-feedback) + 140ms); }
+
+  /* Live numbers (RollingNumber): a changed digit slides out and the new one in; direction follows the change. The outgoing digit is
+     drawn from data-d so it is never text. Bars follow the same beat, with transform only. */
+  @keyframes ds-roll-up { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+  @keyframes ds-roll-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+  .ds-roll-old { display: block; }
+  .ds-roll-old::before { content: attr(data-d); }
+  .ds-roll-col { animation: ds-roll-up var(--duration-ds-large) var(--ease-ds) both; }
+  .ds-roll-col[data-dir='down'] { animation-name: ds-roll-down; }
+  .ds-roll-in { animation: ds-fade var(--duration-ds-feedback) var(--ease-ds) both; }
+  .ds-fill { transition: transform var(--duration-ds-large) var(--ease-ds); }
+
   /* Theme switch: colours cross-fade once, instead of jumping. The class is added for a moment by applyThemeFade(). */
   html.ds-theme-fade, html.ds-theme-fade *, html.ds-theme-fade *::before, html.ds-theme-fade *::after {
     transition: background-color var(--duration-ds-enter) var(--ease-ds), border-color var(--duration-ds-enter) var(--ease-ds), color var(--duration-ds-enter) var(--ease-ds), fill var(--duration-ds-enter) var(--ease-ds), stroke var(--duration-ds-enter) var(--ease-ds) !important;

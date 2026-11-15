@@ -4,7 +4,7 @@ export interface RouteStop { name: string; time?: string }
 
 /**
  * The signature (plan 2.4, D8): a thin line with stop dots, drawn ONLY from real stop data.
- * Fewer than two stops renders nothing. Never decoration, never animated. Logical layout, so it mirrors in RTL.
+ * Fewer than two stops renders nothing. Never decoration, never animated (the one exception is ConfirmedRoute, the booking-confirmed page). Logical layout, so it mirrors in RTL.
  */
 export function RouteLine({ stops, size = 'full' }: { stops: RouteStop[]; size?: 'compact' | 'full' }) {
   const first = stops[0], last = stops[stops.length - 1];
@@ -42,8 +42,8 @@ export function OccupancyBar({ booked, boarded, capacity, label, figures, tone =
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2 text-[13px]"><span className="text-ink-secondary">{label}</span><span className="tabular-nums text-ink-primary">{figures}</span></div>
       <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={capacity} aria-valuenow={booked} aria-valuetext={figures} className="relative h-2 overflow-hidden rounded-full bg-surface-sunken">
-        <span className={cx('absolute inset-y-0 start-0', tone === 'action' ? 'bg-action' : 'bg-line-strong')} style={{ width: `${pct(booked)}%` }} />
-        {boarded !== undefined ? <span className="absolute inset-y-0 start-0 bg-action" style={{ width: `${pct(boarded)}%` }} /> : null}
+        <span className={cx('ds-fill absolute inset-y-0 start-0 w-full origin-[0_50%] rtl:origin-[100%_50%]', tone === 'action' ? 'bg-action' : 'bg-line-strong')} style={{ transform: `scaleX(${pct(booked) / 100})` }} />
+        {boarded !== undefined ? <span className="ds-fill absolute inset-y-0 start-0 w-full origin-[0_50%] rtl:origin-[100%_50%] bg-action" style={{ transform: `scaleX(${pct(boarded) / 100})` }} /> : null}
       </div>
     </div>
   );

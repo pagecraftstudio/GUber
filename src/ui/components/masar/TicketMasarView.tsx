@@ -3,6 +3,7 @@ import { ArrowLeft, CheckCircle2, Printer } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/ds/primitives/Button';
 import { Ticket } from '@/ds/domain/Ticket';
+import { ConfirmedRoute } from '@/ds/domain/ConfirmedRoute';
 import { InlineAlert } from '@/ds/feedback/InlineAlert';
 import { Skeleton } from '@/ds/feedback/States';
 import { Identifier } from '@/ds/format/Identifier';
@@ -27,6 +28,8 @@ export function TicketMasarView(p: TicketMasarViewProps) {
   const active = p.passengers[p.activeIdx] ?? p.passengers[0];
   const tint = tenantAccent(p.company.primaryColor);
   const boarded = active?.status === 'boarded';
+  const origin = (ar ? p.route?.originCityAr : p.route?.originCityEn) ?? '';
+  const dest = (ar ? p.route?.destCityAr : p.route?.destCityEn) ?? '';
 
   let qr: ReactNode;
   if (p.loading) qr = <div role="status" aria-label={ar ? 'جارٍ تحميل التذاكر…' : 'Loading your tickets…'}><Skeleton className="size-36" /></div>;
@@ -50,7 +53,9 @@ export function TicketMasarView(p: TicketMasarViewProps) {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10 sm:px-6">
       <header className="flex flex-col items-center gap-2 text-center print:hidden">
-        <CheckCircle2 size={32} strokeWidth={1.5} className="ds-check text-status-success-fg" aria-hidden="true" />
+        {origin && dest
+          ? <ConfirmedRoute origin={origin} destination={dest} />
+          : <CheckCircle2 size={32} strokeWidth={1.5} className="ds-check text-status-success-fg" aria-hidden="true" />}
         <div className="ds-confirm-copy flex flex-col items-center gap-2">
           <h1 className="text-2xl font-medium">{t('ticketIssuedSuccess')}</h1>
           <p className="max-w-md text-sm text-ink-secondary">{t('ticketSub')}</p>
