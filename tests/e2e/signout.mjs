@@ -19,8 +19,8 @@ const path = (p) => new URL(p.url()).pathname + new URL(p.url()).search;
 async function customerLogin(ctx) {
   const p = await L.newPage(ctx);
   await p.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Sign In|Create Account/i, 15000); await sleep(600);
-  await typeInto(p, '[role=dialog] input[type=email]', 'so-cust@e2e.test'); await typeInto(p, '[role=dialog] input[type=password]', PW);
-  await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2500);
+  await typeInto(p, 'dialog[open] input[type=email]', 'so-cust@e2e.test'); await typeInto(p, 'dialog[open] input[type=password]', PW);
+  await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: 'dialog[open]' }); await sleep(2500);
   return p;
 }
 async function staffLogin(ctx, email) {
@@ -43,7 +43,7 @@ for (const r of ['/admin', '/dashboard', '/driver']) {
   const t = await text(p);
   check(`customer: ${r} shows no staff content`, !/Platform overview|Audit logs|Boarding progress|Companies/.test(t) && (/could not be found|404|no access|sign in/i.test(t) || /^\/(company\/login|no-access|my-bookings)/.test(path(p))), `${path(p)} :: ${t.slice(0, 100)}`);
 }
-await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures?/i, 20000);
+await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /(?:Showing )?\d+ Departures?/i, 20000);
 // open the account menu and sign out
 const menu = await p.evaluateHandle(() => [...document.querySelectorAll('button')].find((e) => e.offsetParent && e.innerText.includes('Signout')));
 if (menu.asElement()) { await menu.asElement().click(); await sleep(300); }
