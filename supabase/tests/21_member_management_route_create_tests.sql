@@ -60,36 +60,36 @@ select t.as_admin();
 select t.eq('reactivated', t.mstatus(5), 'active');
 select t.eq('status change audited', t.n_audit('member.status_changed') >= 2, true);
 
--- ============ create_route_with_stops ============
+-- ============ create_route_pair ============
 select t.as_user(t.u(5));   -- booking staff: no routes.write
-select t.raises('booking staff cannot create a route', $$select public.create_route_with_stops('R-X','RX1','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$, '42501');
+select t.raises('booking staff cannot create a route', $$select public.create_route_pair('R-X','RX1','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '42501');
 select t.as_user(t.u(6));
-select t.raises('driver cannot create a route', $$select public.create_route_with_stops('R-X','RX2','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$, '42501');
+select t.raises('driver cannot create a route', $$select public.create_route_pair('R-X','RX2','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '42501');
 select t.as_anon();
-select t.raises('anonymous cannot create a route', $$select public.create_route_with_stops('R-X','RX3','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$);
+select t.raises('anonymous cannot create a route', $$select public.create_route_pair('R-X','RX3','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$);
 select t.as_user(t.u(8));   -- owner of the suspended company
-select t.raises('suspended company cannot create a route', $$select public.create_route_with_stops('R-X','RX4','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$);
+select t.raises('suspended company cannot create a route', $$select public.create_route_pair('R-X','RX4','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$);
 
 select t.as_admin();
 create temp table t_before as select t.n_routes(t.u(101)) as a, t.n_routes(t.u(102)) as b;
 grant all on t_before to authenticated;
 
 select t.as_user(t.u(4));   -- ops A creates: company comes from membership
-select t.eq('ops creates a route with two stops', (public.create_route_with_stops('Atomic A','ATM-A','Cairo','Giza','d','[{"name":"Start","offsetMinutes":0,"stopType":"pickup"},{"name":"End","offsetMinutes":30,"stopType":"dropoff"}]'::jsonb) ->> 'stops')::int, 2);
+select t.eq('ops creates a route and its return', (public.create_route_pair('Atomic A','ATM-A','Cairo','Giza','d','[{"name":"Start","offsetMinutes":0,"stopType":"pickup"},{"name":"End","offsetMinutes":30,"stopType":"dropoff"}]'::jsonb,'{"sameAsReverse":true}'::jsonb) ->> 'same_as_reverse')::boolean, true);
 select t.as_admin();
-select t.eq('route landed in company A', t.n_routes(t.u(101)), (select a + 1 from t_before));
+select t.eq('both routes landed in company A', t.n_routes(t.u(101)), (select a + 2 from t_before));
 select t.eq('company B route count untouched', t.n_routes(t.u(102)), (select b from t_before));
 select t.eq('its stops belong to company A', (select count(*) from public.route_stops s join public.routes r on r.id = s.route_id where r.code = 'ATM-A' and s.company_id = t.u(101)), 2::bigint);
 
 -- rollback: a bad stop list must not leave a route behind
 select t.as_user(t.u(4));
-select t.raises('one stop only is refused', $$select public.create_route_with_stops('Atomic B','ATM-B','A','B',null,'[{"name":"Only","offsetMinutes":0}]'::jsonb)$$, '22023');
-select t.raises('duplicate stop names refused', $$select public.create_route_with_stops('Atomic C','ATM-C','A','B',null,'[{"name":"Same","offsetMinutes":0},{"name":"same","offsetMinutes":5}]'::jsonb)$$, '22023');
-select t.raises('decreasing minutes refused', $$select public.create_route_with_stops('Atomic D','ATM-D','A','B',null,'[{"name":"S1","offsetMinutes":10},{"name":"S2","offsetMinutes":5}]'::jsonb)$$, '22023');
-select t.raises('invalid route fields refused', $$select public.create_route_with_stops('x','ATM-E','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$, '22023');
+select t.raises('one stop only is refused', $$select public.create_route_pair('Atomic B','ATM-B','A','B',null,'[{"name":"Only","offsetMinutes":0}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '22023');
+select t.raises('duplicate stop names refused', $$select public.create_route_pair('Atomic C','ATM-C','A','B',null,'[{"name":"Same","offsetMinutes":0},{"name":"same","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '22023');
+select t.raises('decreasing minutes refused', $$select public.create_route_pair('Atomic D','ATM-D','A','B',null,'[{"name":"S1","offsetMinutes":10},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '22023');
+select t.raises('invalid route fields refused', $$select public.create_route_pair('x','ATM-E','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '22023');
 select t.as_admin();
 select t.eq('failed creates left no route behind', (select count(*) from public.routes where code in ('ATM-B','ATM-C','ATM-D','ATM-E')), 0::bigint);
-select t.eq('company A count only grew by the one good route', t.n_routes(t.u(101)), (select a + 1 from t_before));
+select t.eq('company A count only grew by the one good pair', t.n_routes(t.u(101)), (select a + 2 from t_before));
 
 -- plan limit: fill company B to its max_routes, then the RPC must refuse and roll back
 do $$ declare v_lim int; v_n int; i int := 0; begin
@@ -100,8 +100,13 @@ do $$ declare v_lim int; v_n int; i int := 0; begin
     insert into public.routes (company_id, name, code, origin_name, destination_name) values (t.u(102), 'Fill ' || i, 'FILL-' || i, 'A', 'B');
     v_n := v_n + 1; end loop; end $$;
 select t.as_user(t.u(7));
-select t.raises('route create refused at the plan limit', $$select public.create_route_with_stops('Over','OVR-1','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$, '53400');
+select t.raises('route create refused at the plan limit', $$select public.create_route_pair('Over','OVR-1','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '53400');
 select t.as_admin();
 select t.eq('no route created over the limit', (select count(*) from public.routes where code = 'OVR-1'), 0::bigint);
 delete from public.routes where code like 'FILL-%' and company_id = t.u(102);
-delete from public.routes where code = 'ATM-A';   -- leave later suites' counts as found
+update public.routes set return_route_id = null where name like 'Atomic A%' or id in (select return_route_id from public.routes where code = 'ATM-A');   -- break the pair link, then remove both
+delete from public.routes where code = 'ATM-A' or name = 'Atomic A (return)';   -- leave later suites' counts as found
+
+select t.as_user(t.u(2));
+select t.raises('the old lone-route call is retired', $$select public.create_route_with_stops('Lone','LN1','A','B',null,'[{"name":"S1","offsetMinutes":0},{"name":"S2","offsetMinutes":5}]'::jsonb)$$, '42501');
+select t.as_admin();

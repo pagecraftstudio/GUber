@@ -11,8 +11,10 @@
 --     swapped, both unpaired), then creates a reversed copy for every route still without a return. The plan limit trigger is OFF during the
 --     backfill so a company at its limit does not abort the migration; those companies are simply at or over the limit afterwards.
 --   * A pair counts ONCE against max_routes (trigger + my_plan_usage). Archiving or restoring one side does the same to the other.
--- NOT IN THIS MIGRATION: the dashboard form and revoking create_route_with_stops (phase B).
+--   * create_route_with_stops (0025) created a route with no return; clients can no longer call it (execute revoked). Use create_route_pair.
+-- NOT IN THIS MIGRATION: the dashboard form (phase B).
 -- ROLLBACK:
+--   grant execute on function public.create_route_with_stops(text, text, text, text, text, jsonb) to authenticated;
 --   drop trigger "170_archive_pair" on public.routes; drop function app_private.routes_archive_pair();
 --   drop trigger enforce_limit on public.routes; create trigger enforce_limit before insert on public.routes for each row execute function app_private.enforce_limit('max_routes', 'deleted_at is null'); drop function app_private.enforce_route_limit(); and re-create my_plan_usage from 0024.
 --   drop function public.create_route_pair(text, text, text, text, text, jsonb, jsonb);
@@ -257,5 +259,8 @@ begin
 end $$;
 create trigger "170_archive_pair" after update of deleted_at on routes
   for each row when (old.deleted_at is distinct from new.deleted_at) execute function app_private.routes_archive_pair();
+
+-- the old way to create a route with no return is closed to clients
+revoke all on function public.create_route_with_stops(text, text, text, text, text, jsonb) from public, anon, authenticated;
 
 select app_private.backfill_route_returns();

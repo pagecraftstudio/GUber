@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormField, FormResult, inputClass, PlanLimitNotice, SubmitButton } from '@/components/dashboard/FormParts';
 import { fingerprint, rowsFromStops, serializeStops, toDraft, type StopRow } from '@/features/stops/draft';
@@ -12,7 +13,7 @@ import { FORM_TEXT, fieldErrorText, ROUTE_UI } from './messages';
 import { issuesToMap, StopsEditor, type StopErrorMap } from './StopsEditor';
 import { useActionForm } from './useActionForm';
 
-export type RouteFormRoute = { id: string; name: string; code: string | null; originName: string; destinationName: string; description: string | null };
+export type RouteFormRoute = { id: string; name: string; code: string | null; originName: string; destinationName: string; description: string | null; returnRoute?: { id: string; name: string } | null };
 
 /** Route fields + ordered stops in one form: one submit, one server action, one atomic stop save in Postgres. */
 export function RouteForm({ route, stops, usage, readOnly = false }: { route?: RouteFormRoute; stops: Stop[]; usage: PlanUsage | null; readOnly?: boolean }) {
@@ -28,6 +29,11 @@ export function RouteForm({ route, stops, usage, readOnly = false }: { route?: R
     if (lastFp.current !== fp) { lastFp.current = fp; setRows(rowsFromStops(stops)); setShowErrors(false); }
   }, [fp, stops]);
 
+  // Return route (creating only): "the same as the go, reversed" is the default; otherwise the company lists its own return stops.
+  const [sameAsReverse, setSameAsReverse] = useState(true);
+  const [retRows, setRetRows] = useState<StopRow[]>([]);
+  const retIssues = useMemo(() => (creating && !sameAsReverse ? validateStopList(retRows.map(toDraft)) : []), [creating, sameAsReverse, retRows]);
+  const retMap = useMemo(() => issuesToMap(retIssues), [retIssues]);
   const issues = useMemo(() => validateStopList(rows.map(toDraft)), [rows]);
   const clientMap = useMemo(() => issuesToMap(issues), [issues]);
   const [a11yMsg, setA11yMsg] = useState('');
@@ -52,9 +58,9 @@ export function RouteForm({ route, stops, usage, readOnly = false }: { route?: R
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     if (readOnly) return e.preventDefault();
     setShowErrors(true);
-    if (issues.length) {
+    if (issues.length || retIssues.length) {
       e.preventDefault();
-      setA11yMsg(FORM_TEXT[lang].fixErrors(issues.length));
+      setA11yMsg(FORM_TEXT[lang].fixErrors(issues.length + retIssues.length));
       const first = ref.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
       requestAnimationFrame(() => (ref.current?.querySelector<HTMLElement>('[aria-invalid="true"]') ?? first)?.focus());
       return;
@@ -81,6 +87,31 @@ export function RouteForm({ route, stops, usage, readOnly = false }: { route?: R
       </div>
       <StopsEditor rows={rows} setRows={setRows} errors={errors} listErrors={clientMap.list} showErrors={showErrors || Object.keys(serverMap).length > 0} readOnly={readOnly} />
       <input type="hidden" name="stops" value={serializeStops(rows)} />
+      {creating && (
+        <fieldset className="space-y-3 rounded-2xl border border-line-default bg-surface-card p-4">
+          <legend className="px-1 text-sm font-bold">{L.returnTitle}</legend>
+          <p className="text-xs text-ink-secondary">{L.returnIntro}</p>
+          <label className="flex items-start gap-2.5 text-sm font-semibold">
+            <input type="checkbox" checked={sameAsReverse} onChange={(e) => setSameAsReverse(e.target.checked)} disabled={readOnly} className="mt-0.5 h-4 w-4 accent-action" />
+            <span>{L.returnSame}<span className="block text-xs font-normal text-ink-secondary">{L.returnSameHint}</span></span>
+          </label>
+          <input type="hidden" name="returnSameAsReverse" value={sameAsReverse ? 'true' : 'false'} />
+          <FormField name="returnName" label={L.returnName} />
+          <p className="-mt-2 text-xs text-ink-secondary">{L.returnNameHint}</p>
+          {!sameAsReverse && (
+            <>
+              <StopsEditor title={L.returnStopsTitle} rows={retRows} setRows={setRetRows} errors={retMap.rows} listErrors={retMap.list} showErrors={showErrors} readOnly={readOnly} />
+              <input type="hidden" name="returnStops" value={serializeStops(retRows)} />
+            </>
+          )}
+        </fieldset>
+      )}
+      {!creating && (
+        <p className="rounded-2xl border border-line-default bg-surface-card p-4 text-sm">
+          <span className="font-bold">{L.returnLinked}: </span>
+          {route?.returnRoute ? <Link href={`/dashboard/routes/${route.returnRoute.id}`} className="font-semibold text-ink-link underline-offset-2 hover:underline">{route.returnRoute.name}</Link> : <span className="text-ink-secondary">{L.returnMissing}</span>}
+        </p>
+      )}
       <div role="alert" aria-live="assertive" className="sr-only">{a11yMsg}</div>
       {!readOnly && (
         <div className="space-y-3">

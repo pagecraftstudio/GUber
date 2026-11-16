@@ -169,8 +169,16 @@ export const STOP_UI = {
 } as const;
 
 export const ROUTE_UI = {
-  en: { addRoute: 'Add a route', editRoute: 'Edit route', name: 'Route name', code: 'Route code', origin: 'Origin', destination: 'Destination', description: 'Description', create: 'Create route', save: 'Save changes', back: 'Back to routes', readOnly: 'You can view this route but not change it.' },
-  ar: { addRoute: 'إضافة مسار', editRoute: 'تعديل المسار', name: 'اسم المسار', code: 'رمز المسار', origin: 'نقطة الانطلاق', destination: 'الوجهة', description: 'الوصف', create: 'إنشاء المسار', save: 'حفظ التغييرات', back: 'العودة إلى المسارات', readOnly: 'يمكنك عرض هذا المسار لكن لا يمكنك تغييره.' },
+  en: { addRoute: 'Add a route', editRoute: 'Edit route', name: 'Route name', code: 'Route code', origin: 'Origin', destination: 'Destination', description: 'Description', create: 'Create route', save: 'Save changes', back: 'Back to routes', readOnly: 'You can view this route but not change it.',
+    returnTitle: 'Return route', returnIntro: 'Every route has a return route. It is used for return trips.',
+    returnSame: 'The return is the same as the go, reversed', returnSameHint: 'The stops are copied in reverse order and the times are counted from the other end. You can edit the return route afterwards.',
+    returnName: 'Return route name (optional)', returnNameHint: 'If left empty, it is named after the route with "(return)".', returnStopsTitle: 'Return stops',
+    returnLinked: 'Return route', returnOpen: 'Open the return route', returnMissing: 'This route has no return route yet.' },
+  ar: { addRoute: 'إضافة مسار', editRoute: 'تعديل المسار', name: 'اسم المسار', code: 'رمز المسار', origin: 'نقطة الانطلاق', destination: 'الوجهة', description: 'الوصف', create: 'إنشاء المسار', save: 'حفظ التغييرات', back: 'العودة إلى المسارات', readOnly: 'يمكنك عرض هذا المسار لكن لا يمكنك تغييره.',
+    returnTitle: 'مسار العودة', returnIntro: 'لكل مسار مسار عودة، ويُستخدم في رحلات العودة.',
+    returnSame: 'مسار العودة هو نفس مسار الذهاب بالعكس', returnSameHint: 'تُنسخ المحطات بترتيب معكوس وتُحسب الدقائق من الطرف الآخر. يمكنك تعديل مسار العودة لاحقًا.',
+    returnName: 'اسم مسار العودة (اختياري)', returnNameHint: 'إذا تُرك فارغًا يُسمّى باسم المسار مع «(عودة)».', returnStopsTitle: 'محطات العودة',
+    returnLinked: 'مسار العودة', returnOpen: 'فتح مسار العودة', returnMissing: 'لا يوجد مسار عودة لهذا المسار بعد.' },
 } as const;
 
 export const DRIVER_UI = {
@@ -217,7 +225,7 @@ export const PAGE_AR: Record<string, string> = {
   "Operator workspace": "مساحة عمل المشغل",
   "Here is your operations workspace. Choose a module to get started.": "هذه مساحة عمل عملياتك. اختر وحدة للبدء.",
   "Add a route": "إضافة مسار",
-  "Name the route, then list its stops in the order the bus visits them.": "سمِّ المسار ثم اذكر محطاته بترتيب مرور الحافلة.",
+  "Name the route, list its stops in the order the bus visits them, then set its return route.": "سمِّ المسار، واذكر محطاته بترتيب مرور الحافلة، ثم حدّد مسار العودة.",
   "Vehicle": "المركبة",
   "Seats": "المقاعد",
   "Status": "الحالة",
