@@ -185,7 +185,7 @@ values (t.u(1101), t.u(101), t.u(201), t.u(225), t.u(234), date_trunc('day', now
 select t.eq('E: live (in-period) subscription is returned', (select count(*) from app_private.live_subscription(t.u(101))), 1::bigint);
 select t.as_user(t.u(2));
 select t.passes('E: in-period: owner inserts a bus', $$insert into buses (company_id, plate_number, capacity) values (t.u(101), 'P71-OK', 20)$$);
-select t.passes('E: in-period: owner inserts a route', $$insert into routes (company_id, name, origin_name, destination_name) values (t.u(101), 'P71 ok route', 'a', 'b')$$);
+select t.passes('E: in-period: owner creates a route with its return (create_route_pair; direct insert is no longer allowed)', $$select public.create_route_pair('P71 ok route','P71R','a','b',null,'[{"name":"P71 s1","offsetMinutes":0},{"name":"P71 s2","offsetMinutes":9}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$);
 select t.passes('E: in-period: owner inserts a driver', $$insert into drivers (company_id, full_name, phone) values (t.u(101), 'P71 driver', '+201000007101')$$);
 
 -- expire A by date only: status stays 'active' (this is the audit's R3 scenario)

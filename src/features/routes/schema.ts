@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { pageQuerySchema } from '@/lib/db/pagination';
+import { stopListSaveSchema } from '@/features/stops/schema';
 import { atLeastOneField, boolParam, optionalText, text } from '@/lib/validation/common';
 
 // No company_id anywhere: tenant comes from the session, and strict objects reject it if a client sends it.
@@ -21,6 +22,29 @@ export const routeCreateSchema = z.strictObject({
   isActive: fields.isActive.optional(),
 });
 export type RouteCreate = z.output<typeof routeCreateSchema>;
+
+/**
+ * The return route of a new route. Always required: either "the same as the go, reversed" (stops come from the go route) or the company's own
+ * return route with its own stops. Mirrors the checks in create_route_pair (migration 0033).
+ */
+export const routeReturnSchema = z.discriminatedUnion('sameAsReverse', [
+  z.strictObject({
+    sameAsReverse: z.literal(true),
+    name: fields.name.optional(),
+    code: fields.code,
+    description: fields.description,
+  }),
+  z.strictObject({
+    sameAsReverse: z.literal(false),
+    name: fields.name.optional(),
+    code: fields.code,
+    description: fields.description,
+    originName: fields.originName.optional(),
+    destinationName: fields.destinationName.optional(),
+    stops: stopListSaveSchema,
+  }),
+]);
+export type RouteReturn = z.output<typeof routeReturnSchema>;
 
 export const routeUpdateSchema = atLeastOneField(
   z.strictObject({

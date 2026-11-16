@@ -7,7 +7,7 @@ import { idSchema } from '@/lib/validation/common';
 import { routeRepository, type RouteRepository } from './repository';
 import { stopListSaveSchema } from '@/features/stops/schema';
 import { stopRepository, type StopRepository } from '@/features/stops/repository';
-import { routeCreateSchema, routeListSchema, routeUpdateSchema } from './schema';
+import { routeCreateSchema, routeListSchema, routeReturnSchema, routeUpdateSchema } from './schema';
 import type { Route } from './types';
 
 /**
@@ -26,9 +26,16 @@ export function makeRouteService(repo: RouteRepository, stopRepo: StopRepository
       if (!route) throw new AppError('not_found');
       return route;
     },
-    async create(ctx: TenantServiceContext, input: unknown): Promise<Route> {
+    /**
+     * A route together with its return route, atomically (create_route_pair). The return is obligatory: a missing or malformed return is a
+     * validation error before the database is touched, and the database refuses it again. Direct route inserts no longer exist.
+     */
+    async createPair(ctx: TenantServiceContext, routeInput: unknown, stopsInput: unknown, returnInput: unknown): Promise<{ route: Route; returnRoute: Route }> {
       requirePermission(ctx, PERMISSIONS.routesWrite);
-      return repo.create(ctx, parseInput(routeCreateSchema, input));
+      const ids = await repo.createPair(ctx, parseInput(routeCreateSchema, routeInput), parseInput(stopListSaveSchema, stopsInput), parseInput(routeReturnSchema, returnInput));
+      const [route, returnRoute] = await Promise.all([repo.get(ctx, ids.routeId), repo.get(ctx, ids.returnRouteId)]);
+      if (!route || !returnRoute) throw new AppError('internal');
+      return { route, returnRoute };
     },
     async update(ctx: TenantServiceContext, rawId: unknown, input: unknown): Promise<Route> {
       requirePermission(ctx, PERMISSIONS.routesWrite);

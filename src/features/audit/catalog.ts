@@ -49,6 +49,7 @@ const ACTION_LABEL: Record<string, string> = {
   'booking.amount_paid': 'Booking paid amount changed',
   'ticket.boarded': 'Ticket boarded',
   'route.stops_saved': 'Route stops saved',
+  'route.pair_created': 'Route and return route created',
   'member.role_changed': 'Member role changed',
   'member.status_changed': 'Member status changed',
   'driver.linked': 'Driver linked to login',

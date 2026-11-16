@@ -73,7 +73,7 @@ select t.eq('dropoff first, nothing to board: two dropoff-only stops', t.err_of(
 select t.eq('only one ACTIVE stop', t.err_of($$select public.save_route_stops(t.u(201), '[{"name":"Aa","offsetMinutes":0},{"name":"Bb","offsetMinutes":5,"isActive":false}]'::jsonb)$$), '22023|route stops invalid: stops_min_two_active');
 select t.as_admin();
 select t.eq('every failed attempt wrote nothing (route 201 unchanged)', t.stop_names(t.u(201)), 'A stop 1');
-select t.eq('no audit row for failed attempts', (select count(*) from audit_logs where action = 'route.stops_saved')::int, 0);
+select t.eq('no audit row for failed attempts', (select count(*) from audit_logs where action = 'route.stops_saved' and entity_id = t.u(201))::int, 0);
 
 -- ===================== happy path: create, update, reorder, remove =====================
 select t.as_user(t.u(4));

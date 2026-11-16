@@ -113,7 +113,7 @@ describe.skipIf(!URL_)('Phase 4 services against real Postgres + PostgREST + RLS
 
   describe('permissions are enforced twice: service and database', () => {
     it('booking staff: service says forbidden; raw write is stopped by RLS', async () => {
-      expect((await fails(routeService.create(bookingA, { name: 'ab', originName: 'cd', destinationName: 'ef' }))).code).toBe('forbidden');
+      expect((await fails(routeService.createPair(bookingA, { name: 'ab', originName: 'cd', destinationName: 'ef' }, [], { sameAsReverse: true }))).code).toBe('forbidden');
       const { error } = await clientFor(U.bookingA).from('routes').insert({ company_id: IDS.companyA, name: 'raw', origin_name: 'a', destination_name: 'b' });
       expect(error && mapDbError(error).code).toBe('forbidden');
       expect((await fails(websiteService.updateSettings(bookingA, { primaryColor: '#112233' }))).code).toBe('forbidden');
@@ -153,16 +153,20 @@ describe.skipIf(!URL_)('Phase 4 services against real Postgres + PostgREST + RLS
   describe('CRUD + business rules enforced by the database', () => {
     it('routes: create, update, code uniqueness, search, soft-delete hidden, pagination', async () => {
       const code = `T-${rnd()}`;
-      const r = await routeService.create(ownerA, { name: `T-route ${code}`, code, originName: 'Fayoum', destinationName: 'Cairo' });
+      const stops = [{ name: 'Fayoum gate', offsetMinutes: 0 }, { name: 'Cairo gate', offsetMinutes: 90 }];
+      const { route: r, returnRoute } = await routeService.createPair(ownerA, { name: `T-route ${code}`, code, originName: 'Fayoum', destinationName: 'Cairo' }, stops, { sameAsReverse: true });
       expect(r.isActive).toBe(true);
-      expect((await fails(routeService.create(ownerA, { name: 'dup', code, originName: 'a1', destinationName: 'b1' }))).detail).toBe('route_code_taken');
+      expect(r.returnRouteId).toBe(returnRoute.id);
+      expect(returnRoute.returnRouteId).toBe(r.id);
+      expect((await fails(routeService.createPair(ownerA, { name: 'dup', code, originName: 'a1', destinationName: 'b1' }, stops, { sameAsReverse: true }))).detail).toBe('route_code_taken');
+      expect((await fails(routeService.createPair(ownerA, { name: 'no return', originName: 'a1', destinationName: 'b1' }, stops, undefined))).code).toBe('validation');
       expect((await routeService.update(ownerA, r.id, { description: 'hi', isActive: false })).isActive).toBe(false);
-      expect((await routeService.list(ownerA, { q: code })).items.map((x) => x.id)).toEqual([r.id]);
+      expect((await routeService.list(ownerA, { q: code })).items.map((x) => x.id).sort()).toEqual([r.id, returnRoute.id].sort()); // the return route carries the name too
       expect((await routeService.list(ownerA, { q: "x),company_id.eq.nope,(y" })).items).toEqual([]); // injection is inert
       const p = await routeService.list(ownerA, { pageSize: 1 });
       expect(p.items.length).toBe(1);
       expect(p.hasMore).toBe(true);
-      await clientFor(U.ownerA).from('routes').update({ deleted_at: new Date().toISOString() }).eq('id', r.id);
+      await clientFor(U.ownerA).from('routes').update({ deleted_at: new Date().toISOString() }).in('id', [r.id, returnRoute.id]);
       expect((await fails(routeService.get(ownerA, r.id))).code).toBe('not_found');
       expect((await routeService.list(ownerA, { q: code })).items).toEqual([]);
     });
