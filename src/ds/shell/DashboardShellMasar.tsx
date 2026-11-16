@@ -8,7 +8,7 @@ import { FlashNotice } from '@/components/dashboard/FlashNotice';
 import { labels, ROLES } from './dashboardLabels';
 import { DashboardLangProvider } from '@/features/dashboard/lang';
 import { DsLangProvider } from '../lang';
-import { Logo } from '../brand/Logo';
+import { HeaderLogo } from '../brand/HeaderLogo';
 import { Button, IconButton, SubmitButton } from '../primitives/Button';
 import { AccountMenu } from './AccountMenu';
 import { ShellFrame, type ShellNavItem } from './ShellFrame';
@@ -53,7 +53,7 @@ export function DashboardShellMasar({ initialLang = 'en', companyName, fullName,
       <ShellFrame
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
         text={st}
-        brand={<Logo size="md" tone="auto" />}
+        brand={<HeaderLogo />}
         items={items}
         sectionLabel={st.workspace}
         sidebarFooter={<><p className="truncate text-[13px] font-medium text-ink-primary">{companyName}</p><p className="truncate text-[13px] text-ink-muted">{roleLabel}</p></>}
