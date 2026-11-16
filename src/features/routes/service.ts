@@ -51,17 +51,6 @@ export function makeRouteService(repo: RouteRepository, stopRepo: StopRepository
       await stopRepo.saveAll(ctx, id, stops);
       return { route };
     },
-    /**
-     * Route + its ordered stops in ONE database transaction (create_route_with_stops). Both inputs are validated first;
-     * any database refusal (stop rules, plan limit, permission) rolls the route back too, so a route never exists without its stops.
-     */
-    async createWithStops(ctx: TenantServiceContext, routeInput: unknown, stopsInput: unknown): Promise<{ route: Route }> {
-      requirePermission(ctx, PERMISSIONS.routesWrite);
-      const id = await repo.createWithStops(ctx, parseInput(routeCreateSchema, routeInput), parseInput(stopListSaveSchema, stopsInput));
-      const route = await repo.get(ctx, id);
-      if (!route) throw new AppError('internal');
-      return { route };
-    },
   };
 }
 export type RouteService = ReturnType<typeof makeRouteService>;

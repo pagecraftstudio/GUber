@@ -94,7 +94,23 @@ function parseStops(f: FormData): unknown {
 }
 const routeFields = (f: FormData) => ({ name: str(f, 'name'), code: str(f, 'code') || null, originName: str(f, 'originName'), destinationName: str(f, 'destinationName'), description: str(f, 'description') || null });
 
-/** Create (no `id`) or update (`id`) a route together with its ordered stop list. */
+/**
+ * The return route chosen in the form. Obligatory: when the choice is missing the schema refuses it (validation), nothing is guessed.
+ * "same as the go, reversed" sends no stops (the database builds them from the go route); otherwise the return stops come as JSON.
+ */
+function returnSpec(f: FormData): unknown {
+  const choice = str(f, 'returnSameAsReverse');
+  const name = str(f, 'returnName') || undefined;
+  if (choice === 'true') return { sameAsReverse: true, name };
+  if (choice !== 'false') return undefined;
+  try {
+    return { sameAsReverse: false, name, stops: JSON.parse(str(f, 'returnStops')) };
+  } catch {
+    throw new AppError('validation', { detail: 'stops_not_a_list' });
+  }
+}
+
+/** Create (no `id`) a route together with its return route, or update (`id`) a route together with its ordered stop list. */
 export async function saveRouteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   const id = str(f, 'id');
   let c: TenantServiceContext | null = null;
@@ -104,7 +120,7 @@ export async function saveRouteFormAction(_prev: FormState, f: FormData): Promis
     if (id) {
       await routeService.updateWithStops(c, id, routeFields(f), parseStops(f));
     } else {
-      const r = await routeService.createWithStops(c, routeFields(f), parseStops(f));
+      const r = await routeService.createPair(c, routeFields(f), parseStops(f), returnSpec(f));
       createdId = r.route.id;
     }
   } catch (e) {

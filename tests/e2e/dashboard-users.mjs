@@ -122,13 +122,13 @@ check('booking staff: no Team link in the navigation', await bookingPage.evaluat
 
 // ---------------- atomic route creation ----------------
 const routesBefore = Number(sql(`select count(*) from routes where company_id = '${A}'`));
-r = await L.rpc(tokOwnerA, 'create_route_with_stops', { p_name: 'Atomic Bad', p_code: 'ATM-X', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Only One', offsetMinutes: 0 }] });
+r = await L.rpc(tokOwnerA, 'create_route_pair', { p_name: 'Atomic Bad', p_code: 'ATM-X', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Only One', offsetMinutes: 0 }], p_return: { sameAsReverse: true } });
 check('atomic: a bad stop list is refused and NO route is left behind', r.status >= 400 && Number(sql(`select count(*) from routes where company_id = '${A}'`)) === routesBefore, JSON.stringify(r));
-r = await L.rpc(tokOwnerA, 'create_route_with_stops', { p_name: 'Atomic Good', p_code: 'ATM-OK', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Start Point', offsetMinutes: 0, stopType: 'pickup' }, { name: 'End Point', offsetMinutes: 20, stopType: 'dropoff' }] });
+r = await L.rpc(tokOwnerA, 'create_route_pair', { p_name: 'Atomic Good', p_code: 'ATM-OK', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Start Point', offsetMinutes: 0, stopType: 'pickup' }, { name: 'End Point', offsetMinutes: 20, stopType: 'dropoff' }], p_return: { sameAsReverse: true } });
 check('atomic: a good call creates the route and both stops in company A', r.status < 300 && sql(`select count(*) from route_stops s join routes r on r.id = s.route_id where r.code = 'ATM-OK' and s.company_id = '${A}'`) === '2', JSON.stringify(r));
-r = await L.rpc(tokManagerA, 'create_route_with_stops', { p_name: 'Atomic Mgr', p_code: 'ATM-M', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Start Point', offsetMinutes: 0 }, { name: 'End Point', offsetMinutes: 20 }] });
+r = await L.rpc(tokManagerA, 'create_route_pair', { p_name: 'Atomic Mgr', p_code: 'ATM-M', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Start Point', offsetMinutes: 0 }, { name: 'End Point', offsetMinutes: 20 }], p_return: { sameAsReverse: true } });
 check('atomic: a manager with routes.write may create (company derived from membership)', r.status < 300 && sql(`select company_id from routes where code = 'ATM-M'`) === A, JSON.stringify(r));
-r = await L.rpc(tokOwnerB, 'create_route_with_stops', { p_name: 'Atomic B', p_code: 'ATM-B', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Start Point', offsetMinutes: 0 }, { name: 'End Point', offsetMinutes: 20 }] });
+r = await L.rpc(tokOwnerB, 'create_route_pair', { p_name: 'Atomic B', p_code: 'ATM-B', p_origin: 'Cairo', p_destination: 'Giza', p_description: null, p_stops: [{ name: 'Start Point', offsetMinutes: 0 }, { name: 'End Point', offsetMinutes: 20 }], p_return: { sameAsReverse: true } });
 check('atomic: Company B call creates the route in Company B, never in A', r.status < 300 && sql(`select company_id from routes where code = 'ATM-B'`) === B, JSON.stringify(r));
 
 // UI create now goes through the atomic RPC: route + stops appear together

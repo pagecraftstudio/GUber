@@ -120,15 +120,19 @@ describe('stop and route services', () => {
     await expect(makeStopService(stopRepository).saveAll(tenantCtx(['routes.write'], { db: f.db }), ID, [stop('A', 0)])).rejects.toMatchObject({ code: 'validation' });
     expect(f.calls).toHaveLength(0);
   });
-  it('createWithStops is ONE rpc (atomic), company comes from the database, not from input', async () => {
-    const f = fakeDb({ data: { route_id: ID, stops: 2 } });
+  it('createPair is ONE rpc (atomic), company comes from the database, not from input, and the return is obligatory', async () => {
+    const f = fakeDb({ data: { route_id: ID, return_route_id: ID } });
     const svc = makeRouteService(routeRepository, stopRepository);
-    await expect(svc.createWithStops(tenantCtx(['routes.read'], { db: f.db }), { name: 'Route One', originName: 'Cairo', destinationName: 'Giza' }, list)).rejects.toMatchObject({ code: 'forbidden' });
+    const route = { name: 'Route One', originName: 'Cairo', destinationName: 'Giza' };
+    const ret = { sameAsReverse: true };
+    await expect(svc.createPair(tenantCtx(['routes.read'], { db: f.db }), route, list, ret)).rejects.toMatchObject({ code: 'forbidden' });
     expect(f.calls).toHaveLength(0);
-    await svc.createWithStops(tenantCtx(['routes.write', 'routes.read'], { db: f.db }), { name: 'Route One', originName: 'Cairo', destinationName: 'Giza', company_id: COMPANY_B } as never, list).catch(() => undefined);
+    await svc.createPair(tenantCtx(['routes.write', 'routes.read'], { db: f.db }), { ...route, company_id: COMPANY_B } as never, list, ret).catch(() => undefined);
     expect(f.calls).toHaveLength(0); // smuggled company_id is rejected by the strict schema before any call
-    await svc.createWithStops(tenantCtx(['routes.write', 'routes.read'], { db: f.db }), { name: 'Route One', originName: 'Cairo', destinationName: 'Giza' }, list).catch(() => undefined);
-    expect(f.calls[0]!.target).toBe('rpc:create_route_with_stops');
+    await expect(svc.createPair(tenantCtx(['routes.write', 'routes.read'], { db: f.db }), route, list, undefined)).rejects.toMatchObject({ code: 'validation' });
+    expect(f.calls).toHaveLength(0); // no return route: refused before the database is touched
+    await svc.createPair(tenantCtx(['routes.write', 'routes.read'], { db: f.db }), route, list, ret).catch(() => undefined);
+    expect(f.calls[0]!.target).toBe('rpc:create_route_pair');
     expect(Object.keys(opsOf(f.calls[0]!, 'args')[0]![0] as object)).not.toContain('p_company');
     expect(f.calls.filter((c) => c.target === 'routes' && c.ops.some(([n]) => n === 'insert'))).toHaveLength(0);
   });

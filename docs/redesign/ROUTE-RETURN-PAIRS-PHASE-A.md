@@ -1,4 +1,4 @@
-# Route + return route: Phase A (database and service), 16 Nov 2026
+# Route + return route: database, service and dashboard form, 16 Nov 2026
 
 Decided with the product owner: linked pair, existing routes backfilled automatically.
 
@@ -15,9 +15,19 @@ Decided with the product owner: linked pair, existing routes backfilled automati
 - Unit: `src` suite passes, plus `return-schema.test.ts`.
 - NOT live Supabase.
 
-## Not done yet (Phase B and open questions)
-1. Dashboard form: return section, the "return is the same as go, reversed" checkbox, editing a pair. `create_route_with_stops` (0025) still exists and still creates a lone route; Phase B switches the form to `create_route_pair` and then revokes it.
-2. Plan limit: each side of a pair counts against `max_routes`, so a Starter company (5) fits two pairs. Recommendation: count a pair once.
-3. Archiving: archiving one side does not archive the other yet.
-4. Backfill cannot be undone cleanly (the reversed copies would have to be deleted by hand). Run on staging first.
-5. e2e dashboard scripts that create routes through the form will need the Phase B form.
+## Added after review (16 Nov 2026)
+- A pair counts ONCE against `max_routes` (limit trigger and `my_plan_usage`). The return side's insert is exempt; the go side's insert is what is checked.
+- Archiving or restoring one side archives or restores its partner (trigger `170_archive_pair`).
+- SQL: 1843 assertions pass.
+
+## Phase B: dashboard form
+- `/dashboard/routes/new`: a required Return route section. The checkbox "The return is the same as the go, reversed" is ON by default; unticking it shows a second stops editor for the return's own stops, plus an optional return name. English and Arabic.
+- Creating goes through `routeService.createPair`. `create_route_with_stops` is retired (execute revoked in 0033; service and repository methods removed).
+- The edit page of a route shows a link to its return route. Editing a route does NOT change its return route (a manual edit of the go leaves the return as it is).
+- Tests: SQL 1844 pass; unit 1457 pass; e2e `dashboard-return-routes.mjs` 10 pass (real browser, local Postgres + PostgREST + auth stub); `dashboard-users.mjs` runs again (29 pass, 1 fail that was already failing: "role change saved from the UI").
+
+## Not done / open
+1. Editing a pair: changing the go route's stops does not offer to update the return. A future "regenerate the return from the go" action would reuse `app_private.reversed_stops`.
+2. Backfill cannot be undone cleanly (the reversed copies would have to be deleted by hand). Run on staging first.
+3. The Arabic wording of the new form texts has not had a native review.
+4. Other e2e scripts still have the pre-existing drift listed in `E2E-RUN-2026-11-16.md`.

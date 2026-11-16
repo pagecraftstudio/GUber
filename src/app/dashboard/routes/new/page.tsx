@@ -13,7 +13,7 @@ export default async function NewRoutePage() {
   const usage = await planUsageService.getOrNull(ctx);
   return (
     <>
-      <PageHeader eyebrow="Network management" title="Add a route" description="Name the route, then list its stops in the order the bus visits them."
+      <PageHeader eyebrow="Network management" title="Add a route" description="Name the route, list its stops in the order the bus visits them, then set its return route."
         action={<Link href="/dashboard/routes" className="text-xs font-bold text-ink-link underline-offset-2 hover:underline"><T>Back to routes</T></Link>} />
       <div className="max-w-4xl"><RouteForm stops={[]} usage={usage} /></div>
     </>

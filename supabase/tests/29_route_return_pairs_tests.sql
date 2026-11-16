@@ -113,3 +113,31 @@ select t.eq('every live route now has a return', (select count(*) from public.ro
 select t.eq('every link is mutual', (select count(*) from public.routes a join public.routes b on b.id = a.return_route_id where b.return_route_id is distinct from a.id), 0::bigint);
 select t.eq('a second backfill changes nothing', (app_private.backfill_route_returns() ->> 'pairs')::int, 0);
 select t.eq('the plan-limit trigger is enabled again', (select tgenabled from pg_trigger where tgname = 'enforce_limit' and tgrelid = 'public.routes'::regclass), 'O'::"char");
+
+-- ============ a pair counts once against max_routes; archive and restore keep the pair together ============
+-- Company A (owner u(2)). Its plan limit is lowered to "used + 1" for this block and put back at the end.
+select t.eq('every company A route is paired after the backfill', (select count(*) from public.routes where company_id = t.u(101) and deleted_at is null and return_route_id is null), 0::bigint);
+create temp table t29 as
+  select (select ls.plan_id from app_private.live_subscription(t.u(101)) ls) as plan_id,
+         (select pe.int_value from public.plan_entitlements pe where pe.key = 'max_routes' and pe.plan_id = (select ls.plan_id from app_private.live_subscription(t.u(101)) ls)) as old_limit,
+         (select count(*) from public.routes x where x.company_id = t.u(101) and x.deleted_at is null and (x.return_route_id is null or x.id < x.return_route_id)) as used,
+         (select id from public.routes where name = 'Pair-1' limit 1) as go_id,
+         (select return_route_id from public.routes where name = 'Pair-1' limit 1) as ret_id;
+grant select on t29 to public;
+update public.plan_entitlements set int_value = (select used + 1 from t29) where key = 'max_routes' and plan_id = (select plan_id from t29);
+select t.as_user(t.u(2));
+select t.eq('usage counts each pair once', (public.my_plan_usage(t.u(101)) -> 'limits' -> 'max_routes' ->> 'used')::bigint, (select used from t29));
+select t.passes('one slot left: a pair fits', $$select public.create_route_pair('Slot-Pair','SP','X','Y',null,'[{"name":"X1","offsetMinutes":0},{"name":"Y1","offsetMinutes":20}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$);
+select t.eq('the new pair used ONE slot, not two', (public.my_plan_usage(t.u(101)) -> 'limits' -> 'max_routes' ->> 'used')::bigint, (select used + 1 from t29));
+select t.raises('now at the limit: a second pair is refused', $$select public.create_route_pair('Slot-Pair2','SP2','X','Y',null,'[{"name":"X1","offsetMinutes":0},{"name":"Y1","offsetMinutes":20}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$, '53400');
+select t.as_admin();
+update public.routes set deleted_at = now() where id = (select go_id from t29);
+select t.eq('archiving one side archives its partner', (select count(*) from public.routes where id in ((select go_id from t29), (select ret_id from t29)) and deleted_at is not null), 2::bigint);
+select t.as_user(t.u(2));
+select t.eq('an archived pair frees one slot', (public.my_plan_usage(t.u(101)) -> 'limits' -> 'max_routes' ->> 'used')::bigint, (select used from t29));
+select t.passes('so a new pair fits again', $$select public.create_route_pair('Slot-Pair3','SP3','X','Y',null,'[{"name":"X1","offsetMinutes":0},{"name":"Y1","offsetMinutes":20}]'::jsonb,'{"sameAsReverse":true}'::jsonb)$$);
+select t.as_admin();
+update public.routes set deleted_at = null where id = (select ret_id from t29);
+select t.eq('restoring one side restores its partner', (select count(*) from public.routes where id in ((select go_id from t29), (select ret_id from t29)) and deleted_at is null), 2::bigint);
+update public.plan_entitlements set int_value = (select old_limit from t29) where key = 'max_routes' and plan_id = (select plan_id from t29);
+select t.eq('the plan limit is put back', (select int_value from public.plan_entitlements where key = 'max_routes' and plan_id = (select plan_id from t29)), (select old_limit from t29));

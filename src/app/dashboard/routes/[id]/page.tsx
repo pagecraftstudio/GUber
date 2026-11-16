@@ -23,12 +23,13 @@ export default async function EditRoutePage({ params }: { params: Promise<{ id: 
     throw e;
   }
   const stops = await stopService.listByRoute(ctx, route.id);
+  const returnRoute = route.returnRouteId ? await routeService.get(ctx, route.returnRouteId).catch(() => null) : null;
   return (
     <>
       <PageHeader eyebrow="Network management" title={route.name} description={canWrite ? 'Edit the route and its stops.' : 'Route details and stops.'}
         action={<Link href="/dashboard/routes" className="text-xs font-bold text-ink-link underline-offset-2 hover:underline"><T>Back to routes</T></Link>} />
       <div className="max-w-4xl">
-        <RouteForm route={{ id: route.id, name: route.name, code: route.code, originName: route.originName, destinationName: route.destinationName, description: route.description }} stops={stops} usage={null} readOnly={!canWrite} />
+        <RouteForm route={{ id: route.id, name: route.name, code: route.code, originName: route.originName, destinationName: route.destinationName, description: route.description, returnRoute: returnRoute ? { id: returnRoute.id, name: returnRoute.name } : null }} stops={stops} usage={null} readOnly={!canWrite} />
       </div>
     </>
   );

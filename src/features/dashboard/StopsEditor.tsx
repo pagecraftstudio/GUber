@@ -25,8 +25,8 @@ export const issuesToMap = (issues: readonly StopIssue[]): { rows: StopErrorMap;
  * Ordered stop list. Reordering uses real buttons (Move up / Move down), so it works with keyboard, touch and screen
  * readers; there is no drag-and-drop to need an alternative for. Every structural change is announced in a polite live region.
  */
-export function StopsEditor({ rows, setRows, errors, listErrors, showErrors, readOnly = false }: {
-  rows: StopRow[]; setRows: Dispatch<SetStateAction<StopRow[]>>; errors: StopErrorMap; listErrors: string[]; showErrors: boolean; readOnly?: boolean;
+export function StopsEditor({ rows, setRows, errors, listErrors, showErrors, readOnly = false, title }: {
+  rows: StopRow[]; setRows: Dispatch<SetStateAction<StopRow[]>>; errors: StopErrorMap; listErrors: string[]; showErrors: boolean; readOnly?: boolean; title?: string;
 }) {
   const lang = useDashLang();
   const T = STOP_UI[lang];
@@ -68,7 +68,7 @@ export function StopsEditor({ rows, setRows, errors, listErrors, showErrors, rea
 
   return (
     <fieldset className="min-w-0 space-y-3 rounded-2xl border border-line-default p-4">
-      <legend className="px-1 text-sm font-bold">{T.title}</legend>
+      <legend className="px-1 text-sm font-bold">{title ?? T.title}</legend>
       <p id={`${base}-help`} className="text-xs text-ink-secondary">{T.help}</p>
       <div role="status" aria-live="polite" className="sr-only">{announce}</div>
       {showErrors && listErrors.length > 0 && (
