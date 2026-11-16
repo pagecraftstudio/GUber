@@ -10,9 +10,11 @@
 --   * EXISTING routes: backfill_route_returns() first pairs routes that are already each other's reverse (same company, origin and destination
 --     swapped, both unpaired), then creates a reversed copy for every route still without a return. The plan limit trigger is OFF during the
 --     backfill so a company at its limit does not abort the migration; those companies are simply at or over the limit afterwards.
--- NOT IN THIS MIGRATION: the dashboard form (next phase); archiving a pair together; whether a pair counts once or twice against max_routes
---   (today each side counts, see the report).
+--   * A pair counts ONCE against max_routes (trigger + my_plan_usage). Archiving or restoring one side does the same to the other.
+-- NOT IN THIS MIGRATION: the dashboard form and revoking create_route_with_stops (phase B).
 -- ROLLBACK:
+--   drop trigger "170_archive_pair" on public.routes; drop function app_private.routes_archive_pair();
+--   drop trigger enforce_limit on public.routes; create trigger enforce_limit before insert on public.routes for each row execute function app_private.enforce_limit('max_routes', 'deleted_at is null'); drop function app_private.enforce_route_limit(); and re-create my_plan_usage from 0024.
 --   drop function public.create_route_pair(text, text, text, text, text, jsonb, jsonb);
 --   drop function app_private.backfill_route_returns(); drop function app_private.reversed_stops(uuid, uuid);
 --   drop trigger "160_return_pair_mutual" on public.routes; drop trigger "155_return_client_guard" on public.routes;
@@ -168,5 +170,92 @@ begin
   return jsonb_build_object('paired_existing', v_paired, 'created_reversed', v_created, 'pairs', v_total);
 end $$;
 revoke all on function app_private.backfill_route_returns() from public, anon, authenticated;
+
+
+-- ======================= a pair counts ONCE against max_routes =======================
+-- Decided with the product owner. A complete pair is counted through whichever side has the smaller id; a route without a return counts as one.
+-- The return side is inserted already carrying the link (return_route_id set), so its insert is exempt: the limit was checked when the go side was inserted.
+create or replace function app_private.enforce_route_limit() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare v_limit integer; v_count bigint;
+begin
+  if new.return_route_id is not null then return new; end if;
+  perform pg_advisory_xact_lock(hashtextextended(new.company_id::text || 'max_routes', 0));
+  v_limit := app_private.entitlement_limit(new.company_id, 'max_routes');
+  if v_limit is null then return new; end if;
+  select count(*) into v_count from public.routes x
+   where x.company_id = new.company_id and x.deleted_at is null and (x.return_route_id is null or x.id < x.return_route_id);
+  if v_count >= v_limit then
+    raise exception 'plan limit reached: max_routes (%)', v_limit using errcode = '53400'; end if;
+  return new;
+end $$;
+drop trigger enforce_limit on routes;
+create trigger enforce_limit before insert on routes for each row execute function app_private.enforce_route_limit();
+
+-- the dashboard usage numbers use the same rule
+create or replace function public.my_plan_usage(p_company uuid)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare
+  v_uid uuid := auth.uid();
+  v_plan uuid;
+  v_tz text;
+  v_limits jsonb := '{}'::jsonb;
+  v_months jsonb := '{}'::jsonb;
+  v_key text;
+  v_lim integer;
+  v_found boolean;
+  v_used bigint;
+  v_m0 timestamp;
+  k int;
+begin
+  if v_uid is null then raise exception 'not authenticated' using errcode = '42501'; end if;
+  if p_company is null or not exists (select 1 from app_private.current_company_ids() c where c = p_company) then
+    raise exception 'company not found' using errcode = 'P0002'; end if;
+
+  select ls.plan_id into v_plan from app_private.live_subscription(p_company) ls;
+  if v_plan is null then return jsonb_build_object('status', 'no_subscription'); end if;
+
+  foreach v_key in array array['max_users', 'max_buses', 'max_drivers', 'max_routes', 'max_trips_per_month'] loop
+    v_found := null;
+    select true, pe.int_value into v_found, v_lim from public.plan_entitlements pe where pe.plan_id = v_plan and pe.key = v_key;
+    if v_found is null then v_lim := 0; end if;
+    v_used := case v_key
+      when 'max_users'   then (select count(*) from public.company_users x where x.company_id = p_company)
+      when 'max_buses'   then (select count(*) from public.buses x where x.company_id = p_company)
+      when 'max_drivers' then (select count(*) from public.drivers x where x.company_id = p_company)
+      when 'max_routes'  then (select count(*) from public.routes x where x.company_id = p_company and x.deleted_at is null and (x.return_route_id is null or x.id < x.return_route_id))   -- a pair counts once (0033)
+      else null end;
+    v_limits := v_limits || jsonb_build_object(v_key, jsonb_build_object('limit', v_lim, 'used', v_used));
+  end loop;
+
+  select coalesce(cs.timezone, 'UTC') into v_tz from public.company_settings cs where cs.company_id = p_company;
+  v_tz := coalesce(v_tz, 'UTC');
+  v_m0 := date_trunc('month', now() at time zone v_tz);
+  for k in 0 .. 3 loop
+    select count(*) into v_used from public.trips t
+     where t.company_id = p_company and t.status <> 'cancelled'
+       and date_trunc('month', t.departure_at at time zone v_tz) = v_m0 + make_interval(months => k);
+    v_months := v_months || jsonb_build_object(to_char(v_m0 + make_interval(months => k), 'YYYY-MM'), v_used);
+  end loop;
+  -- the per-month entry carries the limit; `used` for the current month is repeated for simple callers
+  v_limits := jsonb_set(v_limits, '{max_trips_per_month,used}', to_jsonb((v_months -> to_char(v_m0, 'YYYY-MM'))::bigint));
+
+  return jsonb_build_object('status', 'ok', 'limits', v_limits, 'trip_months', v_months);
+end $$;
+revoke all on function public.my_plan_usage(uuid) from public, anon;
+grant execute on function public.my_plan_usage(uuid) to authenticated;
+
+-- ======================= archive and restore a pair together =======================
+create or replace function app_private.routes_archive_pair() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.return_route_id is not null then
+    update public.routes p set deleted_at = new.deleted_at
+     where p.id = new.return_route_id and p.company_id = new.company_id and p.deleted_at is distinct from new.deleted_at;
+  end if;
+  return null;
+end $$;
+create trigger "170_archive_pair" after update of deleted_at on routes
+  for each row when (old.deleted_at is distinct from new.deleted_at) execute function app_private.routes_archive_pair();
 
 select app_private.backfill_route_returns();

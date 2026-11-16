@@ -139,7 +139,7 @@ select t.eq('company A staff cannot delete company B stops directly', t.affected
 select t.as_user(t.u(2));
 select t.eq('usage: A is professional (max_buses 20)', (public.my_plan_usage(t.u(101))->'limits'->'max_buses'->>'limit')::int, 20);
 select t.eq('usage: counts buses like the trigger does (all rows)', (public.my_plan_usage(t.u(101))->'limits'->'max_buses'->>'used')::int, (select count(*) from public.buses where company_id = t.u(101))::int);
-select t.eq('usage: routes exclude soft-deleted', (public.my_plan_usage(t.u(101))->'limits'->'max_routes'->>'used')::int, (select count(*) from public.routes where company_id = t.u(101) and deleted_at is null)::int);
+select t.eq('usage: routes exclude soft-deleted', (public.my_plan_usage(t.u(101))->'limits'->'max_routes'->>'used')::int, (select count(*) from public.routes where company_id = t.u(101) and deleted_at is null and (return_route_id is null or id < return_route_id))::int);   -- a pair counts once (0033)
 select t.eq('usage: users count every membership row', (public.my_plan_usage(t.u(101))->'limits'->'max_users'->>'used')::int, (select count(*) from public.company_users where company_id = t.u(101))::int);
 select t.eq('usage: status ok', public.my_plan_usage(t.u(101))->>'status', 'ok');
 select t.eq('usage: four months of trips', (select count(*) from jsonb_object_keys(public.my_plan_usage(t.u(101))->'trip_months'))::int, 4);
