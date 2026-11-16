@@ -27,7 +27,7 @@ export async function clickText(p, txt, { sel = 'button,a', scope = 'body', exac
 }
 export const hasText = async (p, re) => re.test(await text(p));
 export async function waitText(p, re, ms = 8000) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (re.test(await text(p))) return true; await sleep(200); } return false; }
-export const dialogText = (p) => p.evaluate(() => (document.querySelector('[role=dialog]') || { innerText: '' }).innerText);
+export const dialogText = (p) => p.evaluate(() => (document.querySelector('dialog[open]') || { innerText: '' }).innerText);
 export async function typeInto(p, sel, value) {
   await p.waitForSelector(sel, { timeout: 5000 }); await p.focus(sel);
   await p.keyboard.down('Control'); await p.keyboard.press('KeyA'); await p.keyboard.up('Control'); await p.keyboard.press('Backspace'); // clear (fields may be prefilled)

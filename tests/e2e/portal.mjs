@@ -32,11 +32,11 @@ check('setup: capacity counters = booked seats', seatsBooked(T(805)) === 3 && se
 const browser = await L.launch();
 async function newSession(email, ctx = browser) { // a separate browser context = separate cookies, so two customers can be signed in at once
   const p = await L.newPage(ctx);
-  await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000);
+  await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /(?:Showing )?\d+ Departures/i, 20000);
   await p.goto(L.BASE + '/login', { waitUntil: 'domcontentloaded' }); await waitText(p, /Sign In|Create Account/i, 15000); await sleep(600);
-  await typeInto(p, '[role=dialog] input[type=email]', email); await typeInto(p, '[role=dialog] input[type=password]', PW);
-  await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2000);
-  await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /Showing \d+ Departures/i, 20000); // login now lands on /my-bookings
+  await typeInto(p, 'dialog[open] input[type=email]', email); await typeInto(p, 'dialog[open] input[type=password]', PW);
+  await clickText(p, 'Sign In', { sel: 'button[type=submit]', scope: 'dialog[open]' }); await sleep(2000);
+  await p.goto(L.BASE + '/', { waitUntil: 'domcontentloaded', timeout: 60000 }); await waitText(p, /(?:Showing )?\d+ Departures/i, 20000); // login now lands on /my-bookings
   return p;
 }
 async function openPortal(p, who, attempt = 0) {
@@ -88,8 +88,8 @@ const openCancel = async (p, ref) => p.evaluate((r) => { const els = [...documen
 check('cancel UI: modal opens', (await openCancel(pc, cCancel.reference)) && (await waitText(pc, /Cancellation is immediate and final/, 4000)));
 const modal = await dialogText(pc);
 check('cancel UI: modal states cancellation is immediate/final, no operator review, no hard-coded "3 hours"', /immediate and final/.test(modal) && /no operator review/.test(modal) && !/3 hours/i.test(modal), modal.slice(0, 300));
-await typeInto(pc, '[role=dialog] textarea', 'Exam moved');
-await clickText(pc, 'Cancel booking now', { sel: 'button', scope: '[role=dialog]' });
+await typeInto(pc, 'dialog[open] textarea', 'Exam moved');
+await clickText(pc, 'Cancel booking now', { sel: 'button', scope: 'dialog[open]' });
 await sleep(2500);
 pt = await portalText(pc);
 const afterCancel = await cardFor(pc, cCancel.reference);
@@ -115,16 +115,16 @@ check('window UI (stale): page still offers Cancel for the 48h booking', /Cancel
 sql(`update trips set departure_at = now() + interval '10 hours', arrival_at = now() + interval '12 hours' where id = '${T(807)}'`); // time passes: now inside the window
 check('window UI (stale): setup moved the trip inside the window', Number(sql(`select count(*) from public.bookings where id = '${cStale.id}'`)) === 1);
 await openCancel(pc, cStale.reference); await waitText(pc, /immediate and final/, 3000);
-await typeInto(pc, '[role=dialog] textarea', 'too late?');
-await clickText(pc, 'Cancel booking now', { sel: 'button', scope: '[role=dialog]' }); await sleep(2000);
+await typeInto(pc, 'dialog[open] textarea', 'too late?');
+await clickText(pc, 'Cancel booking now', { sel: 'button', scope: 'dialog[open]' }); await sleep(2000);
 const dErr = await dialogText(pc);
 check('window rejection: backend refuses, UI shows the localized "cancellation period has ended" error and stays open', /cancellation period for this trip has ended/i.test(dErr), dErr.slice(0, 300));
 check('window rejection: booking still confirmed, seat still taken', bk(cStale.id).status === 'confirmed' && seatsBooked(T(807)) === 1);
 await pc.keyboard.press('Escape'); await sleep(400);
-await clickText(pc, 'Cancel', { sel: 'button', scope: '[role=dialog]' }).catch(() => {});
+await clickText(pc, 'Cancel', { sel: 'button', scope: 'dialog[open]' }).catch(() => {});
 
 // ---------- 4. over-capacity in the booking UI ----------
-await pc.goto(L.BASE + '/', { waitUntil: 'domcontentloaded' }); await waitText(pc, /Showing \d+ Departures/i, 20000); await sleep(800);
+await pc.goto(L.BASE + '/', { waitUntil: 'domcontentloaded' }); await waitText(pc, /(?:Showing )?\d+ Departures/i, 20000); await sleep(800);
 const farDate = sql(`select to_char(departure_at at time zone 'Africa/Cairo','YYYY-MM-DD') from trips where id = '${T(806)}'`);
 await pc.$eval('input[type=date]', (el, v) => { const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }, farDate);
 await clickText(pc, 'Find Scheduled Trips'); await sleep(1200);
@@ -133,13 +133,13 @@ console.log('FULL-CARD-BUTTONS', JSON.stringify(fullCard));
 check('over-capacity: the full trip is marked as full in search (0 seats left)', Number(sql(`select seats_available from public_search_trips() where trip_id = '${T(806)}'`)) === 0);
 // Race: the page believes there is a seat. Make the UI attempt the booking while the DB is already full.
 sql(`update trips set capacity = 3 where id = '${T(806)}'`); // DB: temporarily 2 seats free so the card is bookable
-await pc.reload({ waitUntil: 'domcontentloaded' }); await waitText(pc, /Showing \d+ Departures/i, 20000); await sleep(600);
+await pc.reload({ waitUntil: 'domcontentloaded' }); await waitText(pc, /(?:Showing )?\d+ Departures/i, 20000); await sleep(600);
 await pc.$eval('input[type=date]', (el, v) => { const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }, farDate);
-await clickText(pc, 'Find Scheduled Trips'); await waitText(pc, /Showing 1 Departure/i, 6000);
+await clickText(pc, 'Find Scheduled Trips'); await waitText(pc, /(?:Showing )?1 Departure/i, 6000);
 await clickText(pc, 'Book Seat'); await waitText(pc, /Book Your Seat/, 6000);
-await typeInto(pc, '[role=dialog] input[placeholder="01012345678"]', '01033334444');
+await typeInto(pc, 'dialog[open] input[placeholder="01012345678"]', '01033334444');
 sql(`update trips set capacity = 1 where id = '${T(806)}'`); // someone else took the seats before Carol confirms: DB is full again
-await clickText(pc, 'Confirm booking', { sel: 'button[type=submit]', scope: '[role=dialog]' }); await sleep(2000);
+await clickText(pc, 'Confirm booking', { sel: 'button[type=submit]', scope: 'dialog[open]' }); await sleep(2000);
 const capErr = await dialogText(pc);
 check('over-capacity: booking is refused with the "not enough seats" message, dialog stays open', /Not enough seats are left on this trip/.test(capErr) && !/MB-[A-Z0-9]{4,}/.test(capErr), capErr.slice(0, 300));
 check('over-capacity: nothing was booked, counter unchanged', seatsBooked(T(806)) === 1 && Number(sql(`select count(*) from bookings b join customers c on c.id = b.customer_id join auth.users u on u.id = c.user_id where u.email = 'carol@e2e.test' and b.trip_id = '${T(806)}'`)) === 0);
