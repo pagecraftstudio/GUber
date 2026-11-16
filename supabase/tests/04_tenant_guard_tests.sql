@@ -117,7 +117,7 @@ select t.as_user(t.u(2));   -- owner A (professional)
 select t.passes('owner A inserts a bus into A', $$insert into buses (company_id, plate_number, capacity) values (t.u(101), 'OK-1', 20)$$);
 select t.eq('owner A updates own route', t.affected($$update routes set description = 'ok' where id = t.u(201)$$), 1::bigint);
 select t.as_user(t.u(3));   -- manager A
-select t.passes('manager A inserts a route into A', $$insert into routes (company_id, name, origin_name, destination_name) values (t.u(101), 'OK route', 'a', 'b')$$);
+select t.raises('manager A cannot insert a route directly (routes come from create_route_pair, migration 0033)', $$insert into routes (company_id, name, origin_name, destination_name) values (t.u(101), 'OK route', 'a', 'b')$$, '42501');
 select t.as_user(t.u(4));   -- operations A
 select t.eq('operations A updates a trip price', t.affected($$update trips set price = 51 where id = t.u(242)$$), 1::bigint);
 select t.as_user(t.u(1));   -- platform super_admin

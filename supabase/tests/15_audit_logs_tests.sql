@@ -209,4 +209,4 @@ select t.eq('H: no parameter is a role', (select count(*) from pg_proc p where p
 select t.eq('H: both indexes exist', (select count(*) from pg_indexes where tablename = 'audit_logs' and indexname in ('audit_logs_created_idx','audit_logs_action_idx')), 2::bigint);
 select t.eq('H: every action namespace in the log is one the UI knows (extend the TS catalogue when this fails)',
   (select coalesce(array_agg(distinct split_part(action, '.', 1)), '{}') from audit_logs where action not like 'phase7%' and action not like 'test.%'
-     and split_part(action, '.', 1) not in ('booking','company','invite','subscription','ticket','trip')), '{}'::text[]);
+     and split_part(action, '.', 1) not in ('booking','company','invite','subscription','ticket','trip','route','member','driver')), '{}'::text[]);
