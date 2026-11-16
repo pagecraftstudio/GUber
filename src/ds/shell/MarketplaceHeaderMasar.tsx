@@ -1,7 +1,7 @@
 'use client';
 import { LogOut, Menu, Moon, Sun, Ticket, User } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { Logo } from '../brand/Logo';
+import { HeaderLogo } from '../brand/HeaderLogo';
 import { Drawer } from '../feedback/Dialog';
 import { Identifier } from '../format/Identifier';
 import { Button, IconButton } from '../primitives/Button';
@@ -41,7 +41,7 @@ export function MarketplaceHeaderMasar(p: MarketplaceHeaderMasarProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-line-default bg-surface-card" dir={p.lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <a href="/" aria-label={st.productName} className={cx('rounded-ds-sm', FOCUS)}><Logo size="md" tone="auto" /></a>
+        <a href="/" aria-label={st.productName} className={cx('rounded-ds-sm', FOCUS)}><HeaderLogo /></a>
         <nav aria-label={st.mainNav} className="hidden items-center gap-2 lg:flex">{p.links.map((l) => <LinkItem key={l.label} l={l} />)}</nav>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline"><Button variant="ghost" onClick={p.onToggleLang}>{p.langLabel}</Button></span>
