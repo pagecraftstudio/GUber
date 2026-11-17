@@ -1,7 +1,7 @@
-import { LayoutDashboard, UserCog, UserRound, Route, BusFront, Users, CalendarDays, Ticket, Globe2, Settings2, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, UserCog, UserRound, Route, BusFront, Users, CalendarDays, Ticket, Globe2, Settings2, BadgePercent, Inbox, type LucideIcon } from 'lucide-react';
 import { PERMISSIONS, type PermissionKey } from '@/lib/auth/permission-keys';
 
-export type NavKey = 'overview' | 'routes' | 'buses' | 'drivers' | 'users' | 'trips' | 'bookings' | 'customers' | 'website' | 'settings';
+export type NavKey = 'overview' | 'routes' | 'buses' | 'drivers' | 'users' | 'trips' | 'bookings' | 'customers' | 'plans' | 'subscriptions' | 'website' | 'settings';
 export type NavItem = { href: string; key: NavKey; icon: LucideIcon; permission: PermissionKey | null };
 
 /** The sidebar list. An item shows only when the member holds its read permission (each page re-checks; RLS decides). */
@@ -14,6 +14,8 @@ export const NAV: readonly NavItem[] = [
   { href: '/dashboard/trips', key: 'trips', icon: CalendarDays, permission: PERMISSIONS.tripsRead },
   { href: '/dashboard/bookings', key: 'bookings', icon: Ticket, permission: PERMISSIONS.bookingsRead },
   { href: '/dashboard/customers', key: 'customers', icon: UserRound, permission: PERMISSIONS.customersRead },
+  { href: '/dashboard/plans', key: 'plans', icon: BadgePercent, permission: PERMISSIONS.routesRead },
+  { href: '/dashboard/subscriptions', key: 'subscriptions', icon: Inbox, permission: PERMISSIONS.bookingsRead },
   { href: '/dashboard/website', key: 'website', icon: Globe2, permission: PERMISSIONS.websiteRead },
   { href: '/dashboard/settings', key: 'settings', icon: Settings2, permission: PERMISSIONS.settingsRead },
 ];

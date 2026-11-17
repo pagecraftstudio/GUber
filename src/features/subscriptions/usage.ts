@@ -3,7 +3,7 @@
  * triggers do; nothing here re-implements which rows count or what a plan allows. Display only: Postgres still
  * refuses an over-limit insert whatever this says.
  */
-export const USAGE_KEYS = ['max_users', 'max_buses', 'max_drivers', 'max_routes', 'max_trips_per_month'] as const;
+export const USAGE_KEYS = ['max_users', 'max_buses', 'max_drivers', 'max_routes', 'max_trips_per_month', 'max_route_plans'] as const;
 export type UsageKey = (typeof USAGE_KEYS)[number];
 
 export type PlanUsage =
@@ -26,6 +26,9 @@ export function parsePlanUsage(raw: unknown): PlanUsage | null {
   const limits = {} as Record<UsageKey, { limit: number | null; used: number }>;
   for (const key of USAGE_KEYS) {
     const e = (r.limits as Record<string, unknown>)[key] as { limit?: unknown; used?: unknown } | undefined;
+    // max_route_plans arrives with migration 0035: an older database simply lacks it, which must not blank every other form's numbers.
+    // The database trigger still enforces the plan limit either way.
+    if (!e && key === 'max_route_plans') { limits[key] = { limit: null, used: 0 }; continue; }
     if (!e || !(e.limit === null || isCount(e.limit)) || !isCount(e.used)) return null; // malformed => unavailable, not guessed
     limits[key] = { limit: e.limit as number | null, used: e.used };
   }

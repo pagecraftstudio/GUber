@@ -1,8 +1,10 @@
 'use client';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { FormField, FormResult, PlanLimitNotice, SubmitButton } from '@/components/dashboard/FormParts';
 import { allowanceFor, blocksSubmit, type PlanUsage, type UsageKey } from '@/features/subscriptions/usage';
-import { createBusFormAction, createDriverFormAction } from './form-actions';
+import { createBusFormAction, createDriverFormAction, createPlanFormAction } from './form-actions';
+import { controlClass } from '@/ds/primitives/Input';
+import { JP } from './masar/textPlans';
 import { useDashLang } from './lang';
 import { fieldErrorText, FORM_TEXT, LABELS } from './messages';
 import type { FormState } from './form-state';
@@ -64,6 +66,45 @@ export function DriverCreateForm({ usage }: { usage: PlanUsage | null }) {
         <FormField dir="ltr" name="phone" label={L.phone} type="tel" autoComplete="off" required error={err('phone')} />
         <FormField dir="ltr" name="licenseNumber" label={L.license} error={err('licenseNumber')} />
         <FormField name="licenseExpiry" label={L.licenseExpiry} type="date" error={err('licenseExpiry')} />
+      </>)}
+    </CreateForm>
+  );
+}
+
+type PlanRoute = { id: string; name: string };
+
+/** Add a subscription plan for one route. Validity is either N months from approval or a fixed date range (fixed once created). */
+export function PlanCreateForm({ routes, usage }: { routes: PlanRoute[]; usage: PlanUsage | null }) {
+  const lang = useDashLang();
+  const t = JP[lang];
+  const selectId = useId();
+  const [kind, setKind] = useState<'duration' | 'range'>('duration');
+  return (
+    <CreateForm resource="max_route_plans" usage={usage} title={t.addPlan} action={createPlanFormAction} submitLabel={t.createPlan}>
+      {(err) => routes.length === 0 ? <p className="text-sm text-ink-secondary">{t.noRoutesToPlan}</p> : (<>
+        <div className="space-y-1">
+          <label htmlFor={`${selectId}-r`} className="block text-sm font-medium">{t.pickRoute}</label>
+          <select id={`${selectId}-r`} name="routeId" required defaultValue="" className={controlClass(!!err('routeId'))}>
+            <option value="" disabled>{t.choose}</option>
+            {routes.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+          {err('routeId') ? <p role="alert" className="text-xs font-semibold text-status-error-fg">{err('routeId')}</p> : null}
+        </div>
+        <FormField name="name" label={t.planName} required error={err('name')} />
+        <FormField dir="ltr" name="price" label={t.priceLabel} type="number" min={0} step="0.01" inputMode="decimal" required error={err('price')} />
+        <div className="space-y-1">
+          <label htmlFor={`${selectId}-v`} className="block text-sm font-medium">{t.validityType}</label>
+          <select id={`${selectId}-v`} name="validityType" value={kind} onChange={(e) => setKind(e.target.value === 'range' ? 'range' : 'duration')} className={controlClass(false)}>
+            <option value="duration">{t.byMonths}</option>
+            <option value="range">{t.byRange}</option>
+          </select>
+        </div>
+        {kind === 'duration'
+          ? <FormField dir="ltr" name="durationMonths" label={t.monthsLabel} type="number" min={1} max={24} step="1" inputMode="numeric" required error={err('durationMonths')} />
+          : <div className="grid grid-cols-2 gap-2">
+              <FormField name="startsOn" label={t.startsOn} type="date" required error={err('startsOn')} />
+              <FormField name="endsOn" label={t.endsOn} type="date" required error={err('endsOn')} />
+            </div>}
       </>)}
     </CreateForm>
   );

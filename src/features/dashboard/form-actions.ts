@@ -14,6 +14,7 @@ import { tripTemplateService } from '@/features/trip-templates/service';
 import { companyTimeZone } from '@/features/trips/company-timezone';
 import { localDateTimeToInstant } from '@/features/trips/day-groups';
 import { userService } from '@/features/users/service';
+import { routePlanService } from '@/features/route-plans/service';
 import { companyService } from '@/features/companies/service';
 import { websiteService } from '@/features/website/service';
 import { buildInviteUrl } from '@/features/users/invite-link';
@@ -320,4 +321,14 @@ export async function saveWebsiteFormAction(_prev: FormState, f: FormData): Prom
   } catch (e) {
     return failure(c, e);
   }
+}
+
+export async function createPlanFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run('/dashboard/plans', async (c) => {
+    const range = str(f, 'validityType') === 'range';
+    await routePlanService.createPlan(c, {
+      routeId: str(f, 'routeId'), name: str(f, 'name'), price: num(f, 'price'), validityType: str(f, 'validityType'),
+      ...(range ? { startsOn: str(f, 'startsOn') || undefined, endsOn: str(f, 'endsOn') || undefined } : { durationMonths: Number.isNaN(num(f, 'durationMonths')) ? undefined : num(f, 'durationMonths') }),
+    });
+  });
 }

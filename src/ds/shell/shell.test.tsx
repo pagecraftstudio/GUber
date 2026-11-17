@@ -25,7 +25,7 @@ describe('dashboard shell: navigation and permissions', () => {
   it('shows only what the member may read, keeps overview, marks the current page', () => {
     dash();
     const links = within(sidebar()).getAllByRole('link').map((a) => a.textContent);
-    expect(links).toEqual(['Overview', 'Trips', 'Bookings']);
+    expect(links).toEqual(['Overview', 'Trips', 'Bookings', 'Requests']);
     expect(within(sidebar()).getByRole('link', { name: 'Bookings' }).getAttribute('aria-current')).toBe('page');
     expect(within(sidebar()).getByRole('link', { name: 'Trips' }).hasAttribute('aria-current')).toBe(false);
   });
