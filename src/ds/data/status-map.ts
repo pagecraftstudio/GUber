@@ -28,6 +28,13 @@ export const STATUS_MAP = {
     partial: { tone: 'info', icon: 'circle', label: { en: 'Partly boarded', ar: 'صعد جزء منهم' } },
     boarded: { tone: 'success', icon: 'check', label: { en: 'Boarded', ar: 'صعد' } },
   },
+  riderSubscription: {
+    pending: { tone: 'warning', icon: 'clock', label: { en: 'Pending', ar: 'قيد المراجعة' } },
+    active: { tone: 'success', icon: 'check', label: { en: 'Active', ar: 'فعّال' } },
+    rejected: { tone: 'error', icon: 'x', label: { en: 'Rejected', ar: 'مرفوض' } },
+    cancelled: { tone: 'neutral', icon: 'minus', label: { en: 'Cancelled', ar: 'ملغي' } },
+    expired: { tone: 'neutral', icon: 'minus', label: { en: 'Expired', ar: 'منتهي' } },
+  },
   trip: {
     draft: { tone: 'neutral', icon: 'dot', label: { en: 'Draft', ar: 'مسودة' } },
     scheduled: { tone: 'info', icon: 'clock', label: { en: 'Scheduled', ar: 'مجدولة' } },

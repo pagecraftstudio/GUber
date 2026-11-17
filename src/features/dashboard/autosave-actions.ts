@@ -9,6 +9,7 @@ import { routeService } from '@/features/routes/service';
 import { busService } from '@/features/buses/service';
 import { driverService } from '@/features/drivers/service';
 import { bookingService } from '@/features/bookings/service';
+import { routePlanService } from '@/features/route-plans/service';
 
 /**
  * Autosave actions: each applies ONE change and returns a small result. No redirect, so the page never navigates or
@@ -65,4 +66,19 @@ export async function setPaymentStatusAction(id: string, paymentStatus: string):
 /** Cancel a booking (releases its seats exactly once; repeating is a harmless no-op). */
 export async function cancelBookingAction(id: string): Promise<AutoResult> {
   return run(['/dashboard/bookings'], (c) => bookingService.cancel(c, { bookingId: id }));
+}
+
+/** Approve (starts the subscription, recorded as paid) or reject a member's request. The company is derived by the RPC from the request row. */
+export async function decideSubscriptionAction(id: string, approve: boolean, note?: string): Promise<AutoResult> {
+  const n = typeof note === 'string' ? note.trim() : '';
+  return run(['/dashboard/subscriptions'], (c) => routePlanService.decide(c, id, { approve: approve === true, ...(n ? { note: n } : {}) }));
+}
+
+/** Plan on/off. The RPC takes the whole editable set, so the current name and price travel with the switch. */
+export async function setPlanActiveAction(id: string, name: string, price: number, isActive: boolean): Promise<AutoResult> {
+  return run(['/dashboard/plans'], (c) => routePlanService.updatePlan(c, id, { name, price, isActive: isActive === true }));
+}
+
+export async function archivePlanAction(id: string): Promise<AutoResult> {
+  return run(['/dashboard/plans'], (c) => routePlanService.archivePlan(c, id));
 }

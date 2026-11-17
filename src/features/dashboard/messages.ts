@@ -9,6 +9,7 @@ const RES: Record<UsageKey, Record<Lang, { name: string; short: string }>> = {
   max_drivers: { en: { name: 'drivers', short: 'driver' }, ar: { name: 'السائقين', short: 'سائق' } },
   max_routes: { en: { name: 'routes', short: 'route' }, ar: { name: 'المسارات', short: 'مسار' } },
   max_trips_per_month: { en: { name: 'trips this month', short: 'trip' }, ar: { name: 'الرحلات هذا الشهر', short: 'رحلة' } },
+  max_route_plans: { en: { name: 'subscription plans', short: 'plan' }, ar: { name: 'باقات الاشتراك', short: 'باقة' } },
 };
 export const isUsageKey = (v: string | undefined): v is UsageKey => !!v && v in RES;
 

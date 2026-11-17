@@ -1,0 +1,36 @@
+/**
+ * Strings for the subscription screens (Phase B). English follows Appendix C: sentence case, verb-first buttons, no greeting titles.
+ * ARABIC IS A DRAFT for the named reviewer (O1/D10).
+ */
+export const JP = {
+  en: {
+    plans: 'Subscription plans', plansText: 'Plans members can request for a route. One plan covers the route and its return route: one go scan and one return scan a day.',
+    requests: 'Subscription requests', requestsText: 'Approve a request once payment is received. Approval starts the subscription and counts as paid.',
+    plan: 'Plan', route: 'Route', price: 'Price', validity: 'Validity', status: 'Status', manage: 'Manage', archive: 'Archive',
+    months: (n: string) => `${n} from approval`, monthsUnit: (n: number) => (n === 1 ? 'month' : 'months'), range: (a: string, b: string) => `${a} to ${b}`,
+    noPlans: 'No plans yet', noPlansText: 'Create a plan for a route so members can request it.',
+    addPlan: 'Add a plan', createPlan: 'Create plan', planName: 'Plan name', pickRoute: 'Route', choose: 'Choose a route', priceLabel: 'Price',
+    validityType: 'Validity', byMonths: 'Months from approval', byRange: 'Fixed dates', monthsLabel: 'Months', startsOn: 'Starts on', endsOn: 'Ends on',
+    noRoutesToPlan: 'Add a route first, then create plans for it.',
+    member: 'Member', masarId: 'MASAR ID', phone: 'Phone', requested: 'Requested', valid: 'Valid', actions: 'Decision',
+    approve: 'Approve', reject: 'Reject', note: 'Note (optional)', confirmApprove: 'Approve this request?', confirmReject: 'Reject this request?',
+    approveText: 'The subscription starts today and is recorded as paid.', rejectText: 'The member will see the request as rejected.', cancel: 'Cancel',
+    all: 'All', pending: 'Pending', active: 'Active', closed: 'Closed', noRequests: 'No requests', noRequestsText: 'Requests appear here when members ask for one of your plans.',
+    countPending: (n: string) => `${n} waiting for a decision`, decided: 'Decided', saved: 'Saved',
+  },
+  ar: {
+    plans: 'باقات الاشتراك', plansText: 'باقات يطلبها الأعضاء لمسار معين. الباقة الواحدة تشمل المسار ومسار العودة: مسح للذهاب ومسح للعودة في اليوم.',
+    requests: 'طلبات الاشتراك', requestsText: 'وافق على الطلب بعد استلام المبلغ. الموافقة تبدأ الاشتراك وتُسجَّل كمدفوعة.',
+    plan: 'الباقة', route: 'المسار', price: 'السعر', validity: 'الصلاحية', status: 'الحالة', manage: 'إدارة', archive: 'أرشفة',
+    months: (n: string) => `${n} من تاريخ الموافقة`, monthsUnit: (n: number) => (n === 1 ? 'شهر' : n === 2 ? 'شهران' : n <= 10 ? 'أشهر' : 'شهراً'), range: (a: string, b: string) => `من ${a} إلى ${b}`,
+    noPlans: 'لا توجد باقات بعد', noPlansText: 'أنشئ باقة لمسار ليتمكن الأعضاء من طلبها.',
+    addPlan: 'إضافة باقة', createPlan: 'إنشاء الباقة', planName: 'اسم الباقة', pickRoute: 'المسار', choose: 'اختر مساراً', priceLabel: 'السعر',
+    validityType: 'الصلاحية', byMonths: 'أشهر من تاريخ الموافقة', byRange: 'تواريخ محددة', monthsLabel: 'عدد الأشهر', startsOn: 'تبدأ في', endsOn: 'تنتهي في',
+    noRoutesToPlan: 'أضف مساراً أولاً ثم أنشئ له باقات.',
+    member: 'العضو', masarId: 'رقم مسار', phone: 'الهاتف', requested: 'تاريخ الطلب', valid: 'الصلاحية', actions: 'القرار',
+    approve: 'موافقة', reject: 'رفض', note: 'ملاحظة (اختياري)', confirmApprove: 'الموافقة على هذا الطلب؟', confirmReject: 'رفض هذا الطلب؟',
+    approveText: 'يبدأ الاشتراك اليوم ويُسجَّل كمدفوع.', rejectText: 'سيرى العضو أن الطلب مرفوض.', cancel: 'إلغاء',
+    all: 'الكل', pending: 'قيد المراجعة', active: 'فعّالة', closed: 'المغلقة', noRequests: 'لا توجد طلبات', noRequestsText: 'تظهر الطلبات هنا عندما يطلب الأعضاء إحدى باقاتك.',
+    countPending: (n: string) => `${n} بانتظار القرار`, decided: 'تم القرار', saved: 'تم الحفظ',
+  },
+} as const;
