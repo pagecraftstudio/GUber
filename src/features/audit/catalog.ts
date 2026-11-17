@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -13,6 +13,8 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   trip: 'Trip',
   ticket: 'Ticket',
   route: 'Route',
+  route_plan: 'Subscription plan',
+  route_subscription: 'Rider subscription',
   member: 'Team member',
   driver: 'Driver',
 };
@@ -50,6 +52,14 @@ const ACTION_LABEL: Record<string, string> = {
   'ticket.boarded': 'Ticket boarded',
   'route.stops_saved': 'Route stops saved',
   'route.pair_created': 'Route and return route created',
+  'route_plan.created': 'Subscription plan created',
+  'route_plan.updated': 'Subscription plan updated',
+  'route_plan.archived': 'Subscription plan archived',
+  'route_subscription.requested': 'Subscription requested',
+  'route_subscription.approved': 'Subscription approved',
+  'route_subscription.rejected': 'Subscription rejected',
+  'route_subscription.cancelled': 'Subscription cancelled',
+  'route_subscription.scanned': 'Subscription scanned',
   'member.role_changed': 'Member role changed',
   'member.status_changed': 'Member status changed',
   'driver.linked': 'Driver linked to login',
