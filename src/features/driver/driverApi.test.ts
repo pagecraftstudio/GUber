@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOARD_MESSAGES, classifyBoardError } from './driverApi';
+import { BOARD_MESSAGES, MASAR_ID_RE, classifyBoardError } from './driverApi';
 
 describe('classifyBoardError', () => {
   it.each([
@@ -11,6 +11,10 @@ describe('classifyBoardError', () => {
     ['23514', 'trip is closed for boarding', 'boarding_closed'],
     ['28000', 'not authenticated', 'not_signed_in'],
     ['42501', 'permission denied for function board_ticket', 'not_signed_in'],
+    ['23514', 'subscription is not valid', 'subscription_invalid'],
+    ['23505', 'already scanned for this direction today', 'already_scanned'],
+    ['P0002', 'no valid subscription', 'no_subscription'],
+    ['P0002', 'no booking for this trip', 'no_booking'],
     ['XX000', 'boom', 'unknown'],
   ])('%s / %s -> %s', (code, msg, want) => expect(classifyBoardError(code, msg)).toBe(want));
 });
@@ -30,5 +34,14 @@ describe('classifyBoardError: poor network', () => {
 describe('classifyBoardError: rate limiting (0020)', () => {
   it('PT429 -> rate_limited (and does not leak the database message)', () => {
     expect(classifyBoardError('PT429', 'rate limit exceeded')).toBe('rate_limited');
+  });
+});
+
+describe('MASAR_ID_RE', () => {
+  it('matches the 0034 format only (no 0, 1, I, O)', () => {
+    expect(MASAR_ID_RE.test('MSR-AB23-XY9Z')).toBe(true);
+    expect(MASAR_ID_RE.test('msr-ab23-xy9z')).toBe(true);
+    expect(MASAR_ID_RE.test('MSR-AB01-XY9Z')).toBe(false);
+    expect(MASAR_ID_RE.test('MALAKY:TICKET:abc')).toBe(false);
   });
 });

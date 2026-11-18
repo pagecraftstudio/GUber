@@ -131,8 +131,8 @@ export function DriverBoardingMasarView(p: DriverBoardingViewProps) {
       <div ref={camera}><QrScanner active={p.scanning} onToken={p.onScanToken} /></div>
 
       <form onSubmit={(e) => { e.preventDefault(); p.onSubmitManual(); }} className="space-y-2">
-        <label className="block text-sm font-medium text-ink-primary" htmlFor="manual-code">Or enter the code</label>
-        <Input id="manual-code" size="lg" dir="ltr" value={p.manual} onChange={(e) => p.onManualChange(e.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="MALAKY:TICKET:…" maxLength={200} className="!h-12" />
+        <label className="block text-sm font-medium text-ink-primary" htmlFor="manual-code">Or enter the ticket code or MASAR ID</label>
+        <Input id="manual-code" size="lg" dir="ltr" value={p.manual} onChange={(e) => p.onManualChange(e.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="MALAKY:TICKET:… or MSR-XXXX-XXXX" maxLength={200} className="!h-12" />
         <Button type="submit" variant="secondary" size="lg" fullWidth loading={p.busy} disabled={!p.manual.trim()} className="!h-12">Board passenger</Button>
       </form>
 

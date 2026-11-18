@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSupabaseBrowser } from '@/ui/lib/real/supabaseBrowser';
-import { BOARD_MESSAGES, BoardError, createDriverApi, type BoardingStats, type DriverTrip } from './driverApi';
+import { BOARD_MESSAGES, BoardError, MASAR_ID_RE, createDriverApi, type BoardingStats, type DriverTrip } from './driverApi';
 import { DriverBoardingMasarView, type Outcome } from './masar/DriverBoardingMasarView';
 
 const RETRYABLE = new Set(['network', 'rate_limited', 'unknown']);
@@ -41,11 +41,18 @@ export function DriverBoarding() {
     setLastToken(token);
     setBusy(true);
     try {
-      const r = await api.board(tripId, token);
-      setStats({ expected: r.expected, boarded: r.boarded, remaining: r.remaining });
-      setOutcome(r.result === 'boarded'
-        ? { kind: 'ok', text: `Boarded: ticket ${r.ticket_index}` }
-        : { kind: 'dup', text: `Already boarded (ticket ${r.ticket_index}, ${fmt(r.boarded_at)})` });
+      if (MASAR_ID_RE.test(token)) {
+        const m = await api.scanMasar(tripId, token.toUpperCase());
+        setStats({ expected: m.expected, boarded: m.boarded, remaining: m.remaining });
+        setOutcome({ kind: 'ok', text: `Boarded: ${m.member_name} (Subscriber, ${m.direction === 'go' ? 'go' : 'return'})` });
+      } else {
+        const r = await api.board(tripId, token);
+        setStats({ expected: r.expected, boarded: r.boarded, remaining: r.remaining });
+        const who = r.subscriber ? ` ${r.subscriber.member_name} (Subscriber, ${r.subscriber.direction})` : ` ticket ${r.ticket_index}`;
+        setOutcome(r.result === 'boarded'
+          ? { kind: 'ok', text: `Boarded:${who}` }
+          : { kind: 'dup', text: `Already boarded (${who.trim()}, ${fmt(r.boarded_at)})` });
+      }
       setManual('');
     } catch (e) {
       const code = e instanceof BoardError ? e.code : 'unknown';

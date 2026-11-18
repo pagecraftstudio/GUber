@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BoardingStats, DriverTrip } from '../driverApi';
 
-const api = { myTrips: vi.fn(), stats: vi.fn(), board: vi.fn() };
+const api = { myTrips: vi.fn(), stats: vi.fn(), board: vi.fn(), scanMasar: vi.fn() };
 vi.mock('@/ui/lib/real/supabaseBrowser', () => ({ getSupabaseBrowser: () => ({}) }));
 vi.mock('../driverApi', async (orig) => ({ ...(await orig<typeof import('../driverApi')>()), createDriverApi: () => api }));
 vi.mock('../QrScanner', () => ({ QrScanner: ({ active, onToken }: { active: boolean; onToken: (t: string) => void }) => (active ? <button onClick={() => onToken('SCANNED')}>fake-camera-hit</button> : null) }));
@@ -17,12 +17,13 @@ const trip = (n: number, over: Partial<DriverTrip> = {}): DriverTrip => ({ trip_
 const stats = (b: number): BoardingStats => ({ expected: 10, boarded: b, remaining: 10 - b });
 const ok = (i: number, b: number) => ({ result: 'boarded' as const, ticket_index: i, boarded_at: '2026-11-09T06:40:00Z', ...stats(b) });
 const mount = () => render(<DriverBoarding />);
-const enter = async (code: string) => { await userEvent.type(await screen.findByLabelText('Or enter the code'), code); await userEvent.click(screen.getByRole('button', { name: 'Board passenger' })); };
+const enter = async (code: string) => { await userEvent.type(await screen.findByLabelText('Or enter the ticket code or MASAR ID'), code); await userEvent.click(screen.getByRole('button', { name: 'Board passenger' })); };
 
 beforeEach(() => {
   api.myTrips.mockReset().mockResolvedValue([trip(1), trip(2)]);
   api.stats.mockReset().mockImplementation(async (id: string) => (id === 't1' ? stats(2) : stats(5)));
   api.board.mockReset();
+  api.scanMasar.mockReset();
   Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
   Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), configurable: true });
 });
@@ -79,7 +80,24 @@ describe('driver boarding (MASAR look)', () => {
     expect(screen.getByTestId('stat-boarded').textContent).toBe('3');
     expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('3');
     expect(navigator.vibrate).toHaveBeenCalledWith(60);
-    expect((screen.getByLabelText('Or enter the code') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Or enter the ticket code or MASAR ID') as HTMLInputElement).value).toBe('');
+  });
+
+  it('a subscriber QR scan names the member and the direction', async () => {
+    api.board.mockResolvedValue({ ...ok(1, 3), subscriber: { direction: 'go', member_name: 'Mona Ali', masar_id: 'MSR-AB23-XY9Z' } });
+    mount();
+    await enter('MALAKY:TICKET:abc');
+    expect((await screen.findByTestId('scan-outcome')).textContent).toMatch(/Boarded: Mona Ali \(Subscriber, go\)/);
+  });
+
+  it('a MASAR ID goes to the subscription scan, not the ticket scan', async () => {
+    api.scanMasar.mockResolvedValue({ direction: 'return', member_name: 'Mona Ali', masar_id: 'MSR-AB23-XY9Z', ticket_index: 1, ...stats(4) });
+    mount();
+    await enter('msr-ab23-xy9z');
+    expect(api.scanMasar).toHaveBeenCalledWith('t1', 'MSR-AB23-XY9Z');
+    expect(api.board).not.toHaveBeenCalled();
+    expect((await screen.findByTestId('scan-outcome')).textContent).toMatch(/Boarded: Mona Ali \(Subscriber, return\)/);
+    expect(screen.getByTestId('stat-boarded').textContent).toBe('4');
   });
 
   it('an already-boarded ticket is a warning, not a success', async () => {
@@ -115,7 +133,7 @@ describe('driver boarding (MASAR look)', () => {
     let done!: (v: ReturnType<typeof ok>) => void;
     api.board.mockImplementation(() => new Promise((r) => { done = r; }));
     mount();
-    await userEvent.type(await screen.findByLabelText('Or enter the code'), 'A');
+    await userEvent.type(await screen.findByLabelText('Or enter the ticket code or MASAR ID'), 'A');
     const btn = screen.getByRole('button', { name: 'Board passenger' });
     fireEvent.click(btn);
     await waitFor(() => expect(btn.getAttribute('aria-busy')).toBe('true'));

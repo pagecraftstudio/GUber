@@ -59,12 +59,26 @@ select t.eq('day state: both seats booked', (select go_booked::text || return_bo
 select t.eq('day state: another day still free', (select go_booked::text || return_booked::text from public.subscriber_day_state((select s1 from sub_reads), t.d200() + 1)), 'falsefalse');
 select t.eq('bookings: two legs, go then return, not scanned', (select string_agg(direction || ':' || scanned::text, ',' order by departure_at) from public.subscriber_bookings((select s1 from sub_reads))), 'go:false,return:false');
 select t.eq('bookings: legs carry outbound / return', (select string_agg(trip_leg, ',' order by departure_at) from public.subscriber_bookings((select s1 from sub_reads))), 'outbound,return');
-select t.as_user(t.u(5));
-select public.scan_route_subscription(t.masar(t.u(3001)), t.u(3201));
-select t.as_user(t.u(3001));
-select t.eq('bookings: the scanned leg is marked', (select string_agg(direction || ':' || scanned::text, ',' order by departure_at) from public.subscriber_bookings((select s1 from sub_reads))), 'go:true,return:false');
 select t.eq('go options: a fully booked day no longer offers that trip twice (trip still has seats, so listed)', (select count(*) from public.subscriber_outbound_options((select s1 from sub_reads), t.d200())), 1::bigint);
 select public.cancel_my_booking((select booking_id from public.subscriber_bookings((select s1 from sub_reads)) where direction = 'go'));
 select t.eq('bookings: cancelling the go leg removes both from the list', (select count(*) from public.subscriber_bookings((select s1 from sub_reads))), 0::bigint);
 select t.eq('day state: free again after the cancel', (select go_booked::text || return_booked::text from public.subscriber_day_state((select s1 from sub_reads), t.d200())), 'falsefalse');
+select t.as_admin();
+
+-- scanned flag (0037: a scan boards the ticket, so the trip must be inside the boarding window: book it ahead, then move it next to now)
+select t.as_admin();
+insert into buses (id, company_id, plate_number, capacity) values (t.u(3233), t.u(101), 'S32-3', 30) on conflict do nothing;
+insert into drivers (id, company_id, full_name, phone) values (t.u(3243), t.u(101), 'S32 D3', '+201300000003') on conflict do nothing;
+insert into trips (id, company_id, route_id, bus_id, driver_id, departure_at, arrival_at, price, capacity, status) values
+  (t.u(3203), t.u(101), t.sroute('Sub-Go'), t.u(3233), t.u(3243), date_trunc('day', now()) + interval '205 day 6 hours', date_trunc('day', now()) + interval '205 day 7 hours', 50, 5, 'scheduled');
+select t.as_user(t.u(3001));
+select public.create_my_subscriber_booking((select s1 from sub_reads), t.u(3203));
+select t.as_admin();
+update trips set departure_at = now() + interval '50 minutes', arrival_at = now() + interval '80 minutes' where id = t.u(3203);
+select t.as_user(t.u(3001));
+select t.eq('bookings: not scanned before the scan', (select scanned from public.subscriber_bookings((select s1 from sub_reads)) where trip_id = t.u(3203)), false);
+select t.as_user(t.u(5));
+select public.scan_route_subscription(t.masar(t.u(3001)), t.u(3203));
+select t.as_user(t.u(3001));
+select t.eq('bookings: the scanned leg is marked', (select scanned from public.subscriber_bookings((select s1 from sub_reads)) where trip_id = t.u(3203)), true);
 select t.as_admin();
