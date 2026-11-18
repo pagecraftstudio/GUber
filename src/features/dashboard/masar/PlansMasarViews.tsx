@@ -12,6 +12,7 @@ import { SaveStatus, viewOfInline } from '@/ds/feedback/SaveStatus';
 import { useInlineSave } from '@/ds/hooks/useInlineSave';
 import { PlanLimitNotice } from '@/components/dashboard/FormParts';
 import { PlanCreateForm } from '../CreateForms';
+import { RevokeCell } from './RevokeMasar';
 import { archivePlanAction, decideSubscriptionAction, setPlanActiveAction } from '../autosave-actions';
 import type { PlanUsage } from '@/features/subscriptions/usage';
 import type { RoutePlan, RouteSubscription } from '@/features/route-plans/types';
@@ -127,7 +128,7 @@ export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: R
     { key: 'requested', header: t.requested, cell: (r) => formatDay(r.requestedAt.slice(0, 10), lang, 'numeric') },
     { key: 'valid', header: t.valid, cell: (r) => (r.validFrom && r.validTo ? t.range(formatDay(r.validFrom, lang, 'numeric'), formatDay(r.validTo, lang, 'numeric')) : '—') },
     { key: 'status', header: t.status, cell: (r) => <StatusBadge domain="riderSubscription" value={r.status} /> },
-    { key: 'decision', header: t.actions, cell: (r) => (r.status === 'pending' && p.canDecide ? <DecisionCell s={r} /> : <span className="text-[13px] text-ink-muted">{r.decisionNote ?? (r.status === 'pending' ? '' : t.decided)}</span>) },
+    { key: 'decision', header: t.actions, cell: (r) => (r.status === 'pending' && p.canDecide ? <DecisionCell s={r} /> : r.status === 'active' && p.canDecide ? <RevokeCell s={r} /> : <span className="text-[13px] text-ink-muted">{r.decisionNote ?? (r.status === 'pending' ? '' : t.decided)}</span>) },
   ];
   const label: Record<RequestFilter, string> = { all: t.all, pending: t.pending, active: t.active, closed: t.closed };
   return (

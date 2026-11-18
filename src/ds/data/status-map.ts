@@ -34,6 +34,7 @@ export const STATUS_MAP = {
     rejected: { tone: 'error', icon: 'x', label: { en: 'Rejected', ar: 'مرفوض' } },
     cancelled: { tone: 'neutral', icon: 'minus', label: { en: 'Cancelled', ar: 'ملغي' } },
     expired: { tone: 'neutral', icon: 'minus', label: { en: 'Expired', ar: 'منتهي' } },
+    revoked: { tone: 'error', icon: 'x', label: { en: 'Revoked', ar: 'تم إنهاؤه' } },
   },
   trip: {
     draft: { tone: 'neutral', icon: 'dot', label: { en: 'Draft', ar: 'مسودة' } },

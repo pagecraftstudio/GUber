@@ -10,6 +10,7 @@ import { busService } from '@/features/buses/service';
 import { driverService } from '@/features/drivers/service';
 import { bookingService } from '@/features/bookings/service';
 import { routePlanService } from '@/features/route-plans/service';
+import type { FutureBooking } from '@/features/route-plans/types';
 
 /**
  * Autosave actions: each applies ONE change and returns a small result. No redirect, so the page never navigates or
@@ -72,6 +73,24 @@ export async function cancelBookingAction(id: string): Promise<AutoResult> {
 export async function decideSubscriptionAction(id: string, approve: boolean, note?: string): Promise<AutoResult> {
   const n = typeof note === 'string' ? note.trim() : '';
   return run(['/dashboard/subscriptions'], (c) => routePlanService.decide(c, id, { approve: approve === true, ...(n ? { note: n } : {}) }));
+}
+
+/** The member's future bookings, for the warning shown before a revoke. Read-only; the RPC checks bookings.write and tenant. */
+export async function loadSubscriptionBookingsAction(id: string): Promise<{ ok: true; data: FutureBooking[] } | { ok: false; code: string; detail?: string }> {
+  try {
+    const c = createTenantServiceContext(await createClient(), await requireTenant());
+    return { ok: true, data: await routePlanService.futureBookings(c, id) };
+  } catch (e) {
+    if (isNextSignal(e)) throw e;
+    const c = toClientError(e);
+    return { ok: false, code: c.code, ...(c.detail ? { detail: c.detail } : {}) };
+  }
+}
+
+/** End an active subscription and cancel exactly the chosen future bookings (the others stay). */
+export async function revokeSubscriptionAction(id: string, cancelBookingIds: string[], reason?: string): Promise<AutoResult> {
+  const r = typeof reason === 'string' ? reason.trim() : '';
+  return run(['/dashboard/subscriptions', '/dashboard/bookings'], (c) => routePlanService.revoke(c, id, { cancelBookingIds, ...(r ? { reason: r } : {}) }));
 }
 
 /** Plan on/off. The RPC takes the whole editable set, so the current name and price travel with the switch. */

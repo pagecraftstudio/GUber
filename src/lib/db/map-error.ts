@@ -74,6 +74,8 @@ const RULES: Rule[] = [
   { match: /phone already registered for this company/, code: 'conflict', detail: 'phone_taken_in_company' },
   { match: /plan period already ended/, code: 'business_rule', detail: 'plan_period_ended' },
   { match: /only a pending request can be decided/, code: 'business_rule', detail: 'request_not_pending' },
+  { match: /subscription is not active/, code: 'business_rule', detail: 'subscription_not_active' },
+  { match: /booking cannot be cancelled$/, code: 'business_rule', detail: 'revoke_booking_not_cancellable' },
   { match: /subscription is not open/, code: 'business_rule', detail: 'subscription_not_open' },
   // booking RPCs (0010)
   { match: /invalid phone number/, code: 'validation', detail: 'invalid_phone', fields: { phone: 'invalid_phone' } },

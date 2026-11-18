@@ -4,8 +4,8 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { routePlanRepository, type RoutePlanRepository } from './repository';
-import { decisionSchema, planCreateSchema, planUpdateSchema, subscriptionListSchema } from './schema';
-import type { RoutePlan, RouteSubscription } from './types';
+import { decisionSchema, planCreateSchema, revokeSchema, planUpdateSchema, subscriptionListSchema } from './schema';
+import type { FutureBooking, RoutePlan, RouteSubscription } from './types';
 
 /** Order inside every method: authorize -> validate -> repository. Plans follow routes.* ; the request inbox follows bookings.*. */
 export function makeRoutePlanService(repo: RoutePlanRepository) {
@@ -33,6 +33,14 @@ export function makeRoutePlanService(repo: RoutePlanRepository) {
     async decide(ctx: TenantServiceContext, rawId: unknown, input: unknown): Promise<void> {
       requirePermission(ctx, PERMISSIONS.bookingsWrite);
       return repo.decide(ctx, parseInput(idSchema, rawId), parseInput(decisionSchema, input));
+    },
+    async futureBookings(ctx: TenantServiceContext, rawId: unknown): Promise<FutureBooking[]> {
+      requirePermission(ctx, PERMISSIONS.bookingsWrite);
+      return repo.futureBookings(ctx, parseInput(idSchema, rawId));
+    },
+    async revoke(ctx: TenantServiceContext, rawId: unknown, input: unknown): Promise<void> {
+      requirePermission(ctx, PERMISSIONS.bookingsWrite);
+      return repo.revoke(ctx, parseInput(idSchema, rawId), parseInput(revokeSchema, input));
     },
   };
 }

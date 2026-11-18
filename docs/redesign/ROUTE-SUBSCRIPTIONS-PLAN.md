@@ -82,3 +82,10 @@ Entitlement `max_route_plans` (starter 3, professional 20, enterprise unlimited)
 - Driver app: subscriber name and direction on success; MASAR ID accepted in the manual field; new messages (subscription not active, already scanned, no subscription, no booking).
 - Tests: SQL suite 33 (2001 pass in total), unit 1504, e2e `tests/e2e/subscription-boarding.mjs` (15 pass). Suites 30 and 32 adapted: scanning now needs a trip inside the boarding window.
 - Gaps: no staff screen for the MASAR scan (only the driver page); a scan on a trip whose subscription was cancelled is refused but cancelling does not cancel future bookings (Phase E).
+
+## Phase E1 status: DONE (branch feat/route-subscriptions-phase-e), NOT yet applied to live
+- Migration `0038_subscription_revoke_and_expiry.sql`: status `revoked` (+ revoked_at/by/reason), `subscription_future_bookings`, `revoke_route_subscription(sub, booking_ids, reason)`, `app_private.expire_route_subscriptions()` scheduled nightly by pg_cron when the extension is available (enable it in Supabase first, otherwise the migration only prints the command to run).
+- Revoke rule (decided with the product owner): staff see the member's upcoming bookings and choose per booking: cancel (seat freed) or keep (seat stays held, but cannot be scanned as a subscriber trip). Boarded legs cannot be cancelled. All-or-nothing validation; audited with counts only.
+- Dashboard: Revoke button on active rows opens a checklist dialog. Member: Revoked and Expired states, Renew button (re-requests the same plan).
+- Tests: SQL suite 34 (2031 pass in total), unit 1512, e2e `tests/e2e/subscription-revoke.mjs` (13 pass).
+- Not done (E2): reports (active per plan, scans per day, no-shows, revenue, return intent), platform-admin usage, expiry reminders (no sending channel exists yet), renewal before the end date.

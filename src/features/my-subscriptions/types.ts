@@ -1,4 +1,4 @@
-export type MemberStatus = 'pending' | 'active' | 'rejected' | 'cancelled' | 'expired';
+export type MemberStatus = 'pending' | 'active' | 'rejected' | 'cancelled' | 'expired' | 'revoked';
 
 export type MySubscriptionRow = {
   id: string; company_id: string; company_name: string; plan_id: string; plan_name: string; route_id: string;
@@ -6,11 +6,11 @@ export type MySubscriptionRow = {
   valid_from: string | null; valid_to: string | null; requested_at: string; masar_id: string;
 };
 export type MySubscription = {
-  id: string; companyName: string; planName: string; originName: string; destinationName: string; status: MemberStatus;
+  id: string; planId: string; companyName: string; planName: string; originName: string; destinationName: string; status: MemberStatus;
   price: number; currency: string; validFrom: string | null; validTo: string | null; requestedAt: string; masarId: string;
 };
 export const toMySubscription = (r: MySubscriptionRow): MySubscription => ({
-  id: r.id, companyName: r.company_name, planName: r.plan_name, originName: r.origin_name, destinationName: r.destination_name,
+  id: r.id, planId: r.plan_id, companyName: r.company_name, planName: r.plan_name, originName: r.origin_name, destinationName: r.destination_name,
   status: r.status, price: Number(r.price), currency: r.currency, validFrom: r.valid_from, validTo: r.valid_to, requestedAt: r.requested_at, masarId: r.masar_id,
 });
 

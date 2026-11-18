@@ -34,5 +34,9 @@ export type PlanUpdate = z.output<typeof planUpdateSchema>;
 export const decisionSchema = z.strictObject({ approve: z.boolean(), note: optionalText(500) });
 export type Decision = z.output<typeof decisionSchema>;
 
-export const subscriptionListSchema = z.strictObject({ status: z.enum(['pending', 'active', 'rejected', 'cancelled', 'expired']).optional() });
+export const subscriptionListSchema = z.strictObject({ status: z.enum(['pending', 'active', 'rejected', 'cancelled', 'expired', 'revoked']).optional() });
 export type SubscriptionListQuery = z.output<typeof subscriptionListSchema>;
+
+/** Which future bookings to cancel while revoking. Ids only: the database re-checks each one belongs to this subscription and is still cancellable. */
+export const revokeSchema = z.strictObject({ cancelBookingIds: z.array(z.string().uuid()).max(200), reason: optionalText(500) });
+export type Revoke = z.output<typeof revokeSchema>;

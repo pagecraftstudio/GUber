@@ -54,6 +54,15 @@ describe('errorText', () => {
   });
 });
 
+describe('MySubscriptionsView statuses (Phase E)', () => {
+  it('offers Renew on an expired subscription and explains a revoked one', async () => {
+    render(<MySubscriptionsView lang="en" profile={{ masarId: 'MSR-AAAA-BBBB', phone: '+20100', fullName: 'A' }} subs={[{ ...sub, status: 'expired' }, { ...sub, id: ID2, status: 'revoked' }]} bookings={{}} />);
+    expect(screen.getByRole('button', { name: 'Renew' })).toBeTruthy();
+    expect(screen.getByText(/ended by the company/)).toBeTruthy();
+    expect(screen.queryByText('Book a trip')).toBeNull();
+  });
+});
+
 describe('MySubscriptionsView', () => {
   const booking: SubscriberBooking = { bookingId: ID, reference: 'BK-1', tripId: ID2, tripLeg: 'outbound', direction: 'go', departureAt: '2026-12-02T06:00:00Z', arrivalAt: '2026-12-02T07:00:00Z', originName: 'Cairo', destinationName: 'Campus', status: 'confirmed', scanned: false } as SubscriberBooking;
   for (const lang of ['en', 'ar'] as const) {

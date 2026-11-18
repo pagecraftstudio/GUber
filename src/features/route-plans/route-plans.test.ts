@@ -9,7 +9,7 @@ import { toRoutePlan, toSubscription } from './types';
 const ID = '00000000-0000-4000-8000-000000000201';
 const base = { routeId: ID, name: 'Monthly', price: 900 };
 
-const repo = () => ({ listPlans: vi.fn(async () => []), createPlan: vi.fn(async () => ID), updatePlan: vi.fn(), archivePlan: vi.fn(), listSubscriptions: vi.fn(async () => []), decide: vi.fn() }) as unknown as RoutePlanRepository & Record<string, ReturnType<typeof vi.fn>>;
+const repo = () => ({ listPlans: vi.fn(async () => []), createPlan: vi.fn(async () => ID), updatePlan: vi.fn(), archivePlan: vi.fn(), listSubscriptions: vi.fn(async () => []), decide: vi.fn(), futureBookings: vi.fn(async () => []), revoke: vi.fn() }) as unknown as RoutePlanRepository & Record<string, ReturnType<typeof vi.fn>>;
 
 describe('planCreateSchema (mirrors route_plans_validity_shape)', () => {
   it('accepts a duration plan and a range plan', () => {
@@ -75,6 +75,26 @@ describe('route plan service authorization', () => {
     await expect(s.decide(tenantCtx(['bookings.write']), 'nope', { approve: true })).rejects.toBeInstanceOf(AppError);
     await expect(s.decide(tenantCtx(['bookings.write']), ID, { approve: 'x' })).rejects.toBeInstanceOf(AppError);
     expect(r.decide).not.toHaveBeenCalled();
+  });
+});
+
+describe('revoke (Phase E1)', () => {
+  const U1 = '00000000-0000-4000-8000-000000000301';
+  it('needs bookings.write for both the warning list and the revoke', async () => {
+    const r = repo(); const s = makeRoutePlanService(r);
+    await expect(s.futureBookings(tenantCtx(['bookings.read']), ID)).rejects.toBeInstanceOf(AppError);
+    await expect(s.revoke(tenantCtx(['bookings.read']), ID, { cancelBookingIds: [] })).rejects.toBeInstanceOf(AppError);
+    expect(r.futureBookings).not.toHaveBeenCalled(); expect(r.revoke).not.toHaveBeenCalled();
+    await s.revoke(tenantCtx(['bookings.write']), ID, { cancelBookingIds: [U1], reason: 'left' });
+    expect(r.revoke).toHaveBeenCalledWith(expect.anything(), ID, { cancelBookingIds: [U1], reason: 'left' });
+  });
+  it('validates ids and rejects extra keys (no company id from the client)', async () => {
+    const r = repo(); const s = makeRoutePlanService(r); const c = tenantCtx(['bookings.write']);
+    await expect(s.revoke(c, ID, { cancelBookingIds: ['nope'] })).rejects.toBeInstanceOf(AppError);
+    await expect(s.revoke(c, ID, { cancelBookingIds: [], companyId: ID })).rejects.toBeInstanceOf(AppError);
+    await expect(s.revoke(c, ID, { cancelBookingIds: Array(201).fill(U1) })).rejects.toBeInstanceOf(AppError);
+    await expect(s.revoke(c, 'bad', { cancelBookingIds: [] })).rejects.toBeInstanceOf(AppError);
+    expect(r.revoke).not.toHaveBeenCalled();
   });
 });
 

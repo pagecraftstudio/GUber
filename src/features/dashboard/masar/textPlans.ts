@@ -17,6 +17,8 @@ export const JP = {
     approveText: 'The subscription starts today and is recorded as paid.', rejectText: 'The member will see the request as rejected.', cancel: 'Cancel',
     all: 'All', pending: 'Pending', active: 'Active', closed: 'Closed', noRequests: 'No requests', noRequestsText: 'Requests appear here when members ask for one of your plans.',
     countPending: (n: string) => `${n} waiting for a decision`, decided: 'Decided', saved: 'Saved',
+    revoke: 'Revoke', revokeTitle: 'Revoke this subscription?', revokeText: 'The member can no longer scan or book with it. Choose what happens to the trips already booked.', loadingTrips: 'Loading booked trips', loadFailed: 'Could not load the booked trips. Close and try again.', noFuture: 'No upcoming booked trips.',
+    selectAll: 'Select all', selectNone: 'Select none', cancelChosen: (n: string) => `${n} will be cancelled and their seats freed`, keepNote: 'Trips left unticked stay booked and keep their seat, but cannot be used as subscriber trips.', cannotCancel: 'Already boarded or closed', reason: 'Reason (optional)', confirmRevoke: 'Revoke subscription', go: 'Go', ret: 'Return',
   },
   ar: {
     plans: 'باقات الاشتراك', plansText: 'باقات يطلبها الأعضاء لمسار معين. الباقة الواحدة تشمل المسار ومسار العودة: مسح للذهاب ومسح للعودة في اليوم.',
@@ -32,5 +34,7 @@ export const JP = {
     approveText: 'يبدأ الاشتراك اليوم ويُسجَّل كمدفوع.', rejectText: 'سيرى العضو أن الطلب مرفوض.', cancel: 'إلغاء',
     all: 'الكل', pending: 'قيد المراجعة', active: 'فعّالة', closed: 'المغلقة', noRequests: 'لا توجد طلبات', noRequestsText: 'تظهر الطلبات هنا عندما يطلب الأعضاء إحدى باقاتك.',
     countPending: (n: string) => `${n} بانتظار القرار`, decided: 'تم القرار', saved: 'تم الحفظ',
+    revoke: 'إنهاء الاشتراك', revokeTitle: 'إنهاء هذا الاشتراك؟', revokeText: 'لن يتمكن العضو من المسح أو الحجز به بعد الآن. اختر ما يحدث للرحلات المحجوزة مسبقاً.', loadingTrips: 'جارٍ تحميل الرحلات المحجوزة', loadFailed: 'تعذر تحميل الرحلات المحجوزة. أغلق وحاول مرة أخرى.', noFuture: 'لا توجد رحلات قادمة محجوزة.',
+    selectAll: 'تحديد الكل', selectNone: 'إلغاء التحديد', cancelChosen: (n: string) => `سيتم إلغاء ${n} وتحرير مقاعدها`, keepNote: 'الرحلات غير المحددة تبقى محجوزة وتحتفظ بمقعدها، لكن لا يمكن استخدامها كرحلات اشتراك.', cannotCancel: 'صعد بالفعل أو أُغلقت الرحلة', reason: 'السبب (اختياري)', confirmRevoke: 'إنهاء الاشتراك', go: 'ذهاب', ret: 'عودة',
   },
 } as const;

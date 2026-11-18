@@ -6,7 +6,7 @@ import { formatDateTime, formatDay, formatMoney } from '@/ds/format';
 import { Button } from '@/ds/primitives/Button';
 import { buttonClass } from '@/ds/primitives/button-class';
 import { controlClass } from '@/ds/primitives/Input';
-import { cancelSubscriberBookingAction, cancelSubscriptionAction, savePhoneAction } from '../actions';
+import { cancelSubscriberBookingAction, cancelSubscriptionAction, requestPlanAction, savePhoneAction } from '../actions';
 import type { MemberProfile, MySubscription, SubscriberBooking } from '../types';
 import { MT } from './text';
 import { useMemberAction } from './useMemberAction';
@@ -84,6 +84,8 @@ function SubscriptionCard({ lang, s, bookings }: { lang: 'en' | 'ar'; s: MySubsc
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {s.status === 'active' ? <Link href={`/my-subscriptions/${s.id}/book`} className={buttonClass('primary', 'md')}>{t.book}</Link> : null}
+        {s.status === 'expired' ? <Button disabled={pending} onClick={() => run(() => requestPlanAction(s.planId))}>{t.renew}</Button> : null}
+        {s.status === 'revoked' ? <p className="text-sm text-ink-secondary">{t.revokedText}</p> : null}
         {open ? <Button variant="secondary" disabled={pending} onClick={() => run(() => cancelSubscriptionAction(s.id))}>{s.status === 'pending' ? t.cancel : t.cancelSub}</Button> : null}
       </div>
       <Err text={error} />
