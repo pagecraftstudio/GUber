@@ -75,3 +75,10 @@ Entitlement `max_route_plans` (starter 3, professional 20, enterprise unlimited)
 - Pages: `/my-subscriptions`, `/my-subscriptions/plans`, `/my-subscriptions/[id]/book`; link added on `/my-bookings`.
 - Tests: SQL suite 32 (1975 pass total), 14 unit tests, e2e `tests/e2e/member-subscriptions.mjs` (17 pass).
 - Known gaps: Arabic text is a draft; trip times show in the browser timezone; a member needs a profile phone before requesting; staff revoke (E); rotating QR scan token (D).
+
+## Phase D status: DONE (branch feat/route-subscriptions-phase-d), NOT yet applied to live
+- Design change vs. the plan: no separate member token. A subscriber booking already has a ticket whose QR rotates (my_ticket_qr). Migration `0037_subscription_scan_boarding.sql` makes board_ticket also record the daily scan, and makes the MASAR ID fallback (scan_route_subscription) board the ticket under the same window, rate limit and locks.
+- Fixed a bug found by tests: a member with two active plans of one company could be matched to the wrong one on a MASAR scan.
+- Driver app: subscriber name and direction on success; MASAR ID accepted in the manual field; new messages (subscription not active, already scanned, no subscription, no booking).
+- Tests: SQL suite 33 (2001 pass in total), unit 1504, e2e `tests/e2e/subscription-boarding.mjs` (15 pass). Suites 30 and 32 adapted: scanning now needs a trip inside the boarding window.
+- Gaps: no staff screen for the MASAR scan (only the driver page); a scan on a trip whose subscription was cancelled is refused but cancelling does not cancel future bookings (Phase E).

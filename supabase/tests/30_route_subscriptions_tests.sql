@@ -163,14 +163,29 @@ select t.eq('return full: refused as a whole', left(t.err_of(format($$select pub
 select t.as_admin();
 select t.eq('cancel: precondition, two confirmed legs', (select count(*) from bookings where subscription_id = (select term from sub_ids) and trip_id in (t.u(3001), t.u(3011)) and status = 'confirmed'), 2::bigint);
 
+-- ============ scan fixtures (0037: a scan boards the ticket, so the trip must be inside the boarding window) ============
+-- Booking needs a trip far enough ahead, so the pair is booked in the future and then moved next to "now" by the admin.
+select t.as_admin();
+insert into trips (id, company_id, route_id, bus_id, driver_id, departure_at, arrival_at, price, capacity, status) values
+  (t.u(3021), t.u(101), t.sub_route('Sub-Go'),          t.u(3031), t.u(3041), date_trunc('day', now()) + interval '72 day 6 hours',  date_trunc('day', now()) + interval '72 day 7 hours',  50, 5, 'scheduled'),
+  (t.u(3022), t.u(101), t.sub_route('Sub-Go (return)'), t.u(3031), t.u(3041), date_trunc('day', now()) + interval '72 day 12 hours', date_trunc('day', now()) + interval '72 day 13 hours', 50, 5, 'scheduled'),
+  (t.u(3024), t.u(101), t.sub_route('Sub-Go (return)'), t.u(3032), t.u(3042), now() + interval '100 minutes', now() + interval '130 minutes', 50, 5, 'scheduled');
+select t.as_user(t.u(3001));
+select public.create_my_subscriber_booking((select term from sub_ids), t.u(3021), t.u(3022));
+select t.as_admin();
+update trips set departure_at = now() + interval '10 minutes', arrival_at = now() + interval '40 minutes' where id = t.u(3021);
+update trips set departure_at = now() + interval '90 minutes', arrival_at = now() + interval '150 minutes' where id = t.u(3022);
+-- tomorrow's go trip (already booked above as 3002): boarding already open, so the next-day scan can be tested
+update trips set departure_at = now() + interval '1 day 10 minutes', arrival_at = now() + interval '1 day 40 minutes', status = 'boarding' where id = t.u(3002);
+
 -- ============ scan ============
 select t.as_user(t.u(5));
-select t.eq('scan: no booking on that trip refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3012))), 'P0002|no booking for this trip');
-select t.eq('scan: unknown MASAR ID refused', t.err_of(format($$select public.scan_route_subscription('MSR-ZZZZ-ZZZZ', %L)$$, t.u(3001))), 'P0002|no valid subscription');
-select t.eq('scan: go direction recorded', (select public.scan_route_subscription(lower(t.masar(t.u(3001))), t.u(3001)))->>'direction', 'go');
-select t.eq('scan: a second go scan the same day refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3001))), '23505|already scanned for this direction today');
-select t.eq('scan: return direction recorded', (select public.scan_route_subscription(t.masar(t.u(3001)), t.u(3011)))->>'direction', 'return');
-select t.eq('scan: a third scan the same day refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3011))), '23505|already scanned for this direction today');
+select t.eq('scan: no booking on that trip refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3024))), 'P0002|no booking for this trip');
+select t.eq('scan: unknown MASAR ID refused', t.err_of(format($$select public.scan_route_subscription('MSR-ZZZZ-ZZZZ', %L)$$, t.u(3021))), 'P0002|no valid subscription');
+select t.eq('scan: go direction recorded', (select public.scan_route_subscription(lower(t.masar(t.u(3001))), t.u(3021)))->>'direction', 'go');
+select t.eq('scan: a second go scan the same day refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3021))), '23505|already scanned for this direction today');
+select t.eq('scan: return direction recorded', (select public.scan_route_subscription(t.masar(t.u(3001)), t.u(3022)))->>'direction', 'return');
+select t.eq('scan: a third scan the same day refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3022))), '23505|already scanned for this direction today');
 select t.as_admin();
 select t.eq('scan: exactly two scan rows, one per direction', (select string_agg(direction, ',' order by direction) from route_subscription_scans), 'go,return');
 select t.eq('scan: audited', (select count(*) from audit_logs where action = 'route_subscription.scanned'), 2::bigint);
@@ -202,7 +217,7 @@ select t.eq('cancel: both seats released', t.seats(t.u(3001)) + t.seats(t.u(3011
 select t.as_admin();
 update route_subscriptions set valid_from = current_date - 40, valid_to = current_date - 10 where id = (select term from sub_ids);
 select t.as_user(t.u(5));
-select t.eq('expired: scan refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3001))), 'P0002|no valid subscription');
+select t.eq('expired: scan refused', t.err_of(format($$select public.scan_route_subscription(%L, %L)$$, t.masar(t.u(3001)), t.u(3021))), 'P0002|no valid subscription');
 select t.as_user(t.u(3001));
 select t.eq('expired: renewal request lapses the old row and is accepted', (select count(*) from (select public.request_route_subscription(t.plan_id('Term'))) q), 1::bigint);
 select t.as_admin();
