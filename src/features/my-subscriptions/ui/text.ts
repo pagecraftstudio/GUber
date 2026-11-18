@@ -2,14 +2,14 @@
 const ERR_EN: Record<string, string> = {
   already_booked_day: 'You already have a seat on this route for that day', subscription_open: 'You already have an open request or an active subscription for this plan',
   subscription_not_valid_on_date: 'Your subscription is not valid on that date', profile_phone_required: 'Add a valid phone number first', trip_full: 'This trip has no seats left',
-  phone_taken_in_company: 'This phone number is already used by another account of this company', plan_period_ended: 'This plan has ended', subscription_not_open: 'This subscription can no longer be changed',
+  phone_taken_in_company: 'This phone number is already used by another account of this company', plan_period_ended: 'This plan has ended', subscription_not_open: 'This subscription can no longer be changed', subscription_not_active: 'This subscription is no longer active',
   rate_limited: 'Too many attempts. Try again in a minute', not_found: 'We could not find that. Refresh the page and try again', invalid_phone: 'Enter a valid phone number',
   validation: 'Check the details and try again', forbidden: 'You cannot do that', unauthenticated: 'Sign in again to continue', trip_not_bookable: 'This trip is not open for booking', trip_departed: 'This trip has already left',
 };
 const ERR_AR: Record<string, string> = {
   already_booked_day: 'لديك مقعد بالفعل على هذا المسار في ذلك اليوم', subscription_open: 'لديك طلب مفتوح أو اشتراك فعّال لهذه الباقة', subscription_not_valid_on_date: 'اشتراكك غير صالح في هذا التاريخ',
   profile_phone_required: 'أضف رقم هاتف صالحاً أولاً', trip_full: 'لا توجد مقاعد متاحة في هذه الرحلة', phone_taken_in_company: 'رقم الهاتف مستخدم في حساب آخر لدى هذه الشركة',
-  plan_period_ended: 'انتهت فترة هذه الباقة', subscription_not_open: 'لا يمكن تعديل هذا الاشتراك بعد الآن', rate_limited: 'محاولات كثيرة. حاول بعد دقيقة',
+  plan_period_ended: 'انتهت فترة هذه الباقة', subscription_not_open: 'لا يمكن تعديل هذا الاشتراك بعد الآن', subscription_not_active: 'هذا الاشتراك لم يعد فعّالاً', rate_limited: 'محاولات كثيرة. حاول بعد دقيقة',
   not_found: 'لم نجد ما طلبته. حدّث الصفحة وحاول مرة أخرى', invalid_phone: 'أدخل رقم هاتف صالحاً', validation: 'راجع البيانات وحاول مرة أخرى', forbidden: 'لا يمكنك تنفيذ ذلك',
   unauthenticated: 'سجّل الدخول مرة أخرى للمتابعة', trip_not_bookable: 'هذه الرحلة غير متاحة للحجز', trip_departed: 'غادرت هذه الرحلة بالفعل',
 };
@@ -28,6 +28,7 @@ export const MT = {
     pendingText: 'Waiting for the company to approve it', validity: (a: string, b: string) => `Valid ${a} to ${b}`, cancel: 'Cancel request', cancelSub: 'Cancel subscription',
     book: 'Book a trip', upcoming: 'Upcoming trips', noTrips: 'No upcoming trips', go: 'Go', ret: 'Return', scanned: 'Scanned', subscriber: 'Subscriber', cancelTrip: 'Cancel trip',
     cancelTripNote: 'Cancelling one trip of a round trip cancels both.',
+    renew: 'Renew', revokedText: 'This subscription was ended by the company. Contact them or request a new one.',
     plansTitle: 'Subscription plans', plansText: 'Choose a plan, then the company approves it. One plan gives you one go and one return scan a day.',
     noPlans: 'No plans available', noPlansText: 'Companies have not published subscription plans yet.', request: 'Request this plan', requested: 'Request sent',
     months: (n: string, unit: string) => `${n} ${unit} from approval`, monthsOne: 'month', monthsMany: 'months', range: (a: string, b: string) => `${a} to ${b}`, signInHint: 'Sign in to request a plan',
@@ -45,6 +46,7 @@ export const MT = {
     pendingText: 'بانتظار موافقة الشركة', validity: (a: string, b: string) => `صالح من ${a} إلى ${b}`, cancel: 'إلغاء الطلب', cancelSub: 'إلغاء الاشتراك',
     book: 'احجز رحلة', upcoming: 'الرحلات القادمة', noTrips: 'لا توجد رحلات قادمة', go: 'ذهاب', ret: 'عودة', scanned: 'تم المسح', subscriber: 'مشترك', cancelTrip: 'إلغاء الرحلة',
     cancelTripNote: 'إلغاء إحدى رحلتي الذهاب والعودة يلغي الاثنتين.',
+    renew: 'تجديد', revokedText: 'أنهت الشركة هذا الاشتراك. تواصل معها أو اطلب اشتراكاً جديداً.',
     plansTitle: 'باقات الاشتراك', plansText: 'اختر باقة ثم توافق عليها الشركة. الباقة تمنحك مسحاً واحداً للذهاب وآخر للعودة يومياً.',
     noPlans: 'لا توجد باقات متاحة', noPlansText: 'لم تنشر الشركات باقات اشتراك بعد.', request: 'اطلب هذه الباقة', requested: 'تم إرسال الطلب',
     months: (n: string, unit: string) => `${n} ${unit} من تاريخ الموافقة`, monthsOne: 'شهر', monthsMany: 'أشهر', range: (a: string, b: string) => `من ${a} إلى ${b}`, signInHint: 'سجّل الدخول لطلب باقة',

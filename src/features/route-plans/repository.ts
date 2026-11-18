@@ -1,8 +1,8 @@
 import { expectList } from '@/lib/db/query';
 import { mapDbError } from '@/lib/db/map-error';
 import type { TenantServiceContext } from '@/lib/service/context';
-import type { Decision, PlanCreate, PlanUpdate, SubscriptionListQuery } from './schema';
-import { PLAN_SELECT, SUBSCRIPTION_SELECT, toRoutePlan, toSubscription, type RoutePlan, type RoutePlanRow, type RouteSubscription, type SubscriptionRow } from './types';
+import type { Decision, PlanCreate, PlanUpdate, Revoke, SubscriptionListQuery } from './schema';
+import { toFutureBooking, type FutureBooking, type FutureBookingRow, PLAN_SELECT, SUBSCRIPTION_SELECT, toRoutePlan, toSubscription, type RoutePlan, type RoutePlanRow, type RouteSubscription, type SubscriptionRow } from './types';
 
 export type RoutePlanRepository = {
   listPlans(ctx: TenantServiceContext): Promise<RoutePlan[]>;
@@ -11,6 +11,8 @@ export type RoutePlanRepository = {
   archivePlan(ctx: TenantServiceContext, id: string): Promise<void>;
   listSubscriptions(ctx: TenantServiceContext, q: SubscriptionListQuery): Promise<RouteSubscription[]>;
   decide(ctx: TenantServiceContext, id: string, d: Decision): Promise<void>;
+  futureBookings(ctx: TenantServiceContext, id: string): Promise<FutureBooking[]>;
+  revoke(ctx: TenantServiceContext, id: string, r: Revoke): Promise<void>;
 };
 
 const LIMIT = 200; // a company's inbox is bounded on purpose; filter by status to see the rest
@@ -52,6 +54,17 @@ export const routePlanRepository: RoutePlanRepository = {
 
   async decide(ctx, id, d) {
     const { error } = await ctx.db.rpc('decide_route_subscription', { p_id: id, p_approve: d.approve, p_note: d.note ?? null });
+    if (error) throw mapDbError(error);
+  },
+
+  async futureBookings(ctx, id) {
+    const { data, error } = await ctx.db.rpc('subscription_future_bookings', { p_subscription_id: id });
+    if (error) throw mapDbError(error);
+    return ((data ?? []) as FutureBookingRow[]).map(toFutureBooking);
+  },
+
+  async revoke(ctx, id, r) {
+    const { error } = await ctx.db.rpc('revoke_route_subscription', { p_subscription_id: id, p_cancel_booking_ids: r.cancelBookingIds, p_reason: r.reason ?? null });
     if (error) throw mapDbError(error);
   },
 };

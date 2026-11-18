@@ -6,6 +6,8 @@ import type { FormState } from '@/features/dashboard/form-state';
 import type { AutoResult } from '@/features/dashboard/autosave-actions';
 
 export const EXTRA: Record<string, { en: string; ar: string }> = {
+  subscription_not_active: { en: 'This subscription is no longer active.', ar: 'هذا الاشتراك لم يعد فعّالاً.' },
+  revoke_booking_not_cancellable: { en: 'One of the selected bookings can no longer be cancelled. Reload and try again.', ar: 'لم يعد ممكناً إلغاء أحد الحجوزات المحددة. أعد التحميل وحاول مرة أخرى.' },
   amount_exceeds_total: { en: 'More than the booking total.', ar: 'أكثر من إجمالي الحجز.' },
   amount_invalid: { en: 'Enter a valid amount.', ar: 'أدخل مبلغاً صحيحاً.' },
   booking_not_cancellable: { en: 'Cancelled booking: use refund.', ar: 'حجز ملغي: استخدم الاسترداد.' },

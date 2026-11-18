@@ -10,7 +10,11 @@ import type { RoutePlan, RouteSubscription } from '@/features/route-plans/types'
 const decide = vi.fn(async (_id: string, _a: boolean, _n?: string) => ({ ok: true as const }));
 const setActive = vi.fn(async (_id: string, _n: string, _p: number, _on: boolean) => ({ ok: true as const }));
 const archive = vi.fn(async (_id: string) => ({ ok: true as const }));
+const loadBookings = vi.fn();
+const revoke = vi.fn(async (_id: string, _ids: string[], _r?: string) => ({ ok: true as const }));
 vi.mock('../autosave-actions', () => ({
+  loadSubscriptionBookingsAction: (id: string) => loadBookings(id),
+  revokeSubscriptionAction: (id: string, ids: string[], r?: string) => revoke(id, ids, r),
   decideSubscriptionAction: (id: string, a: boolean, n?: string) => decide(id, a, n),
   setPlanActiveAction: (id: string, n: string, p: number, on: boolean) => setActive(id, n, p, on),
   archivePlanAction: (id: string) => archive(id),
@@ -99,5 +103,50 @@ describe('requests view', () => {
     render(wrap('ar', <SubscriptionsMasarView rows={[]} filter="pending" canDecide />));
     expect(screen.getAllByText('طلبات الاشتراك').length).toBeGreaterThan(0);
     expect(screen.getAllByText('لا توجد طلبات').length).toBeGreaterThan(0);
+  });
+});
+
+describe('RevokeCell (Phase E1)', () => {
+  const fb = (id: string, canCancel: boolean, direction: 'go' | 'return' = 'go') => ({ bookingId: id, reference: `BK-${id}`, direction, departureAt: '2026-12-02T06:00:00Z', originName: 'Cairo', destinationName: 'Galala', canCancel });
+  const mount = (lang: 'en' | 'ar' = 'en') => render(<DsLangProvider value={lang}><SubscriptionsMasarView rows={[sub({ status: 'active', validFrom: '2026-11-01', validTo: '2026-12-01' })]} filter="active" canDecide /></DsLangProvider>);
+
+  it('lists the upcoming bookings, locks the boarded one, and sends only the ticked ids', async () => {
+    loadBookings.mockResolvedValue({ ok: true, data: [fb('a', true), fb('b', true, 'return'), fb('c', false)] });
+    mount();
+    await userEvent.click(tb().getByRole('button', { name: 'Revoke Mona Ali' }));
+    const dlg = within(document.querySelector('table dialog') as HTMLElement);
+    expect(await dlg.findByText('BK-a')).toBeTruthy();
+    const box = (ref: string) => dlg.getByLabelText(new RegExp(ref)) as HTMLInputElement;
+    expect(box('BK-a').checked).toBe(true);
+    expect(box('BK-c').disabled).toBe(true);
+    expect(box('BK-c').checked).toBe(false);
+    await userEvent.click(box('BK-b'));                        // keep this one
+    expect(dlg.getByText(/1 will be cancelled/)).toBeTruthy();
+    await userEvent.type(dlg.getByLabelText('Reason (optional)'), 'left');
+    await userEvent.click(dlg.getByRole('button', { name: 'Revoke subscription' }));
+    await waitFor(() => expect(revoke).toHaveBeenCalledWith('s1', ['a'], 'left'));
+  });
+  it('select none sends an empty list; nothing upcoming still allows the revoke', async () => {
+    loadBookings.mockResolvedValue({ ok: true, data: [] });
+    mount();
+    await userEvent.click(tb().getByRole('button', { name: 'Revoke Mona Ali' }));
+    const dlg = within(document.querySelector('table dialog') as HTMLElement);
+    expect(await dlg.findByText('No upcoming booked trips.')).toBeTruthy();
+    await userEvent.click(dlg.getByRole('button', { name: 'Revoke subscription' }));
+    await waitFor(() => expect(revoke).toHaveBeenCalledWith('s1', [], ''));
+  });
+  it('a failed load disables the revoke button', async () => {
+    loadBookings.mockResolvedValue({ ok: false, code: 'not_found' });
+    mount();
+    await userEvent.click(tb().getByRole('button', { name: 'Revoke Mona Ali' }));
+    const dlg = within(document.querySelector('table dialog') as HTMLElement);
+    expect(await dlg.findByRole('alert')).toBeTruthy();
+    expect((dlg.getByRole('button', { name: 'Revoke subscription' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it('shows Revoke only on active rows and has no serious a11y violations in Arabic', async () => {
+    loadBookings.mockResolvedValue({ ok: true, data: [fb('a', true)] });
+    const { container } = mount('ar');
+    expect(tb().getAllByRole('button', { name: /إنهاء الاشتراك/ }).length).toBe(1);
+    expect(await bad(container)).toEqual([]);
   });
 });

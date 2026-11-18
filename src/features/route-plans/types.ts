@@ -1,5 +1,5 @@
 export type ValidityType = 'duration' | 'range';
-export type SubscriptionStatus = 'pending' | 'active' | 'rejected' | 'cancelled' | 'expired';
+export type SubscriptionStatus = 'pending' | 'active' | 'rejected' | 'cancelled' | 'expired' | 'revoked';
 
 export type RoutePlanRow = {
   id: string;
@@ -103,4 +103,17 @@ export const toSubscription = (r: SubscriptionRow): RouteSubscription => ({
   requestedAt: r.requested_at,
   decidedAt: r.decided_at,
   decisionNote: r.decision_note,
+});
+
+/** A future subscriber booking shown to staff before they revoke (subscription_future_bookings). */
+export type FutureBookingRow = {
+  booking_id: string; reference: string; trip_id: string; trip_leg: string | null; direction: 'go' | 'return'; departure_at: string; arrival_at: string;
+  origin_name: string; destination_name: string; status: string; can_cancel: boolean;
+};
+export type FutureBooking = {
+  bookingId: string; reference: string; direction: 'go' | 'return'; departureAt: string; originName: string; destinationName: string; canCancel: boolean;
+};
+export const toFutureBooking = (r: FutureBookingRow): FutureBooking => ({
+  bookingId: r.booking_id, reference: r.reference, direction: r.direction, departureAt: r.departure_at,
+  originName: r.origin_name, destinationName: r.destination_name, canCancel: r.can_cancel,
 });
