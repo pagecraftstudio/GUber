@@ -66,6 +66,15 @@ const RULES: Rule[] = [
   { match: /cannot change your own (role|status)/, code: 'business_rule', detail: 'cannot_change_self' },
   // route stops (0024)
   { match: /route stop has bookings/, code: 'business_rule', detail: 'stop_has_bookings' },
+  // route subscriptions (0034): member side messages
+  { match: /already booked for this day/, code: 'conflict', detail: 'already_booked_day' },
+  { match: /you already have an open request or active subscription/, code: 'conflict', detail: 'subscription_open' },
+  { match: /subscription is not valid on that date/, code: 'business_rule', detail: 'subscription_not_valid_on_date' },
+  { match: /a valid phone number is required on your profile/, code: 'validation', detail: 'profile_phone_required' },
+  { match: /phone already registered for this company/, code: 'conflict', detail: 'phone_taken_in_company' },
+  { match: /plan period already ended/, code: 'business_rule', detail: 'plan_period_ended' },
+  { match: /only a pending request can be decided/, code: 'business_rule', detail: 'request_not_pending' },
+  { match: /subscription is not open/, code: 'business_rule', detail: 'subscription_not_open' },
   // booking RPCs (0010)
   { match: /invalid phone number/, code: 'validation', detail: 'invalid_phone', fields: { phone: 'invalid_phone' } },
   { match: /idempotency key reused/, code: 'conflict', detail: 'idempotency_conflict' },

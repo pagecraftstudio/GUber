@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { UiRoot } from '@/ui/UiRoot';
 import { requireCustomer } from '@/lib/auth/guards';
 
@@ -9,5 +10,10 @@ export const metadata = { title: 'My bookings', robots: { index: false, follow: 
  */
 export default async function MyBookingsPage() {
   await requireCustomer();
-  return <UiRoot initialView="customer" />;
+  return (
+    <>
+      <div className="flex justify-end bg-surface-card px-4 py-2 text-sm"><Link href="/my-subscriptions" className="font-medium underline">My subscriptions</Link></div>
+      <UiRoot initialView="customer" />
+    </>
+  );
 }
