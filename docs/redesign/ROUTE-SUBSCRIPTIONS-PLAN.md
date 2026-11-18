@@ -69,3 +69,9 @@ Entitlement `max_route_plans` (starter 3, professional 20, enterprise unlimited)
 - Branch per phase, small commits, end commit messages with the attribution lines from the session.
 - Local test run: `tests/run-all-local.sh` (Postgres 16 + PostgREST) and `npx vitest run src`; do not claim live validation.
 - Never expose service-role keys; derive company from rows or membership, never from client input.
+
+## Phase C status: DONE (branch feat/route-subscriptions-phase-c)
+- Migration `0036_member_subscription_reads.sql` (4 read RPCs, authenticated only). **Apply to live before deploying the code.**
+- Pages: `/my-subscriptions`, `/my-subscriptions/plans`, `/my-subscriptions/[id]/book`; link added on `/my-bookings`.
+- Tests: SQL suite 32 (1975 pass total), 14 unit tests, e2e `tests/e2e/member-subscriptions.mjs` (17 pass).
+- Known gaps: Arabic text is a draft; trip times show in the browser timezone; a member needs a profile phone before requesting; staff revoke (E); rotating QR scan token (D).
