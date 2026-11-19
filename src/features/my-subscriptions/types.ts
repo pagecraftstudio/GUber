@@ -8,10 +8,12 @@ export type MySubscriptionRow = {
 export type MySubscription = {
   id: string; planId: string; companyName: string; planName: string; originName: string; destinationName: string; status: MemberStatus;
   price: number; currency: string; validFrom: string | null; validTo: string | null; requestedAt: string; masarId: string;
+  /** IANA zone of the company, so trip times show as the company's clock reads. */
+  timeZone: string;
 };
-export const toMySubscription = (r: MySubscriptionRow): MySubscription => ({
+export const toMySubscription = (r: MySubscriptionRow, timeZone = 'Africa/Cairo'): MySubscription => ({
   id: r.id, planId: r.plan_id, companyName: r.company_name, planName: r.plan_name, originName: r.origin_name, destinationName: r.destination_name,
-  status: r.status, price: Number(r.price), currency: r.currency, validFrom: r.valid_from, validTo: r.valid_to, requestedAt: r.requested_at, masarId: r.masar_id,
+  status: r.status, price: Number(r.price), currency: r.currency, validFrom: r.valid_from, validTo: r.valid_to, requestedAt: r.requested_at, masarId: r.masar_id, timeZone,
 });
 
 export type PublicPlanRow = {

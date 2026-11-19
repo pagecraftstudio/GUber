@@ -45,7 +45,7 @@ function PhoneForm({ lang }: { lang: 'en' | 'ar' }) {
   );
 }
 
-function TripRow({ lang, b }: { lang: 'en' | 'ar'; b: SubscriberBooking }) {
+function TripRow({ lang, b, timeZone }: { lang: 'en' | 'ar'; b: SubscriberBooking; timeZone: string }) {
   const t = MT[lang];
   const { pending, error, run } = useMemberAction(lang);
   return (
@@ -56,7 +56,7 @@ function TripRow({ lang, b }: { lang: 'en' | 'ar'; b: SubscriberBooking }) {
           {b.originName} → {b.destinationName}
           {b.scanned ? <span className="ms-2 text-[12px] text-status-success-fg">{t.scanned}</span> : null}
         </p>
-        <p className="text-[13px] text-ink-secondary"><span dir="ltr">{formatDateTime(b.departureAt, lang)}</span> · <span dir="ltr">{b.reference}</span></p>
+        <p className="text-[13px] text-ink-secondary"><span dir="ltr">{formatDateTime(b.departureAt, lang, { timeZone })}</span> · <span dir="ltr">{b.reference}</span></p>
         <Err text={error} />
       </div>
       {!b.scanned ? <Button variant="ghost" disabled={pending} onClick={() => run(() => cancelSubscriberBookingAction(b.bookingId))} aria-label={`${t.cancelTrip} ${b.reference}`} className="!h-8 !px-2 text-[13px]">{t.cancelTrip}</Button> : null}
@@ -93,7 +93,7 @@ function SubscriptionCard({ lang, s, bookings }: { lang: 'en' | 'ar'; s: MySubsc
         <div className="mt-4">
           <h4 className="text-sm font-medium">{t.upcoming}</h4>
           {bookings.length === 0 ? <p className="mt-1 text-sm text-ink-secondary">{t.noTrips}</p> : (<>
-            <ul className="mt-1">{bookings.map((b) => <TripRow key={b.bookingId} lang={lang} b={b} />)}</ul>
+            <ul className="mt-1">{bookings.map((b) => <TripRow key={b.bookingId} lang={lang} b={b} timeZone={s.timeZone} />)}</ul>
             <p className="mt-1 text-[12px] text-ink-muted">{t.cancelTripNote}</p>
           </>)}
         </div>

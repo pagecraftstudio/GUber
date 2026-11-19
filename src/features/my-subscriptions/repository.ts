@@ -31,7 +31,9 @@ export const memberSubscriptionRepository = {
     return (await rows<PublicPlanRow>(db.rpc('public_route_plans', { p_company_id: null }))).map(toPublicPlan);
   },
   async mine({ db }: MemberDb): Promise<MySubscription[]> {
-    return (await rows<MySubscriptionRow>(db.rpc('my_route_subscriptions'))).map(toMySubscription);
+    const [subs, zones] = await Promise.all([rows<MySubscriptionRow>(db.rpc('my_route_subscriptions')), rows<{ subscription_id: string; timezone: string }>(db.rpc('my_subscription_timezones'))]);
+    const zoneOf = new Map(zones.map((z) => [z.subscription_id, z.timezone]));
+    return subs.map((s) => toMySubscription(s, zoneOf.get(s.id)));
   },
   async request({ db }: MemberDb, planId: string): Promise<string> {
     const { data, error } = await db.rpc('request_route_subscription', { p_plan_id: planId });

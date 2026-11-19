@@ -10,7 +10,7 @@ beforeAll(polyfillDialog);
 afterEach(cleanup);
 
 const props = {
-  from: '2026-11-01', to: '2026-11-30',
+  from: '2026-11-01', to: '2026-11-30', timeZone: 'Africa/Cairo',
   plans: [{ planId: 'p1', planName: 'Monthly', routeName: 'Campus', isActive: true, activeNow: 4, pendingNow: 1, newInRange: 5, revenue: 4500, currency: 'EGP' }],
   days: [{ day: '2026-11-10', goScans: 3, returnScans: 2, goBooked: 4, returnBooked: 3, noShows: 2 }],
   demand: [{ tripId: 't1', routeName: 'Campus', departureAt: '2026-11-20T06:30:00Z', capacity: 40, seatsAvailable: 30, subscriberSeats: 6, returnIntent: 4 }],

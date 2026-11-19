@@ -15,6 +15,6 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
   const subs = await memberSubscriptionService.mine({ db: await createClient(), userId: auth.userId });
   const sub = subs.find((s) => s.id === id && s.status === 'active');
   if (!sub) notFound();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: sub.timeZone }).format(new Date()) // company-local day, YYYY-MM-DD;
   return <BookScreen sub={sub} today={today} />;
 }
