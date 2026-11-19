@@ -2,8 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { mapDbError } from '@/lib/db/map-error';
 import type { BookInput } from './schema';
 import {
-  toMySubscription, toPublicPlan, toSubscriberBooking, toTripOption,
-  type DayState, type MemberProfile, type MySubscription, type MySubscriptionRow, type PublicPlan, type PublicPlanRow, type SubscriberBooking,
+  toMemberNotice, toMySubscription, toPublicPlan, toSubscriberBooking, toTripOption,
+  type DayState, type MemberNotice, type MemberNoticeRow, type MemberProfile, type MySubscription, type MySubscriptionRow, type PublicPlan, type PublicPlanRow, type SubscriberBooking,
   type SubscriberBookingRow, type TripOption, type TripOptionRow,
 } from './types';
 
@@ -31,9 +31,17 @@ export const memberSubscriptionRepository = {
     return (await rows<PublicPlanRow>(db.rpc('public_route_plans', { p_company_id: null }))).map(toPublicPlan);
   },
   async mine({ db }: MemberDb): Promise<MySubscription[]> {
-    const [subs, zones] = await Promise.all([rows<MySubscriptionRow>(db.rpc('my_route_subscriptions')), rows<{ subscription_id: string; timezone: string }>(db.rpc('my_subscription_timezones'))]);
+    const [subs, zones, renewable] = await Promise.all([rows<MySubscriptionRow>(db.rpc('my_route_subscriptions')), rows<{ subscription_id: string; timezone: string }>(db.rpc('my_subscription_timezones')), rows<{ subscription_id: string }>(db.rpc('my_renewable_subscriptions'))]);
+    const canRenew = new Set(renewable.map((r) => r.subscription_id));
     const zoneOf = new Map(zones.map((z) => [z.subscription_id, z.timezone]));
-    return subs.map((s) => toMySubscription(s, zoneOf.get(s.id)));
+    return subs.map((s) => toMySubscription(s, zoneOf.get(s.id), canRenew.has(s.id)));
+  },
+  async notices({ db }: MemberDb): Promise<MemberNotice[]> {
+    return (await rows<MemberNoticeRow>(db.rpc('my_notices', { p_limit: 20 }))).map(toMemberNotice);
+  },
+  async markNoticesRead({ db }: MemberDb): Promise<void> {
+    const { error } = await db.rpc('mark_my_notices_read');
+    if (error) throw mapDbError(error);
   },
   async request({ db }: MemberDb, planId: string): Promise<string> {
     const { data, error } = await db.rpc('request_route_subscription', { p_plan_id: planId });

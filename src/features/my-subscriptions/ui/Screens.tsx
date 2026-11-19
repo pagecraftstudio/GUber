@@ -1,12 +1,12 @@
 'use client';
-import type { MemberProfile, MySubscription, PublicPlan, SubscriberBooking } from '../types';
+import type { MemberNotice, MemberProfile, MySubscription, PublicPlan, SubscriberBooking } from '../types';
 import { BookView } from './BookView';
 import { MemberShell } from './MemberShell';
 import { MySubscriptionsView } from './MySubscriptionsView';
 import { PlansView } from './PlansView';
 
 /** Client wrappers: a server page can only pass serialisable props, so the language-aware render function lives here. */
-export const MySubscriptionsScreen = (p: { profile: MemberProfile; subs: MySubscription[]; bookings: Record<string, SubscriberBooking[]> }) => (
+export const MySubscriptionsScreen = (p: { profile: MemberProfile; subs: MySubscription[]; bookings: Record<string, SubscriberBooking[]>; notices: MemberNotice[] }) => (
   <MemberShell>{(lang) => <MySubscriptionsView lang={lang} {...p} />}</MemberShell>
 );
 export const PlansScreen = (p: { plans: PublicPlan[]; hasPhone: boolean }) => (

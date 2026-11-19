@@ -103,3 +103,11 @@ Entitlement `max_route_plans` (starter 3, professional 20, enterprise unlimited)
 - The report's default range is the last 30 days on the company's clock, not the server's UTC date.
 - e2e `tests/e2e/subscription-report.mjs` (9 checks: owner report, bad range, booking staff blocked).
 - Still open, need a product decision: Arabic review, phone requirement, staff MASAR-ID scan screen, cancel vs future bookings, expiry reminders, renewal before expiry.
+
+## Phase E3 status (renewal before expiry, expiry notices, expiring list)
+
+- Migration `0041_subscription_renewal_and_expiry_notices.sql` (NOT yet applied to live). Rules: a duration plan can be renewed in the last 7 days (`app_private.subscription_notice_days()`); approval starts the new period the day after the current one ends (a second, future-dated active row; fixed-window plans cannot be renewed early). One pending request per plan and member replaces "one open row".
+- Member notices: nightly `notify-expiring-subscriptions` (06:00 UTC) writes one in-app notification per ending subscription (member language, once only, skipped if a renewal is pending or queued). Read through `my_notices()` / `mark_my_notices_read()`; shown on /my-subscriptions. "Renew now" shows only when `my_renewable_subscriptions()` says so.
+- Staff: "Expiring soon" tab on /dashboard/subscriptions (`subscriptions_expiring()`, bookings.read) with a WhatsApp link carrying a ready message in the member's language. Nothing is sent by the platform.
+- Phone before a request: stays required (decision). Arabic text: approved (decision). Driver MASAR-ID scan: already on the driver boarding page (field accepts a ticket code or MASAR ID).
+- Tests: SQL suite 36 (2101 pass, 0 fail), unit 1539 pass, e2e `subscription-renewal.mjs` 13/13.

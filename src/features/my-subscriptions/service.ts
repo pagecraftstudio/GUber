@@ -13,6 +13,8 @@ export function makeMemberSubscriptionService(repo: MemberSubscriptionRepository
     savePhone: (c: MemberContext, input: unknown) => repo.setPhone(c, c.userId, parseInput(phoneUpdateSchema, input).phone),
     publicPlans: (c: MemberContext) => repo.publicPlans(c),
     mine: (c: MemberContext) => repo.mine(c),
+    notices: (c: MemberContext) => repo.notices(c),
+    markNoticesRead: (c: MemberContext) => repo.markNoticesRead(c),
     request: (c: MemberContext, input: unknown) => repo.request(c, parseInput(requestSchema, input).planId),
     cancel: (c: MemberContext, id: unknown) => repo.cancel(c, parseInput(idSchema, id)),
     outboundOptions: (c: MemberContext, input: unknown) => { const i = parseInput(daySchema, input); return repo.outboundOptions(c, i.subscriptionId, i.day); },

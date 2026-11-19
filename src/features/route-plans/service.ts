@@ -5,7 +5,7 @@ import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { routePlanRepository, type RoutePlanRepository } from './repository';
 import { decisionSchema, planCreateSchema, revokeSchema, planUpdateSchema, subscriptionListSchema } from './schema';
-import type { FutureBooking, RoutePlan, RouteSubscription } from './types';
+import type { ExpiringSubscription, FutureBooking, RoutePlan, RouteSubscription } from './types';
 
 /** Order inside every method: authorize -> validate -> repository. Plans follow routes.* ; the request inbox follows bookings.*. */
 export function makeRoutePlanService(repo: RoutePlanRepository) {
@@ -29,6 +29,10 @@ export function makeRoutePlanService(repo: RoutePlanRepository) {
     async listSubscriptions(ctx: TenantServiceContext, rawQuery?: unknown): Promise<RouteSubscription[]> {
       requirePermission(ctx, PERMISSIONS.bookingsRead);
       return repo.listSubscriptions(ctx, parseInput(subscriptionListSchema, rawQuery ?? {}));
+    },
+    async expiringSubscriptions(ctx: TenantServiceContext): Promise<ExpiringSubscription[]> {
+      requirePermission(ctx, PERMISSIONS.bookingsRead);
+      return repo.expiring(ctx);
     },
     async decide(ctx: TenantServiceContext, rawId: unknown, input: unknown): Promise<void> {
       requirePermission(ctx, PERMISSIONS.bookingsWrite);

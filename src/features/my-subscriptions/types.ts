@@ -10,10 +10,15 @@ export type MySubscription = {
   price: number; currency: string; validFrom: string | null; validTo: string | null; requestedAt: string; masarId: string;
   /** IANA zone of the company, so trip times show as the company's clock reads. */
   timeZone: string;
+  /** The database says this one can be renewed right now (last days, duration plan, nothing queued). */
+  renewable: boolean;
 };
-export const toMySubscription = (r: MySubscriptionRow, timeZone = 'Africa/Cairo'): MySubscription => ({
+export type MemberNotice = { id: string; subject: string; body: string; createdAt: string; isRead: boolean };
+export type MemberNoticeRow = { id: string; subject: string | null; body: string; created_at: string; is_read: boolean };
+export const toMemberNotice = (r: MemberNoticeRow): MemberNotice => ({ id: r.id, subject: r.subject ?? '', body: r.body, createdAt: r.created_at, isRead: r.is_read });
+export const toMySubscription = (r: MySubscriptionRow, timeZone = 'Africa/Cairo', renewable = false): MySubscription => ({
   id: r.id, planId: r.plan_id, companyName: r.company_name, planName: r.plan_name, originName: r.origin_name, destinationName: r.destination_name,
-  status: r.status, price: Number(r.price), currency: r.currency, validFrom: r.valid_from, validTo: r.valid_to, requestedAt: r.requested_at, masarId: r.masar_id, timeZone,
+  status: r.status, price: Number(r.price), currency: r.currency, validFrom: r.valid_from, validTo: r.valid_to, requestedAt: r.requested_at, masarId: r.masar_id, timeZone, renewable,
 });
 
 export type PublicPlanRow = {

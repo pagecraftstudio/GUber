@@ -49,6 +49,19 @@ export const toRoutePlan = (r: RoutePlanRow): RoutePlan => {
   };
 };
 
+export type ExpiringRow = {
+  id: string; masar_id: string; member_name: string; member_phone: string; member_locale: 'ar' | 'en'; company_name: string; plan_name: string;
+  route_name: string; valid_to: string; days_left: number; renewal_pending: boolean;
+};
+export type ExpiringSubscription = {
+  id: string; masarId: string; memberName: string; memberPhone: string; memberLocale: 'ar' | 'en'; companyName: string; planName: string;
+  routeName: string; validTo: string; daysLeft: number; renewalPending: boolean;
+};
+export const toExpiring = (r: ExpiringRow): ExpiringSubscription => ({
+  id: r.id, masarId: r.masar_id, memberName: r.member_name, memberPhone: r.member_phone, memberLocale: r.member_locale === 'en' ? 'en' : 'ar',
+  companyName: r.company_name, planName: r.plan_name, routeName: r.route_name, validTo: r.valid_to, daysLeft: r.days_left, renewalPending: r.renewal_pending,
+});
+
 export type SubscriptionRow = {
   id: string;
   plan_id: string;

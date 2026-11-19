@@ -69,6 +69,8 @@ const RULES: Rule[] = [
   // route subscriptions (0034): member side messages
   { match: /already booked for this day/, code: 'conflict', detail: 'already_booked_day' },
   { match: /you already have an open request or active subscription/, code: 'conflict', detail: 'subscription_open' },
+  { match: /you already have an active subscription for this plan/, code: 'conflict', detail: 'subscription_active' },
+  { match: /renewal opens \d+ days before your subscription ends/, code: 'business_rule', detail: 'renewal_too_early' },
   { match: /subscription is not valid on that date/, code: 'business_rule', detail: 'subscription_not_valid_on_date' },
   { match: /a valid phone number is required on your profile/, code: 'validation', detail: 'profile_phone_required' },
   { match: /phone already registered for this company/, code: 'conflict', detail: 'phone_taken_in_company' },

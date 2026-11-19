@@ -6,8 +6,8 @@ import { formatDateTime, formatDay, formatMoney } from '@/ds/format';
 import { Button } from '@/ds/primitives/Button';
 import { buttonClass } from '@/ds/primitives/button-class';
 import { controlClass } from '@/ds/primitives/Input';
-import { cancelSubscriberBookingAction, cancelSubscriptionAction, requestPlanAction, savePhoneAction } from '../actions';
-import type { MemberProfile, MySubscription, SubscriberBooking } from '../types';
+import { cancelSubscriberBookingAction, cancelSubscriptionAction, markNoticesReadAction, requestPlanAction, savePhoneAction } from '../actions';
+import type { MemberNotice, MemberProfile, MySubscription, SubscriberBooking } from '../types';
 import { MT } from './text';
 import { useMemberAction } from './useMemberAction';
 
@@ -64,7 +64,31 @@ function TripRow({ lang, b, timeZone }: { lang: 'en' | 'ar'; b: SubscriberBookin
   );
 }
 
-function SubscriptionCard({ lang, s, bookings }: { lang: 'en' | 'ar'; s: MySubscription; bookings: SubscriberBooking[] }) {
+function NoticesCard({ lang, notices }: { lang: 'en' | 'ar'; notices: MemberNotice[] }) {
+  const t = MT[lang];
+  const { pending, error, run } = useMemberAction(lang);
+  const unread = notices.filter((n) => !n.isRead).length;
+  if (notices.length === 0) return null;
+  return (
+    <section aria-labelledby="notices" className="rounded-2xl border border-line-default bg-surface-card p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="notices" className="font-semibold">{t.notices}</h2>
+        {unread > 0 ? <Button variant="ghost" disabled={pending} onClick={() => run(() => markNoticesReadAction())} className="!h-8 !px-2 text-[13px]">{t.markRead}</Button> : null}
+      </div>
+      <Err text={error} />
+      <ul className="mt-2">
+        {notices.map((n) => (
+          <li key={n.id} className="border-t border-line-default py-2 first:border-t-0">
+            <p className="text-sm font-medium">{n.isRead ? null : <span className="me-2 rounded-ds-sm bg-status-warning-bg px-1.5 py-0.5 text-[12px] text-status-warning-fg">{t.newNotice}</span>}{n.subject}</p>
+            <p className="text-sm text-ink-secondary">{n.body}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SubscriptionCard({ lang, s, bookings, renewalPending }: { lang: 'en' | 'ar'; s: MySubscription; bookings: SubscriberBooking[]; renewalPending: boolean }) {
   const t = MT[lang];
   const { pending, error, run } = useMemberAction(lang);
   const open = s.status === 'pending' || s.status === 'active';
@@ -85,9 +109,12 @@ function SubscriptionCard({ lang, s, bookings }: { lang: 'en' | 'ar'; s: MySubsc
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {s.status === 'active' ? <Link href={`/my-subscriptions/${s.id}/book`} className={buttonClass('primary', 'md')}>{t.book}</Link> : null}
         {s.status === 'expired' ? <Button disabled={pending} onClick={() => run(() => requestPlanAction(s.planId))}>{t.renew}</Button> : null}
+        {s.renewable ? <Button variant="secondary" disabled={pending} onClick={() => run(() => requestPlanAction(s.planId))}>{t.renewNow}</Button> : null}
         {s.status === 'revoked' ? <p className="text-sm text-ink-secondary">{t.revokedText}</p> : null}
         {open ? <Button variant="secondary" disabled={pending} onClick={() => run(() => cancelSubscriptionAction(s.id))}>{s.status === 'pending' ? t.cancel : t.cancelSub}</Button> : null}
       </div>
+      {s.renewable ? <p className="mt-1 text-[12px] text-ink-muted">{t.renewNote}</p> : null}
+      {renewalPending ? <p className="mt-1 text-sm text-ink-secondary">{t.renewPending}</p> : null}
       <Err text={error} />
       {s.status === 'active' ? (
         <div className="mt-4">
@@ -102,7 +129,7 @@ function SubscriptionCard({ lang, s, bookings }: { lang: 'en' | 'ar'; s: MySubsc
   );
 }
 
-export function MySubscriptionsView({ lang, profile, subs, bookings }: { lang: 'en' | 'ar'; profile: MemberProfile; subs: MySubscription[]; bookings: Record<string, SubscriberBooking[]> }) {
+export function MySubscriptionsView({ lang, profile, subs, bookings, notices = [] }: { lang: 'en' | 'ar'; profile: MemberProfile; subs: MySubscription[]; bookings: Record<string, SubscriberBooking[]>; notices?: MemberNotice[] }) {
   const t = MT[lang];
   return (
     <div className="space-y-5">
@@ -111,10 +138,11 @@ export function MySubscriptionsView({ lang, profile, subs, bookings }: { lang: '
         <Link href="/my-subscriptions/plans" className={buttonClass('primary', 'md')}>{t.plansLink}</Link>
       </div>
       <MasarIdCard lang={lang} id={profile.masarId} />
+      <NoticesCard lang={lang} notices={notices} />
       {profile.phone ? null : <PhoneForm lang={lang} />}
       {subs.length === 0 ? (
         <section className="rounded-2xl border border-dashed border-line-default p-8 text-center"><h2 className="font-semibold">{t.none}</h2><p className="mt-1 text-sm text-ink-secondary">{t.noneText}</p></section>
-      ) : <div className="grid gap-4 md:grid-cols-2">{subs.map((s) => <SubscriptionCard key={s.id} lang={lang} s={s} bookings={bookings[s.id] ?? []} />)}</div>}
+      ) : <div className="grid gap-4 md:grid-cols-2">{subs.map((s) => <SubscriptionCard key={s.id} lang={lang} s={s} bookings={bookings[s.id] ?? []} renewalPending={s.status === 'active' && subs.some((o) => o.planId === s.planId && o.status === 'pending')} />)}</div>}
     </div>
   );
 }
