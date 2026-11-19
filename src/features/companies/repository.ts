@@ -39,6 +39,8 @@ import {
   type PlatformCompanyRow,
 } from './types';
 
+export type SubscriptionUsage = { plans: number; active: number; pending: number; scans30d: number; revenue30d: number };
+
 export type CompanyRepository = {
   profile(ctx: TenantServiceContext): Promise<CompanyProfile | null>;
   settings(ctx: TenantServiceContext): Promise<CompanySettings | null>;
@@ -48,6 +50,7 @@ export type CompanyRepository = {
   // Phase 7.3: every one of these is a SECURITY DEFINER RPC (migration 0017). There is no direct table write.
   adminList(ctx: PlatformServiceContext, q: PlatformCompanyListQuery): Promise<Page<AdminCompanyListItem>>;
   adminDetail(ctx: PlatformServiceContext, id: string): Promise<AdminCompanyDetail>;
+  adminSubscriptionUsage(ctx: PlatformServiceContext, id: string): Promise<SubscriptionUsage>;
   adminCreate(ctx: PlatformServiceContext, input: CreateCompanyInput): Promise<CreatedCompany>;
   adminUpdate(ctx: PlatformServiceContext, id: string, patch: UpdateCompanyInput): Promise<{ changed: boolean }>;
   adminSetStatus(ctx: PlatformServiceContext, id: string, input: SetCompanyStatusInput): Promise<{ previousStatus: string; status: string }>;
@@ -141,6 +144,14 @@ export const companyRepository: CompanyRepository = {
     const parsed = adminCompanyListRawSchema.safeParse(res.data);
     if (!parsed.success) throw new AppError('internal', { cause: parsed.error });
     return toAdminCompanyPage(parsed.data, q);
+  },
+
+  async adminSubscriptionUsage(ctx, id) {
+    const res = await ctx.db.rpc('platform_subscription_usage', { p_company: id });
+    if (res.error) throw mapDbError(res.error);
+    const r = (res.data as { plans: number; active: number; pending: number; scans_30d: number; revenue_30d: number | string }[] | null)?.[0];
+    if (!r) throw new AppError('internal');
+    return { plans: r.plans, active: r.active, pending: r.pending, scans30d: r.scans_30d, revenue30d: Number(r.revenue_30d) };
   },
 
   async adminDetail(ctx, id) {

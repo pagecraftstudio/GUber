@@ -15,5 +15,5 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
   const wanted = FILTERS[filter];
   // one status = filtered in the database (so a long history can never hide pending rows); 'closed' spans several statuses
   const rows = await routePlanService.listSubscriptions(ctx, wanted && wanted.length === 1 ? { status: wanted[0] } : {});
-  return <SubscriptionsMasarView rows={wanted ? rows.filter((r) => wanted.includes(r.status)) : rows} filter={filter} canDecide={auth.membership.permissions.includes('bookings.write')} />;
+  return <SubscriptionsMasarView rows={wanted ? rows.filter((r) => wanted.includes(r.status)) : rows} filter={filter} canDecide={auth.membership.permissions.includes('bookings.write')} canReport={auth.membership.permissions.includes('analytics.read')} />;
 }

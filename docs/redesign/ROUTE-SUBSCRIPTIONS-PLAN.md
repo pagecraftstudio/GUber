@@ -89,3 +89,10 @@ Entitlement `max_route_plans` (starter 3, professional 20, enterprise unlimited)
 - Dashboard: Revoke button on active rows opens a checklist dialog. Member: Revoked and Expired states, Renew button (re-requests the same plan).
 - Tests: SQL suite 34 (2031 pass in total), unit 1512, e2e `tests/e2e/subscription-revoke.mjs` (13 pass).
 - Not done (E2): reports (active per plan, scans per day, no-shows, revenue, return intent), platform-admin usage, expiry reminders (no sending channel exists yet), renewal before the end date.
+
+## Phase E2 status (reports and platform usage)
+
+- Migration `0039_subscription_reports.sql` (NOT yet applied to live): `subscription_plan_report`, `subscription_daily_report`, `subscription_trip_demand` (company, need `analytics.read`) and `platform_subscription_usage` (platform staff only).
+- Definitions: revenue = price of subscriptions paid (approved) in the range, not refunded on revoke; active = valid today; scans = one boarding per direction per company-local day; no-show = subscriber booking never boarded after departure; return intent = subscribers who chose to return the same day.
+- App: `src/features/subscription-reports/*`, page `/dashboard/subscriptions/report`, usage panel on the admin company page.
+- Tests: SQL suite 35 (2061 pass, 0 fail), unit 1524+. No e2e script for E2 yet.

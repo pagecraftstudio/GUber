@@ -62,5 +62,20 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
     activity = null; // the activity card is secondary: the page still renders without it
   }
 
-  return <CompanyDetailMasarView data={result.data} isSuper={isSuper} canSub={canSub} canNote={canNote} planOptions={planOptions} activity={activity} />;
+  const usage = await companyService.adminSubscriptionUsage(ctx, id).catch(() => null);
+  return (
+    <>
+      <CompanyDetailMasarView data={result.data} isSuper={isSuper} canSub={canSub} canNote={canNote} planOptions={planOptions} activity={activity} />
+      {usage ? (
+        <section aria-label="Member subscriptions" className="mt-6 text-sm">
+          <h2 className="mb-2 text-base font-medium">Member subscriptions</h2>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {([['Active plans', usage.plans], ['Active subscriptions', usage.active], ['Pending requests', usage.pending], ['Scans, last 30 days', usage.scans30d], ['Revenue, last 30 days', usage.revenue30d]] as const).map(([k, v]) => (
+              <div key={k}><dt className="text-ink-secondary">{k}</dt><dd className="text-lg tabular-nums">{v}</dd></div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+    </>
+  );
 }

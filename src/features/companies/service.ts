@@ -62,6 +62,10 @@ export function makeCompanyService(repo: CompanyRepository) {
       requirePlatformAccess(ctx);
       return repo.adminList(ctx, parseInput(platformCompanyListSchema, rawQuery ?? {}));
     },
+    async adminSubscriptionUsage(ctx: PlatformServiceContext, rawId: unknown) {
+      requirePlatformAccess(ctx);
+      return repo.adminSubscriptionUsage(ctx, parseInput(idSchema, rawId));
+    },
     async adminDetail(ctx: PlatformServiceContext, rawId: unknown): Promise<AdminCompanyDetail> {
       requirePlatformAccess(ctx);
       return repo.adminDetail(ctx, parseInput(idSchema, rawId));
