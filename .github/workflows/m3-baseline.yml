@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   baseline:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         id: checkout
@@ -53,6 +53,11 @@ jobs:
 
       - name: Build
         id: build
+        env:
+          # Build-time placeholders only; never use real project credentials here.
+          NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "ci_dummy_publishable_key_not_a_secret_000000000000"
+          NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
         run: npm run build
         continue-on-error: true
 
@@ -62,9 +67,20 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install --yes postgresql-16 postgresql-client-16 curl xz-utils
-          sudo pg_ctlcluster 16 main start
-          pg_isready --host 127.0.0.1 --port 5432
+          sudo apt-get install --yes postgresql-common curl xz-utils
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install --yes postgresql-16 postgresql-client-16
+          sudo pg_ctlcluster 16 main start || true
+          for attempt in $(seq 1 30); do
+            if pg_isready --host 127.0.0.1 --port 5432; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "PostgreSQL did not become ready within 30 seconds"
+              exit 1
+            fi
+            sleep 1
+          done
 
           POSTGREST_VERSION="v12.2.3"
           POSTGREST_ARCHIVE="postgrest-${POSTGREST_VERSION}-linux-static-x86-64.tar.xz"
@@ -73,8 +89,8 @@ jobs:
             --output /tmp/postgrest.tar.xz
           tar -xJf /tmp/postgrest.tar.xz -C /tmp postgrest
           sudo install --mode=0755 /tmp/postgrest /usr/local/bin/postgrest
-          postgrest --version
           psql --version
+          postgrest --version
         continue-on-error: true
 
       - name: Run local PostgreSQL and PostgREST test suite
