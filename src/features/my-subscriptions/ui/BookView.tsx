@@ -12,13 +12,13 @@ import { useMemberAction } from './useMemberAction';
 
 const Err = ({ text }: { text: string | null }) => (text ? <p role="alert" className="mt-1 text-sm font-medium text-status-error-fg">{text}</p> : null);
 
-function TripSelect({ lang, label, trips, value, onChange }: { lang: 'en' | 'ar'; label: string; trips: TripOption[]; value: string; onChange: (v: string) => void }) {
+function TripSelect({ lang, label, trips, value, onChange, timeZone }: { lang: 'en' | 'ar'; timeZone: string; label: string; trips: TripOption[]; value: string; onChange: (v: string) => void }) {
   const t = MT[lang];
   return (
     <label className="block text-sm font-medium">{label}
       <select value={value} onChange={(e) => onChange(e.target.value)} className={`${controlClass(false)} mt-1`}>
         <option value="">{t.pick}</option>
-        {trips.map((x) => <option key={x.tripId} value={x.tripId}>{formatDateTime(x.departureAt, lang)} · {t.seatsLeft(formatNumber(x.seatsAvailable, lang))}</option>)}
+        {trips.map((x) => <option key={x.tripId} value={x.tripId}>{formatDateTime(x.departureAt, lang, { timeZone })} · {t.seatsLeft(formatNumber(x.seatsAvailable, lang))}</option>)}
       </select>
     </label>
   );
@@ -73,7 +73,7 @@ export function BookView({ lang, sub, today }: { lang: 'en' | 'ar'; sub: MySubsc
           {state.goBooked && state.returnBooked ? <p role="status" className="text-sm font-medium">{t.dayFull}</p>
             : state.goBooked ? <p role="status" className="text-sm font-medium">{t.goBooked}</p>
             : trips.length === 0 ? <p className="text-sm text-ink-secondary">{t.noGoTrips}</p> : (<>
-              <TripSelect lang={lang} label={t.goTrip} trips={trips} value={go} onChange={pickGo} />
+              <TripSelect lang={lang} timeZone={sub.timeZone} label={t.goTrip} trips={trips} value={go} onChange={pickGo} />
               {go ? (
                 <fieldset>
                   <legend className="text-sm font-medium">{t.returning}</legend>
@@ -84,7 +84,7 @@ export function BookView({ lang, sub, today }: { lang: 'en' | 'ar'; sub: MySubsc
                   <Err text={retLoad.error} />
                 </fieldset>
               ) : null}
-              {needReturn && rets !== null ? (rets.length === 0 ? <p className="text-sm text-ink-secondary">{t.noReturn}</p> : <TripSelect lang={lang} label={t.returnTrip} trips={rets} value={ret} onChange={setRet} />) : null}
+              {needReturn && rets !== null ? (rets.length === 0 ? <p className="text-sm text-ink-secondary">{t.noReturn}</p> : <TripSelect lang={lang} timeZone={sub.timeZone} label={t.returnTrip} trips={rets} value={ret} onChange={setRet} />) : null}
               <Err text={book.error} />
               <Button onClick={confirm} disabled={!canConfirm}>{t.confirm}</Button>
             </>)}

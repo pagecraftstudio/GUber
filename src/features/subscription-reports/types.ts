@@ -13,4 +13,4 @@ export const toTripDemand = (r: DemandRow): TripDemand => ({ tripId: r.trip_id, 
   seatsAvailable: r.seats_available, subscriberSeats: r.subscriber_seats, returnIntent: r.return_intent });
 
 /** Everything the report page shows, for one date range. */
-export type SubscriptionReport = { from: string; to: string; plans: PlanReport[]; days: DailyReport[]; demand: TripDemand[] };
+export type SubscriptionReport = { from: string; to: string; /** company IANA zone: demand times and the default range follow it */ timeZone: string; plans: PlanReport[]; days: DailyReport[]; demand: TripDemand[] };

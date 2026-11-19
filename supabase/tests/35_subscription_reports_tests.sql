@@ -91,3 +91,13 @@ select t.eq('platform usage: a company owner is refused', t.err_of(format('selec
 select t.as_anon();
 select t.eq('platform usage: anon is refused', t.err_of(format('select * from public.platform_subscription_usage(%L)', t.u(101))), '42501|permission denied for function platform_subscription_usage');
 select t.as_admin();
+
+-- member time zones (0040): own subscriptions only, company zone
+select t.as_user(t.u(3001));
+select t.eq('timezones: a member gets a zone for each own subscription', (select count(*) from public.my_subscription_timezones()), (select count(*) from public.route_subscriptions where user_id = t.u(3001)));
+select t.eq('timezones: zone is the company setting', (select count(distinct timezone) from public.my_subscription_timezones()), 1::bigint);
+select t.as_user(t.u(3002));
+select t.eq('timezones: another member sees none of the first member subscriptions', (select count(*) from public.my_subscription_timezones() z where z.subscription_id in (select id from public.route_subscriptions where user_id = t.u(3001))), 0::bigint);
+select t.as_anon();
+select t.eq('timezones: anon is refused', t.err_of('select * from public.my_subscription_timezones()'), '42501|permission denied for function my_subscription_timezones');
+select t.as_admin();

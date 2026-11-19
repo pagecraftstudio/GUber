@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AppError } from '@/lib/errors';
 import { tenantCtx, COMPANY_A } from '@/test/helpers';
-import { makeSubscriptionReportService } from './service';
+import { defaultRange, localDay, makeSubscriptionReportService } from './service';
 import type { SubscriptionReportRepository } from './repository';
 import { rangeSchema } from './schema';
 import { toPlanReport } from './types';
 
-const repo = () => ({ report: vi.fn(async (_c: unknown, r: { from: string; to: string }) => ({ ...r, plans: [], days: [], demand: [] })) }) as unknown as SubscriptionReportRepository & { report: ReturnType<typeof vi.fn> };
+const repo = () => ({ timeZone: vi.fn(async () => 'Africa/Cairo'), report: vi.fn(async (_c: unknown, r: { from: string; to: string }, timeZone: string) => ({ ...r, timeZone, plans: [], days: [], demand: [] })) }) as unknown as SubscriptionReportRepository & { report: ReturnType<typeof vi.fn> };
 const range = { from: '2026-11-01', to: '2026-11-30' };
 
 describe('rangeSchema', () => {
@@ -49,5 +49,19 @@ describe('row mapping', () => {
     const p = toPlanReport({ plan_id: 'p', plan_name: 'M', route_name: 'R', is_active: true, active_now: 2, pending_now: 1, new_in_range: 3, revenue_in_range: '1800.50', currency: null });
     expect(p.revenue).toBe(1800.5);
     expect(p.currency).toBe('EGP');
+  });
+});
+
+describe('company-local days', () => {
+  it('uses the company clock, not UTC, near midnight', () => {
+    const at = new Date('2026-11-19T22:30:00Z'); // 00:30 on the 20th in Cairo (UTC+2)
+    expect(localDay(at, 'Africa/Cairo')).toBe('2026-11-20');
+    expect(localDay(at, 'UTC')).toBe('2026-11-19');
+    expect(defaultRange('Africa/Cairo', at)).toEqual({ from: '2026-10-22', to: '2026-11-20' });
+  });
+  it('defaults the range when none is given', async () => {
+    const r = repo();
+    await makeSubscriptionReportService(r).report(tenantCtx(['analytics.read']));
+    expect(r.report).toHaveBeenCalledOnce();
   });
 });

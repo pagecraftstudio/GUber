@@ -1,14 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { DataTable, type Column } from '@/ds/data/DataTable';
-import { formatDay, formatMoney, formatNumber } from '@/ds/format';
+import { formatDateTime, formatDay, formatMoney, formatNumber } from '@/ds/format';
 import { useDsLang } from '@/ds/lang';
 import { buttonClass } from '@/ds/primitives/button-class';
 import type { DailyReport, PlanReport, TripDemand } from '@/features/subscription-reports/types';
 import { PageHeaderMasar } from './PageHeaderMasar';
 import { RP } from './textReport';
 
-type Props = { from: string; to: string; plans: PlanReport[]; days: DailyReport[]; demand: TripDemand[]; invalid?: boolean };
+type Props = { from: string; to: string; timeZone: string; plans: PlanReport[]; days: DailyReport[]; demand: TripDemand[]; invalid?: boolean };
 
 export function ReportMasarView(p: Props) {
   const lang = useDsLang();
@@ -32,7 +32,7 @@ export function ReportMasarView(p: Props) {
   ];
   const demandCols: Column<TripDemand>[] = [
     { key: 'trip', primary: true, header: t.trip, cell: (r) => r.routeName },
-    { key: 'dep', header: t.departs, cell: (r) => `${formatDay(r.departureAt.slice(0, 10), lang, 'numeric')} ${r.departureAt.slice(11, 16)}` },
+    { key: 'dep', header: t.departs, cell: (r) => formatDateTime(r.departureAt, lang, { timeZone: p.timeZone }) },
     { key: 'left', numeric: true, header: t.seatsLeft, cell: (r) => `${n(r.seatsAvailable)} / ${n(r.capacity)}` },
     { key: 'sub', numeric: true, header: t.subSeats, cell: (r) => n(r.subscriberSeats) },
     { key: 'ret', numeric: true, header: t.returning, cell: (r) => n(r.returnIntent) },

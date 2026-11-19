@@ -25,7 +25,7 @@ vi.mock('next/link', () => ({ default: ({ href, children, ...r }: { href: string
 import { BookView } from './ui/BookView';
 import { MySubscriptionsView } from './ui/MySubscriptionsView';
 
-const sub: MySubscription = { id: ID, companyId: ID2, companyName: 'Nile Bus', planId: ID2, planName: 'Monthly', routeId: ID2, originName: 'Cairo', destinationName: 'Campus', status: 'active', price: 900, currency: 'EGP', validFrom: '2026-12-01', validTo: '2027-01-01', requestedAt: '2026-11-01T10:00:00Z', masarId: 'MSR-AAAA-BBBB' } as MySubscription;
+const sub: MySubscription = { id: ID, companyId: ID2, companyName: 'Nile Bus', planId: ID2, planName: 'Monthly', routeId: ID2, originName: 'Cairo', destinationName: 'Campus', status: 'active', price: 900, currency: 'EGP', validFrom: '2026-12-01', validTo: '2027-01-01', requestedAt: '2026-11-01T10:00:00Z', timeZone: 'Africa/Cairo', masarId: 'MSR-AAAA-BBBB' } as MySubscription;
 const trip = (id: string, h: number): TripOption => ({ tripId: id, departureAt: `2026-12-02T0${h}:00:00Z`, arrivalAt: `2026-12-02T0${h + 1}:00:00Z`, seatsAvailable: 5, originName: 'Cairo', destinationName: 'Campus' });
 const ok = <T,>(data: T) => ({ ok: true as const, data });
 

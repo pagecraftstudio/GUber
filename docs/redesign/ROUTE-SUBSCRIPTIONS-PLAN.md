@@ -96,3 +96,10 @@ Entitlement `max_route_plans` (starter 3, professional 20, enterprise unlimited)
 - Definitions: revenue = price of subscriptions paid (approved) in the range, not refunded on revoke; active = valid today; scans = one boarding per direction per company-local day; no-show = subscriber booking never boarded after departure; return intent = subscribers who chose to return the same day.
 - App: `src/features/subscription-reports/*`, page `/dashboard/subscriptions/report`, usage panel on the admin company page.
 - Tests: SQL suite 35 (2061 pass, 0 fail), unit 1524+. No e2e script for E2 yet.
+
+## Phase E2 follow-up (gap fixes)
+
+- Trip times on the member screens and the staff report now show in the COMPANY time zone (migration `0040_member_subscription_timezones.sql`, applied to live; member "today" for booking is the company-local day).
+- The report's default range is the last 30 days on the company's clock, not the server's UTC date.
+- e2e `tests/e2e/subscription-report.mjs` (9 checks: owner report, bad range, booking staff blocked).
+- Still open, need a product decision: Arabic review, phone requirement, staff MASAR-ID scan screen, cancel vs future bookings, expiry reminders, renewal before expiry.
