@@ -116,7 +116,7 @@ function DecisionCell({ s }: { s: RouteSubscription }) {
 const FILTERS = ['all', 'pending', 'active', 'closed'] as const;
 export type RequestFilter = (typeof FILTERS)[number];
 
-export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: RequestFilter; canDecide: boolean }) {
+export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: RequestFilter; canDecide: boolean; canReport?: boolean }) {
   const lang = useDsLang();
   const t = JP[lang];
   const pendingCount = p.rows.filter((r) => r.status === 'pending').length;
@@ -139,6 +139,7 @@ export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: R
           <Link key={f} href={f === 'pending' ? '/dashboard/subscriptions' : `/dashboard/subscriptions?status=${f}`} aria-current={p.filter === f ? 'page' : undefined}
             className={buttonClass(p.filter === f ? 'primary' : 'secondary', 'md')}>{label[f]}</Link>
         ))}
+        {p.canReport ? <Link href="/dashboard/subscriptions/report" className={buttonClass('secondary', 'md')}>{t.report}</Link> : null}
       </nav>
       {pendingCount > 0 ? <p role="status" className="mb-3 text-sm text-ink-secondary">{t.countPending(formatNumber(pendingCount, lang))}</p> : null}
       <DataTable caption={t.requests} columns={cols} rows={p.rows} rowId={(r) => r.id} empty={{ title: t.noRequests, description: t.noRequestsText }} />

@@ -4,7 +4,7 @@
  */
 export const JP = {
   en: {
-    plans: 'Subscription plans', plansText: 'Plans members can request for a route. One plan covers the route and its return route: one go scan and one return scan a day.',
+    report: 'Report', plans: 'Subscription plans', plansText: 'Plans members can request for a route. One plan covers the route and its return route: one go scan and one return scan a day.',
     requests: 'Subscription requests', requestsText: 'Approve a request once payment is received. Approval starts the subscription and counts as paid.',
     plan: 'Plan', route: 'Route', price: 'Price', validity: 'Validity', status: 'Status', manage: 'Manage', archive: 'Archive',
     months: (n: string) => `${n} from approval`, monthsUnit: (n: number) => (n === 1 ? 'month' : 'months'), range: (a: string, b: string) => `${a} to ${b}`,
@@ -21,7 +21,7 @@ export const JP = {
     selectAll: 'Select all', selectNone: 'Select none', cancelChosen: (n: string) => `${n} will be cancelled and their seats freed`, keepNote: 'Trips left unticked stay booked and keep their seat, but cannot be used as subscriber trips.', cannotCancel: 'Already boarded or closed', reason: 'Reason (optional)', confirmRevoke: 'Revoke subscription', go: 'Go', ret: 'Return',
   },
   ar: {
-    plans: 'باقات الاشتراك', plansText: 'باقات يطلبها الأعضاء لمسار معين. الباقة الواحدة تشمل المسار ومسار العودة: مسح للذهاب ومسح للعودة في اليوم.',
+    report: 'التقرير', plans: 'باقات الاشتراك', plansText: 'باقات يطلبها الأعضاء لمسار معين. الباقة الواحدة تشمل المسار ومسار العودة: مسح للذهاب ومسح للعودة في اليوم.',
     requests: 'طلبات الاشتراك', requestsText: 'وافق على الطلب بعد استلام المبلغ. الموافقة تبدأ الاشتراك وتُسجَّل كمدفوعة.',
     plan: 'الباقة', route: 'المسار', price: 'السعر', validity: 'الصلاحية', status: 'الحالة', manage: 'إدارة', archive: 'أرشفة',
     months: (n: string) => `${n} من تاريخ الموافقة`, monthsUnit: (n: number) => (n === 1 ? 'شهر' : n === 2 ? 'شهران' : n <= 10 ? 'أشهر' : 'شهراً'), range: (a: string, b: string) => `من ${a} إلى ${b}`,
