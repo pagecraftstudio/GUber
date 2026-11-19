@@ -1,6 +1,10 @@
 name: M3 baseline
 
 on:
+  push:
+    branches: [ci/m3-baseline]
+    paths:
+      - .github/workflows/m3-baseline.yml
   workflow_dispatch:
     inputs:
       ref:
@@ -20,7 +24,7 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref || github.sha }}
         continue-on-error: true
 
       - name: Set up Node.js 22
