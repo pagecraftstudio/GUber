@@ -19,6 +19,7 @@ export const PERMISSIONS = {
   bookingsWrite: 'bookings.write',
   websiteRead: 'website.read',
   websiteWrite: 'website.write',
+  websitePublish: 'website.publish',
   mediaRead: 'media.read',
   mediaWrite: 'media.write',
   usersRead: 'users.read',
