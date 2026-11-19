@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic';
 export default async function MySubscriptionsPage() {
   const auth = await requireCustomer();
   const c = { db: await createClient(), userId: auth.userId };
-  const [profile, subs] = await Promise.all([memberSubscriptionService.profile(c), memberSubscriptionService.mine(c)]);
+  const [profile, subs, notices] = await Promise.all([memberSubscriptionService.profile(c), memberSubscriptionService.mine(c), memberSubscriptionService.notices(c)]);
   const active = subs.filter((s) => s.status === 'active');
   const lists = await Promise.all(active.map((s) => memberSubscriptionService.bookings(c, s.id)));
   const bookings = Object.fromEntries(active.map((s, i) => [s.id, lists[i] ?? []]));
-  return <MySubscriptionsScreen profile={profile} subs={subs} bookings={bookings} />;
+  return <MySubscriptionsScreen profile={profile} subs={subs} bookings={bookings} notices={notices} />;
 }

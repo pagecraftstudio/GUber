@@ -2,7 +2,7 @@ import { expectList } from '@/lib/db/query';
 import { mapDbError } from '@/lib/db/map-error';
 import type { TenantServiceContext } from '@/lib/service/context';
 import type { Decision, PlanCreate, PlanUpdate, Revoke, SubscriptionListQuery } from './schema';
-import { toFutureBooking, type FutureBooking, type FutureBookingRow, PLAN_SELECT, SUBSCRIPTION_SELECT, toRoutePlan, toSubscription, type RoutePlan, type RoutePlanRow, type RouteSubscription, type SubscriptionRow } from './types';
+import { toExpiring, toFutureBooking, type ExpiringRow, type ExpiringSubscription, type FutureBooking, type FutureBookingRow, PLAN_SELECT, SUBSCRIPTION_SELECT, toRoutePlan, toSubscription, type RoutePlan, type RoutePlanRow, type RouteSubscription, type SubscriptionRow } from './types';
 
 export type RoutePlanRepository = {
   listPlans(ctx: TenantServiceContext): Promise<RoutePlan[]>;
@@ -10,6 +10,7 @@ export type RoutePlanRepository = {
   updatePlan(ctx: TenantServiceContext, id: string, patch: PlanUpdate): Promise<void>;
   archivePlan(ctx: TenantServiceContext, id: string): Promise<void>;
   listSubscriptions(ctx: TenantServiceContext, q: SubscriptionListQuery): Promise<RouteSubscription[]>;
+  expiring(ctx: TenantServiceContext): Promise<ExpiringSubscription[]>;
   decide(ctx: TenantServiceContext, id: string, d: Decision): Promise<void>;
   futureBookings(ctx: TenantServiceContext, id: string): Promise<FutureBooking[]>;
   revoke(ctx: TenantServiceContext, id: string, r: Revoke): Promise<void>;
@@ -50,6 +51,12 @@ export const routePlanRepository: RoutePlanRepository = {
     if (q.status) query = query.eq('status', q.status);
     const res = await query.order('requested_at', { ascending: false }).order('id').limit(LIMIT);
     return expectList<SubscriptionRow, RouteSubscription>(res as never, toSubscription);
+  },
+
+  async expiring(ctx) {
+    const { data, error } = await ctx.db.rpc('subscriptions_expiring', { p_company: ctx.companyId });
+    if (error) throw mapDbError(error);
+    return ((data ?? []) as ExpiringRow[]).map(toExpiring);
   },
 
   async decide(ctx, id, d) {

@@ -15,7 +15,8 @@ import { PlanCreateForm } from '../CreateForms';
 import { RevokeCell } from './RevokeMasar';
 import { archivePlanAction, decideSubscriptionAction, setPlanActiveAction } from '../autosave-actions';
 import type { PlanUsage } from '@/features/subscriptions/usage';
-import type { RoutePlan, RouteSubscription } from '@/features/route-plans/types';
+import { expiryMessage, whatsappLink } from '@/features/route-plans/expiry-message';
+import type { ExpiringSubscription, RoutePlan, RouteSubscription } from '@/features/route-plans/types';
 import { PageHeaderMasar } from './PageHeaderMasar';
 import { saveLabels } from './text';
 import { JP } from './textPlans';
@@ -113,10 +114,27 @@ function DecisionCell({ s }: { s: RouteSubscription }) {
   );
 }
 
-const FILTERS = ['all', 'pending', 'active', 'closed'] as const;
+const FILTERS = ['all', 'pending', 'active', 'expiring', 'closed'] as const;
 export type RequestFilter = (typeof FILTERS)[number];
 
-export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: RequestFilter; canDecide: boolean; canReport?: boolean }) {
+function ExpiringTable({ rows }: { rows: ExpiringSubscription[] }) {
+  const lang = useDsLang();
+  const t = JP[lang];
+  const cols: Column<ExpiringSubscription>[] = [
+    { key: 'member', primary: true, header: t.member, cell: (r) => (<div><span className="font-medium">{r.memberName}</span><p className="text-[13px] text-ink-secondary"><Identifier value={r.masarId} /></p></div>) },
+    { key: 'phone', header: t.phone, cell: (r) => <Identifier value={r.memberPhone} /> },
+    { key: 'plan', header: t.plan, cell: (r) => (<div><span>{r.planName}</span><p className="text-[13px] text-ink-secondary">{r.routeName}</p></div>) },
+    { key: 'ends', header: t.expiresOn, cell: (r) => (<div><span>{formatDay(r.validTo, lang, 'numeric')}</span><p className="text-[13px] text-ink-secondary">{t.daysLeft(formatNumber(r.daysLeft, lang))}</p></div>) },
+    { key: 'renewal', header: t.renewal, cell: (r) => (r.renewalPending ? <span className="text-[13px]">{t.renewalPending}</span> : <span className="text-[13px] text-ink-muted">{t.notRenewed}</span>) },
+    { key: 'msg', header: t.actions, cell: (r) => {
+      const href = whatsappLink(r.memberPhone, expiryMessage(r));
+      return href ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${t.whatsapp}: ${r.memberName}`} className={buttonClass('secondary', 'md')}>{t.whatsapp}</a> : <span className="text-[13px] text-ink-muted">{t.noWhatsapp}</span>;
+    } },
+  ];
+  return <DataTable caption={t.expiring} columns={cols} rows={rows} rowId={(r) => r.id} empty={{ title: t.noExpiring, description: t.noExpiringText }} />;
+}
+
+export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; expiring?: ExpiringSubscription[]; filter: RequestFilter; canDecide: boolean; canReport?: boolean }) {
   const lang = useDsLang();
   const t = JP[lang];
   const pendingCount = p.rows.filter((r) => r.status === 'pending').length;
@@ -130,7 +148,7 @@ export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: R
     { key: 'status', header: t.status, cell: (r) => <StatusBadge domain="riderSubscription" value={r.status} /> },
     { key: 'decision', header: t.actions, cell: (r) => (r.status === 'pending' && p.canDecide ? <DecisionCell s={r} /> : r.status === 'active' && p.canDecide ? <RevokeCell s={r} /> : <span className="text-[13px] text-ink-muted">{r.decisionNote ?? (r.status === 'pending' ? '' : t.decided)}</span>) },
   ];
-  const label: Record<RequestFilter, string> = { all: t.all, pending: t.pending, active: t.active, closed: t.closed };
+  const label: Record<RequestFilter, string> = { all: t.all, pending: t.pending, active: t.active, expiring: t.expiring, closed: t.closed };
   return (
     <>
       <PageHeaderMasar title={t.requests} description={t.requestsText} />
@@ -142,7 +160,8 @@ export function SubscriptionsMasarView(p: { rows: RouteSubscription[]; filter: R
         {p.canReport ? <Link href="/dashboard/subscriptions/report" className={buttonClass('secondary', 'md')}>{t.report}</Link> : null}
       </nav>
       {pendingCount > 0 ? <p role="status" className="mb-3 text-sm text-ink-secondary">{t.countPending(formatNumber(pendingCount, lang))}</p> : null}
-      <DataTable caption={t.requests} columns={cols} rows={p.rows} rowId={(r) => r.id} empty={{ title: t.noRequests, description: t.noRequestsText }} />
+      {p.filter === 'expiring' ? (<><p className="mb-3 text-sm text-ink-secondary">{t.expiringText}</p><ExpiringTable rows={p.expiring ?? []} /></>) : (
+        <DataTable caption={t.requests} columns={cols} rows={p.rows} rowId={(r) => r.id} empty={{ title: t.noRequests, description: t.noRequestsText }} />)}
     </>
   );
 }

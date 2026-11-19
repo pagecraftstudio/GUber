@@ -28,6 +28,7 @@ async function run<T>(work: (c: MemberContext) => Promise<T>, paths: string[] = 
 
 export async function savePhoneAction(phone: string) { return run((c) => memberSubscriptionService.savePhone(c, { phone }), ['/my-subscriptions']); }
 export async function requestPlanAction(planId: string) { return run((c) => memberSubscriptionService.request(c, { planId }), ['/my-subscriptions', '/my-subscriptions/plans']); }
+export async function markNoticesReadAction() { return run((c) => memberSubscriptionService.markNoticesRead(c), ['/my-subscriptions']); }
 export async function cancelSubscriptionAction(id: string) { return run((c) => memberSubscriptionService.cancel(c, id), ['/my-subscriptions']); }
 export async function cancelSubscriberBookingAction(bookingId: string) { return run((c) => memberSubscriptionService.cancelBooking(c, bookingId), ['/my-subscriptions']); }
 
