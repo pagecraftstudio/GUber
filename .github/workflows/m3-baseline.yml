@@ -1,0 +1,177 @@
+name: M3 baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or commit to test (leave blank to use the ref this run was started on)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+        continue-on-error: true
+
+      - name: Set up Node.js 22
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+        continue-on-error: true
+
+      - name: Install npm dependencies
+        id: npm-ci
+        run: npm ci
+        continue-on-error: true
+
+      - name: Lint
+        id: lint
+        run: |
+          echo "SKIPPED: no script (package.json does not define lint)"
+        continue-on-error: true
+
+      - name: Typecheck
+        id: typecheck
+        run: npm run typecheck
+        continue-on-error: true
+
+      - name: Build
+        id: build
+        run: npm run build
+        continue-on-error: true
+
+      - name: Install PostgreSQL 16 and PostgREST 12
+        id: install-test-stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-16 postgresql-client-16 curl xz-utils
+          sudo pg_ctlcluster 16 main start
+          pg_isready --host 127.0.0.1 --port 5432
+
+          POSTGREST_VERSION="v12.2.3"
+          POSTGREST_ARCHIVE="postgrest-${POSTGREST_VERSION}-linux-static-x86-64.tar.xz"
+          curl --fail --location --retry 3 \
+            "https://github.com/PostgREST/postgrest/releases/download/${POSTGREST_VERSION}/${POSTGREST_ARCHIVE}" \
+            --output /tmp/postgrest.tar.xz
+          tar -xJf /tmp/postgrest.tar.xz -C /tmp postgrest
+          sudo install --mode=0755 /tmp/postgrest /usr/local/bin/postgrest
+          postgrest --version
+          psql --version
+        continue-on-error: true
+
+      - name: Run local PostgreSQL and PostgREST test suite
+        id: local-test-suite
+        shell: bash
+        env:
+          PSQL: "sudo -u postgres psql"
+        run: |
+          set -o pipefail
+          bash tests/run-all-local.sh 2>&1 | tee m3-baseline-test-output.log
+        continue-on-error: true
+
+      - name: Grep for direct domains table access
+        id: grep-domains
+        shell: bash
+        run: |
+          if output="$(git grep -nE "from\(\s*['\"]domains['\"]" -- src)"; then
+            printf '%s\n' "$output"
+          else
+            status=$?
+            if [ "$status" -eq 1 ]; then
+              echo "(no matches)"
+            else
+              exit "$status"
+            fi
+          fi
+        continue-on-error: true
+
+      - name: Grep for slug mutations
+        id: grep-slug-mutations
+        shell: bash
+        run: |
+          if output="$(git grep -niE "set slug|slug\s*=" -- supabase/tests src)"; then
+            printf '%s\n' "$output"
+          else
+            status=$?
+            if [ "$status" -eq 1 ]; then
+              echo "(no matches)"
+            else
+              exit "$status"
+            fi
+          fi
+        continue-on-error: true
+
+      - name: Upload full local test output
+        id: upload-test-log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-baseline-log
+          path: m3-baseline-test-output.log
+          if-no-files-found: warn
+          retention-days: 7
+        continue-on-error: true
+
+      - name: Final verification summary
+        if: always()
+        shell: bash
+        env:
+          CHECKOUT: ${{ steps.checkout.outcome }}
+          SETUP_NODE: ${{ steps.setup-node.outcome }}
+          NPM_CI: ${{ steps.npm-ci.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          TYPECHECK: ${{ steps.typecheck.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          INSTALL_TEST_STACK: ${{ steps.install-test-stack.outcome }}
+          LOCAL_TEST_SUITE: ${{ steps.local-test-suite.outcome }}
+          GREP_DOMAINS: ${{ steps.grep-domains.outcome }}
+          GREP_SLUG_MUTATIONS: ${{ steps.grep-slug-mutations.outcome }}
+          UPLOAD_TEST_LOG: ${{ steps.upload-test-log.outcome }}
+        run: |
+          failed=0
+          report() {
+            name="$1"
+            outcome="$2"
+            if [ "$outcome" = "success" ]; then
+              if [ "$name" = "lint" ]; then
+                echo "PASS: lint (SKIPPED: no script)"
+              else
+                echo "PASS: $name"
+              fi
+            else
+              echo "FAIL: $name (outcome: $outcome)"
+              failed=1
+            fi
+          }
+
+          report "checkout" "$CHECKOUT"
+          report "setup-node" "$SETUP_NODE"
+          report "npm ci" "$NPM_CI"
+          report "lint" "$LINT"
+          report "typecheck" "$TYPECHECK"
+          report "build" "$BUILD"
+          report "install PostgreSQL 16 + PostgREST 12" "$INSTALL_TEST_STACK"
+          report "bash tests/run-all-local.sh" "$LOCAL_TEST_SUITE"
+          report "domains grep" "$GREP_DOMAINS"
+          report "slug mutation grep" "$GREP_SLUG_MUTATIONS"
+          report "upload test log artifact" "$UPLOAD_TEST_LOG"
+
+          if [ "$failed" -ne 0 ]; then
+            echo "OVERALL: FAIL"
+            exit 1
+          fi
+          echo "OVERALL: PASS"
