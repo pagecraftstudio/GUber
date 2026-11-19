@@ -88,13 +88,13 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
   const ref = useModal(open, onClose);
   return (
     <dialog ref={ref} aria-labelledby={`${id}-t`} onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      className={cx('m-auto max-h-[92dvh] w-[min(var(--modal-w),calc(100vw-1rem))] overflow-hidden rounded-ds-lg border border-line-default bg-surface-card p-0 text-ink-primary shadow-lg backdrop:bg-black/50 sm:w-[min(var(--modal-w),calc(100vw-2rem))]', open && 'flex flex-col')}
+      className={cx('m-auto max-h-[min(92dvh,92svh)] w-[min(var(--modal-w),calc(100vw-1rem))] overflow-hidden rounded-ds-lg border border-line-default bg-surface-card p-0 text-ink-primary shadow-lg backdrop:bg-black/50 sm:w-[min(var(--modal-w),calc(100vw-2rem))]', open && 'flex flex-col')}
       style={{ ['--modal-w' as string]: size === 'lg' ? '40rem' : '32rem' }}>
       <div className="flex items-start justify-between gap-3 border-b border-line-default p-4 sm:px-6">
         <div className="min-w-0"><h2 id={`${id}-t`} className="text-xl font-medium">{title}</h2>{subtitle ? <p className="mt-0.5 text-sm text-ink-secondary">{subtitle}</p> : null}</div>
         <IconButton label={t.close} icon={<X size={18} strokeWidth={1.5} />} onClick={onClose} />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
+      <div onFocus={(e) => { const t = e.target as HTMLElement; if (t.matches?.('input,textarea,select')) t.scrollIntoView?.({ block: 'center' }); }} className="min-h-0 flex-initial basis-auto overflow-y-auto overscroll-contain p-4 sm:p-6">{children}</div>
       {footer ? <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line-default bg-surface-sunken p-4 sm:px-6">{footer}</div> : null}
     </dialog>
   );
