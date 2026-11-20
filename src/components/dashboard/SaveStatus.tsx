@@ -13,6 +13,12 @@ export const EXTRA: Record<string, { en: string; ar: string }> = {
   booking_not_cancellable: { en: 'Cancelled booking: use refund.', ar: 'حجز ملغي: استخدم الاسترداد.' },
   booking_cannot_be_cancelled: { en: 'This booking can no longer be cancelled.', ar: 'لا يمكن إلغاء هذا الحجز بعد الآن.' },
   trip_closed: { en: 'This trip is closed.', ar: 'هذه الرحلة مغلقة.' },
+  publish_settings_missing: { en: 'Save the website settings first.', ar: 'احفظ إعدادات الموقع أولًا.' },
+  publish_title_required: { en: 'Add a website title in Website settings first.', ar: 'أضف عنوان الموقع في إعدادات الموقع أولًا.' },
+  publish_home_page_required: { en: 'The home page must be included when publishing.', ar: 'يجب تضمين الصفحة الرئيسية عند النشر.' },
+  publish_home_section_required: { en: 'The home page needs at least one visible section.', ar: 'تحتاج الصفحة الرئيسية إلى قسم واحد ظاهر على الأقل.' },
+  publish_too_large: { en: 'The site is too large to publish. Remove some content.', ar: 'الموقع كبير جدًا للنشر. احذف بعض المحتوى.' },
+  publish_invalid_content: { en: 'Some content is not allowed (HTML or an unsafe link).', ar: 'بعض المحتوى غير مسموح (HTML أو رابط غير آمن).' },
 };
 
 type View = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; code: string; detail?: string };
