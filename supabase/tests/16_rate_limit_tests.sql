@@ -149,4 +149,4 @@ select t.eq('purge: nothing left to remove', app_private.rate_limit_purge(), 0::
 delete from app_private.rate_limit_policies;
 insert into app_private.rate_limit_policies select * from rl_saved_policies;
 delete from app_private.rate_limit_counters;
-select t.eq('restore: policies back to the migration values', (select count(*) from app_private.rate_limit_policies), 10::bigint);
+select t.eq('restore: policies back to the migration values', (select count(*) from app_private.rate_limit_policies), 12::bigint);
