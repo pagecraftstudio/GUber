@@ -62,10 +62,10 @@ select v.c, t.u(v.u), r.id from (values
   (t.u(101),2,'owner'),(t.u(101),3,'manager'),(t.u(101),4,'operations'),(t.u(101),5,'booking'),(t.u(101),6,'driver'),
   (t.u(102),7,'owner'),(t.u(103),8,'owner')) v(c,u,k) join roles r on r.key = v.k;
 
-insert into domains (company_id, hostname, kind, is_primary, verification_status, verified_at) values
-  (t.u(101),'a.test','platform_subdomain',true,'verified',now()),
-  (t.u(102),'b.test','custom',true,'pending',null),
-  (t.u(103),'c.test','platform_subdomain',true,'verified',now());
+insert into domains (company_id, hostname, kind, is_primary, verification_status, verified_at, serving_status, activated_at) values
+  (t.u(101),'a.test','platform_subdomain',true,'verified',now(),'active',now()),
+  (t.u(102),'b.test','custom',true,'pending',null,'pending',null),
+  (t.u(103),'c.test','platform_subdomain',true,'verified',now(),'active',now());
 
 insert into routes (id, company_id, name, origin_name, destination_name) values
   (t.u(201),t.u(101),'A route 1','Fayoum','Cairo'),(t.u(202),t.u(101),'A route 2','Fayoum','Giza'),

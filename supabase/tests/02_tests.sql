@@ -168,7 +168,7 @@ select t.passes('audit writer works', $$select app_private.write_audit('system',
 select t.raises('audit_logs update blocked even for superuser', $$update audit_logs set action = 'x'$$, '42501');
 select t.raises('audit_logs delete blocked', $$delete from audit_logs$$, '42501');
 select t.raises('slug uppercase rejected', $$insert into companies (name,slug) values ('x','Bad-Slug')$$, '23514');
-select t.raises('slug reserved word rejected', $$insert into companies (name,slug) values ('x','admin')$$, '23514');
+select t.raises('slug reserved word rejected (0044 trigger, reserved_names)', $$insert into companies (name,slug) values ('x','admin')$$, '22023');
 select t.raises('hostname uppercase rejected', $$insert into domains (company_id,hostname,kind) values (t.u(101),'UPPER.test','custom')$$, '23514');
 select t.raises('entitlement type mismatch rejected', $$insert into plan_entitlements (plan_id,key,bool_value) select id,'max_users',true from plans where code='starter' on conflict (plan_id,key) do update set bool_value = true, int_value = null$$, '23514');
 

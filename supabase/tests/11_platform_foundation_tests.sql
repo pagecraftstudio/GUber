@@ -46,8 +46,8 @@ select t.eq('policies: platform_select kept on every protected table',
 select t.eq('policies: platform write policies on tenant-operational tables untouched (routes, buses, customers)',
   (select count(*) from pg_policies where schemaname = 'public' and policyname in ('platform_insert','platform_update')
      and tablename in ('routes','buses','customers')), 6::bigint);
-select t.eq('policies: domains write policies unchanged (accepted gap until Phase 12)',
-  (select count(*) from pg_policies where schemaname = 'public' and tablename = 'domains' and policyname in ('platform_insert','platform_update')), 2::bigint);
+select t.eq('policies: domains write policies removed (0042 closes the gap accepted in 0015)',
+  (select count(*) from pg_policies where schemaname = 'public' and tablename = 'domains' and policyname in ('platform_insert','platform_update')), 0::bigint);
 select t.eq('privileges: authenticated has no INSERT/UPDATE on any protected table',
   (select count(*) from unnest(array['companies','subscriptions','invoices','payments','platform_users','plans','plan_entitlements','entitlement_definitions','company_notes']) tbl
     where has_table_privilege('authenticated', 'public.' || tbl, 'INSERT') or has_table_privilege('authenticated', 'public.' || tbl, 'UPDATE')), 0::bigint);
