@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD, PHASE_PRODUCTION_SERVER } from 'next/constants';
 import { assertEnv } from './src/lib/env-check';
 import { buildSecurityHeaders } from './src/lib/security-headers';
+import { readTenantConfig } from './src/lib/tenant/config';
+import { buildTenantHeaders } from './src/lib/tenant/headers';
 
 /**
  * Configuration is a function of the phase so that configuration errors surface where they are cheapest to fix:
@@ -20,7 +22,7 @@ export default function config(phase: string): NextConfig {
     // Build-time switch so the dev-only component gallery is not even compiled into a production build (tests/bundle-scan.sh checks it).
     env: { DS_GALLERY: phase === PHASE_DEVELOPMENT_SERVER || process.env.VERCEL_ENV === 'preview' ? '1' : '0' },
     async headers() {
-      return [{ source: '/:path*', headers }];
+      return [{ source: '/:path*', headers }, ...buildTenantHeaders(readTenantConfig(process.env))];
     },
   };
 }
