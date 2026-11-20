@@ -154,3 +154,7 @@ delete from app_private.rate_limit_counters;
 
 -- 12. reserved list content
 select t.eq('reserved: 14 original + 13 added names', (select count(*) from app_private.reserved_names where scope = 'slug' and held_by_company is null), 27::bigint);
+
+-- cleanup: later suites share this database
+delete from public.domains where kind = 'custom';
+delete from app_private.reserved_names where scope = 'hostname';
