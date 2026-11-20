@@ -15,7 +15,7 @@ export default async function WebsitePagesPage() {
   const pages = canWrite ? await pagesService.ensureHomePage(ctx) : await pagesService.listPages(ctx);
   return (
     <>
-      <PageHeader eyebrow="Brand presence" title="Website pages" description="Edit the draft of your website. Nothing here is public until you publish." action={<Link href="/dashboard/website" className="text-sm font-semibold underline"><Bi en="Website settings" ar="إعدادات الموقع" /></Link>} />
+      <PageHeader eyebrow="Brand presence" title="Website pages" description="Edit the draft of your website. Nothing here is public until you publish." action={<span className="flex gap-4 text-sm font-semibold"><Link href="/dashboard/website/preview" className="underline"><Bi en="Preview draft" ar="معاينة المسودة" /></Link><Link href="/dashboard/website" className="underline"><Bi en="Website settings" ar="إعدادات الموقع" /></Link></span>} />
       <div className="space-y-6">
         <ul className="divide-y divide-line-default rounded-2xl border border-line-default bg-surface-card">
           {pages.length === 0 && <li className="p-5 text-sm text-ink-secondary"><Bi en="No pages yet." ar="لا توجد صفحات بعد." /></li>}

@@ -223,6 +223,8 @@ export const PAGE_AR: Record<string, string> = {
   "Brand presence": "الهوية والحضور",
   "Website settings": "إعدادات الموقع",
   "Website pages": "صفحات الموقع",
+  "Draft preview": "معاينة المسودة",
+  "This is how your website will look if you publish now. It is private to your team.": "هكذا سيظهر موقعك إذا نشرته الآن. هذه المعاينة خاصة بفريقك.",
   "Page": "صفحة",
   "Edit the draft of your website. Nothing here is public until you publish.": "حرّر مسودة موقعك. لا شيء منها عام حتى تنشره.",
   "Draft content. Save each section; changes go public only when you publish.": "محتوى المسودة. احفظ كل قسم؛ لا تظهر التغييرات للعامة إلا بعد النشر.",
