@@ -13,6 +13,8 @@ delete from public.website_publications;
 delete from public.website_sections;
 delete from public.website_pages;
 update public.website_settings set is_published = false, site_title = jsonb_build_object('en', 'Company A') where company_id = t.u(101);
+-- 0048 forbids SVG rows in the public bucket. This suite proves the 0046 VALIDATOR still refuses a legacy SVG row, so the constraint is lifted for the suite only.
+alter table public.media drop constraint media_public_no_svg;
 insert into public.media (id, company_id, kind, bucket, storage_path, original_filename, mime_type, size_bytes) values
   (t.u(391), t.u(101), 'website_image', 'company-public', t.u(101)::text || '/hero.png', 'hero.png', 'image/png', 1000),
   (t.u(392), t.u(101), 'website_image', 'company-public', t.u(101)::text || '/x.svg', 'x.svg', 'image/svg+xml', 1000),
@@ -208,5 +210,6 @@ delete from public.website_publications;
 delete from public.website_sections;
 delete from public.website_pages;
 delete from public.media where id in (t.u(391), t.u(392), t.u(393));
+alter table public.media add constraint media_public_no_svg check (not (bucket = 'company-public' and mime_type = 'image/svg+xml'));
 update public.website_settings set is_published = (company_id = t.u(101)), site_title = null, primary_color = '#1d4ed8', social_links = '{}' where company_id in (t.u(101), t.u(102));
 delete from app_private.rate_limit_counters;
