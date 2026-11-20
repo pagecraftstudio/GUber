@@ -1,0 +1,148 @@
+import type { PublicSite } from './schema';
+import { parseSection, type ParsedSection } from './sections';
+import { mediaUrl, pick, safeHref, type SiteLocale } from './text';
+import { RichText } from './RichText';
+import { distinctRoutes } from './trip-routes';
+import type { SiteTrip } from './trips-data';
+
+export interface SectionsCtx {
+  site: PublicSite['site'];
+  locale: SiteLocale;
+  supabaseUrl: string;
+  /** Loaded lazily by the page only when a trips/routes section exists. */
+  trips: SiteTrip[];
+}
+
+const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="text-2xl font-semibold mb-4">{children}</h2>;
+const Wrap = ({ children, id }: { children: React.ReactNode; id?: string }) => <section id={id} className="mx-auto w-full max-w-5xl px-4 py-10">{children}</section>;
+
+export const needsTrips = (site: PublicSite['site']): boolean =>
+  site.pages.some((p) => p.sections.some((s) => s.type === 'trips' || s.type === 'routes'));
+
+function formatDeparture(t: SiteTrip, locale: SiteLocale): string {
+  try {
+    return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: t.timezone }).format(new Date(t.departure_at));
+  } catch { return t.departure_at; }
+}
+function formatPrice(t: SiteTrip, locale: SiteLocale): string {
+  try {
+    return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { style: 'currency', currency: t.currency }).format(Number(t.price));
+  } catch { return `${t.price} ${t.currency}`; }
+}
+
+function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
+  const { locale, site } = ctx;
+  switch (s.type) {
+    case 'hero': {
+      const img = mediaUrl(ctx.supabaseUrl, s.content.image_media_id ? site.media[s.content.image_media_id] : undefined);
+      const href = safeHref(s.content.cta_href);
+      const cta = pick(s.content.cta_label, locale);
+      return (
+        <section className="bg-[var(--site-accent,var(--ds-action-primary))] text-[var(--site-on-accent,var(--ds-action-on-primary))]">
+          <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-14 md:grid-cols-2 md:items-center">
+            <div className="space-y-4">
+              <h1 className="text-3xl font-bold md:text-4xl">{pick(s.content.title, locale)}</h1>
+              <p className="text-lg opacity-90">{pick(s.content.subtitle, locale)}</p>
+              {href && cta ? <a href={href} className="inline-block rounded-md bg-[var(--site-on-accent,var(--ds-action-on-primary))] px-5 py-2.5 font-medium text-[var(--site-accent,var(--ds-action-primary))]">{cta}</a> : null}
+            </div>
+            {img ? <img src={img} alt={(s.content.image_media_id && site.media[s.content.image_media_id]?.alt) || ''} className="max-h-80 w-full rounded-lg object-cover" loading="eager" /> : null}
+          </div>
+        </section>
+      );
+    }
+    case 'about': return <Wrap id="about"><H2>{pick(s.content.title, locale)}</H2><RichText source={pick(s.content.body, locale)} /></Wrap>;
+    case 'rich_text': return <Wrap><RichText source={pick(s.content.body, locale)} /></Wrap>;
+    case 'features': return (
+      <Wrap id="features">
+        <H2>{pick(s.content.title, locale)}</H2>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {(s.content.items ?? []).map((it, i) => (
+            <li key={i} className="rounded-lg border border-line-default p-4"><h3 className="font-semibold">{pick(it.title, locale)}</h3><p className="mt-1 text-ink-secondary">{pick(it.body, locale)}</p></li>
+          ))}
+        </ul>
+      </Wrap>
+    );
+    case 'faq': return (
+      <Wrap id="faq">
+        <H2>{pick(s.content.title, locale)}</H2>
+        <div className="space-y-2">
+          {(s.content.items ?? []).map((it, i) => (
+            <details key={i} className="rounded-lg border border-line-default p-4"><summary className="cursor-pointer font-medium">{pick(it.question, locale)}</summary><div className="mt-2 text-ink-secondary"><RichText source={pick(it.answer, locale)} /></div></details>
+          ))}
+        </div>
+      </Wrap>
+    );
+    case 'image': {
+      const m = s.content.image_media_id ? site.media[s.content.image_media_id] : undefined;
+      const url = mediaUrl(ctx.supabaseUrl, m);
+      if (!url) return null;
+      return <Wrap><figure><img src={url} alt={m?.alt ?? ''} className="w-full rounded-lg" loading="lazy" />{pick(s.content.caption, locale) ? <figcaption className="mt-2 text-sm text-ink-secondary">{pick(s.content.caption, locale)}</figcaption> : null}</figure></Wrap>;
+    }
+    case 'routes': {
+      const routes = distinctRoutes(ctx.trips);
+      return (
+        <Wrap id="routes">
+          <H2>{pick(s.content.title, locale)}</H2>
+          {routes.length === 0 ? <p className="text-ink-secondary">{locale === 'ar' ? 'لا توجد خطوط متاحة حاليًا.' : 'No routes available right now.'}</p>
+            : <ul className="grid gap-3 sm:grid-cols-2">{routes.map((r, i) => <li key={i} className="rounded-lg border border-line-default p-4">{r.origin} <span aria-hidden>→</span><span className="sr-only">{locale === 'ar' ? 'إلى' : 'to'}</span> {r.destination}</li>)}</ul>}
+        </Wrap>
+      );
+    }
+    case 'trips': {
+      const trips = ctx.trips.slice(0, s.content.limit ?? 10);
+      return (
+        <Wrap id="trips">
+          <H2>{pick(s.content.title, locale)}</H2>
+          {trips.length === 0 ? <p className="text-ink-secondary">{locale === 'ar' ? 'لا توجد رحلات قادمة.' : 'No upcoming trips.'}</p>
+            : <ul className="divide-y divide-line-default rounded-lg border border-line-default">{trips.map((t) => (
+              <li key={t.trip_id} className="flex flex-wrap items-center justify-between gap-2 p-4">
+                <span className="font-medium">{t.origin_name} → {t.destination_name}</span>
+                <span className="text-ink-secondary">{formatDeparture(t, locale)} · {formatPrice(t, locale)} · {t.seats_available} {locale === 'ar' ? 'مقعد' : 'seats'}</span>
+              </li>))}</ul>}
+        </Wrap>
+      );
+    }
+    case 'contact': return <ContactBlock title={pick(s.content.title, locale)} ctx={ctx} />;
+    case 'footer': return null;       // the footer is always rendered from settings (SiteFooter); a footer section must not duplicate it
+  }
+}
+
+const SOCIAL_KEYS = ['facebook', 'instagram', 'x', 'tiktok', 'youtube', 'linkedin', 'telegram'] as const;
+
+export function ContactBlock({ title, ctx }: { title: string; ctx: SectionsCtx }) {
+  const st = ctx.site.settings;
+  const email = st.contact_email && /^[^\s@<>]+@[^\s@<>]+$/.test(st.contact_email) ? st.contact_email : null;
+  const phone = st.contact_phone && /^\+?[\d\s().-]{5,20}$/.test(st.contact_phone) ? st.contact_phone : null;
+  const address = pick(st.contact_address, ctx.locale);
+  return (
+    <Wrap id="contact">
+      {title ? <H2>{title}</H2> : null}
+      <ul className="space-y-1">
+        {email ? <li><a className="underline underline-offset-2" href={`mailto:${email}`}>{email}</a></li> : null}
+        {phone ? <li><a className="underline underline-offset-2" dir="ltr" href={`tel:${phone.replace(/\s/g, '')}`}>{phone}</a></li> : null}
+        {address ? <li>{address}</li> : null}
+      </ul>
+    </Wrap>
+  );
+}
+
+export function SiteFooter({ ctx, name }: { ctx: SectionsCtx; name: string }) {
+  const st = ctx.site.settings;
+  const text = pick(st.footer_text, ctx.locale);
+  const links = SOCIAL_KEYS.flatMap((k) => { const h = safeHref(st.social_links?.[k]); return h && h.startsWith('https://') ? [{ k, h }] : []; });
+  return (
+    <footer className="mt-10 border-t border-line-default">
+      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-ink-secondary">
+        <span>{text || name}</span>
+        {links.length > 0 ? <ul className="flex gap-4">{links.map((l) => <li key={l.k}><a href={l.h} rel="noopener noreferrer nofollow" className="underline underline-offset-2">{l.k}</a></li>)}</ul> : null}
+      </div>
+    </footer>
+  );
+}
+
+export function Sections({ sections, ctx }: { sections: { type: string; content: unknown }[]; ctx: SectionsCtx }) {
+  return sections.map((raw, i) => {
+    const s = parseSection(raw);
+    return s ? <Section key={i} s={s} ctx={ctx} /> : null;     // unknown type / invalid content: skipped, the rest of the page still renders
+  });
+}
