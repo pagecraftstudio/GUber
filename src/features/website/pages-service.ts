@@ -23,6 +23,12 @@ export function makePagesService(repo: PagesRepository) {
       if (!page) throw new AppError('not_found');
       return { page, sections: await repo.listSections(ctx, pageId) };
     },
+    /** Companies start with no website_pages row. The home page is created on first editor visit (write permission only). */
+    async ensureHomePage(ctx: TenantServiceContext): Promise<DraftPage[]> {
+      requirePermission(ctx, PERMISSIONS.websiteWrite);
+      const pages = await repo.listPages(ctx);
+      return pages.some((p) => p.isHome) ? pages : [await repo.createHomePage(ctx), ...pages];
+    },
     async createPage(ctx: TenantServiceContext, input: unknown): Promise<DraftPage> {
       requirePermission(ctx, PERMISSIONS.websiteWrite);
       return repo.createPage(ctx, parseInput(pageCreateSchema, input));

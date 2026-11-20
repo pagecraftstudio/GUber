@@ -12,7 +12,7 @@ const page = (o = {}) => ({ id: ID, slug: 'about', title: { en: 'About' }, isHom
 const section = (o = {}) => ({ id: ID, pageId: ID, type: 'hero' as const, sortOrder: 0, isEnabled: true, content: {}, updatedAt: '', ...o });
 
 function repo(over: Partial<Record<keyof PagesRepository, unknown>> = {}): PagesRepository {
-  const names = ['listPages', 'getPage', 'createPage', 'updatePage', 'deletePage', 'listSections', 'addSection', 'getSection', 'updateSection', 'deleteSection', 'setSectionOrder'];
+  const names = ['listPages', 'getPage', 'createPage', 'createHomePage', 'updatePage', 'deletePage', 'listSections', 'addSection', 'getSection', 'updateSection', 'deleteSection', 'setSectionOrder'];
   return Object.fromEntries(names.map((n) => [n, over[n as keyof PagesRepository] ?? vi.fn()])) as unknown as PagesRepository;
 }
 
@@ -82,5 +82,17 @@ describe('pages service: authorize -> validate -> repository', () => {
     await expect(svc.reorderSections(tenantCtx(['website.write']), ID, { orderedIds: [ID, ID] })).rejects.toMatchObject({ code: 'validation' });
     await svc.reorderSections(tenantCtx(['website.write']), ID, { orderedIds: [ID2, ID] });
     expect(r.setSectionOrder).toHaveBeenCalledWith(expect.anything(), ID, [ID2, ID]);
+  });
+});
+
+describe('ensureHomePage', () => {
+  it('creates home only when missing, and needs write', async () => {
+    const home = page({ isHome: true, slug: '' });
+    const r1 = repo({ listPages: vi.fn().mockResolvedValue([page()]), createHomePage: vi.fn().mockResolvedValue(home) });
+    expect((await makePagesService(r1).ensureHomePage(tenantCtx(['website.write']))).map((p) => p.isHome)).toEqual([true, false]);
+    const r2 = repo({ listPages: vi.fn().mockResolvedValue([home]) });
+    await makePagesService(r2).ensureHomePage(tenantCtx(['website.write']));
+    expect(r2.createHomePage).not.toHaveBeenCalled();
+    await expect(makePagesService(repo()).ensureHomePage(tenantCtx(['website.read']))).rejects.toMatchObject({ code: 'forbidden' });
   });
 });

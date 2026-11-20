@@ -18,6 +18,8 @@ export type PagesRepository = {
   listPages(ctx: TenantServiceContext): Promise<DraftPage[]>;
   getPage(ctx: TenantServiceContext, id: string): Promise<DraftPage | null>;
   createPage(ctx: TenantServiceContext, input: PageCreate): Promise<DraftPage>;
+  /** Idempotent: the partial unique index (one home per company) makes a concurrent second insert fail, and we then read the winner. */
+  createHomePage(ctx: TenantServiceContext): Promise<DraftPage>;
   updatePage(ctx: TenantServiceContext, id: string, patch: PageUpdate): Promise<DraftPage>;
   deletePage(ctx: TenantServiceContext, id: string): Promise<void>;
   listSections(ctx: TenantServiceContext, pageId: string): Promise<DraftSection[]>;
@@ -41,6 +43,16 @@ export const pagesRepository: PagesRepository = {
   async createPage(ctx, input) {
     const row = { company_id: ctx.companyId, slug: input.slug, title: input.title, seo_title: input.seoTitle ?? null, seo_description: input.seoDescription ?? null, is_home: false };
     return expectOne<PageRow, DraftPage>(await ctx.db.from('website_pages').insert(row).select(PAGE_SELECT).single(), toDraftPage);
+  },
+  async createHomePage(ctx) {
+    const row = { company_id: ctx.companyId, slug: '', title: { en: 'Home', ar: 'الرئيسية' }, is_home: true };
+    const res = await ctx.db.from('website_pages').insert(row).select(PAGE_SELECT).single();
+    if (res.error) {
+      const existing = await ctx.db.from('website_pages').select(PAGE_SELECT).eq('company_id', ctx.companyId).eq('is_home', true).maybeSingle();
+      if (!existing.error && existing.data) return toDraftPage(existing.data as PageRow);
+      throw mapDbError(res.error);
+    }
+    return toDraftPage(res.data as PageRow);
   },
   async updatePage(ctx, id, patch) {
     const row: Record<string, unknown> = {};
