@@ -5,6 +5,8 @@
  * SAFETY CONTRACT: the result names the variable and the KIND of problem. It never contains a value, not even a prefix, so
  * a build log or a cold-start error can be shared without leaking a key.
  */
+import { checkTenantEnv } from './tenant/config';
+
 export type EnvIssue = { name: string; problem: string };
 export type EnvInput = Record<string, string | undefined>;
 
@@ -76,6 +78,9 @@ export function checkEnv(env: EnvInput): { ok: boolean; issues: EnvIssue[] } {
     if (name !== 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY' && SECRET_NAME.test(name)) add(name, 'looks like a secret but uses the NEXT_PUBLIC_ prefix, which publishes it to every browser');
     if (name !== 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY' && (/^sb_secret_/i.test(value) || jwtRole(value) === 'service_role')) add(name, 'contains a secret/service-role credential and would be published to every browser');
   }
+
+  // --- tenant routing (TENANT_MODE / PLATFORM_DOMAIN / PLATFORM_EXTRA_HOSTS): optional, default path mode
+  for (const i of checkTenantEnv(env)) add(i.name, i.problem);
 
   // --- data mode
   const mode = env.NEXT_PUBLIC_UI_DATA_MODE;

@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -17,6 +17,8 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   route_subscription: 'Rider subscription',
   member: 'Team member',
   driver: 'Driver',
+  domain: 'Domain',
+  website: 'Website',
 };
 
 export const ACTOR_TYPES = ['platform_user', 'company_user', 'customer', 'system'] as const;
@@ -63,6 +65,15 @@ const ACTION_LABEL: Record<string, string> = {
   'member.role_changed': 'Member role changed',
   'member.status_changed': 'Member status changed',
   'driver.linked': 'Driver linked to login',
+  'domain.add': 'Custom domain added',
+  'domain.remove': 'Custom domain removed',
+  'domain.set_primary': 'Primary domain changed',
+  'domain.verify': 'Domain DNS check recorded',
+  'domain.activate': 'Domain activated',
+  'domain.disable': 'Domain disabled',
+  'website.publish': 'Website published',
+  'website.rollback': 'Website rolled back',
+  'website.unpublish': 'Website unpublished',
 };
 
 /** Human label, or the raw action when the catalogue does not know it (never hides an entry). */
