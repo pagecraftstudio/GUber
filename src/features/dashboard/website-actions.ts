@@ -6,6 +6,7 @@ import { requireTenant } from '@/lib/auth/guards';
 import { AppError } from '@/lib/errors';
 import { createTenantServiceContext, type TenantServiceContext } from '@/lib/service/context';
 import { pagesService } from '@/features/website/pages-service';
+import { publishService } from '@/features/website/publish-service';
 import { errorState, successState, type FormState } from './form-state';
 
 /**
@@ -16,11 +17,11 @@ import { errorState, successState, type FormState } from './form-state';
 const str = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
 const LIST = '/dashboard/website/pages';
 
-async function ctx(): Promise<TenantServiceContext> {
-  return createTenantServiceContext(await createClient(), await requireTenant('website.write'));
+async function ctx(permission = 'website.write'): Promise<TenantServiceContext> {
+  return createTenantServiceContext(await createClient(), await requireTenant(permission));
 }
-async function run(paths: string[], message: Extract<FormState, { status: 'success' }>['message'], work: (c: TenantServiceContext) => Promise<void>): Promise<FormState> {
-  try { await work(await ctx()); } catch (e) { return errorState(e); }
+async function run(paths: string[], message: Extract<FormState, { status: 'success' }>['message'], work: (c: TenantServiceContext) => Promise<void>, permission = 'website.write'): Promise<FormState> {
+  try { await work(await ctx(permission)); } catch (e) { return errorState(e); }
   for (const p of paths) revalidatePath(p);
   return successState(message);
 }
@@ -85,4 +86,16 @@ export async function moveSectionFormAction(_prev: FormState, f: FormData): Prom
     [ids[i], ids[j]] = [ids[j]!, ids[i]!];
     await pagesService.reorderSections(c, pageId, { orderedIds: ids });
   });
+}
+
+/** Going live is a separate permission (website.publish). Nothing else in this file can make content public. */
+const PUBLISH = '/dashboard/website/publish';
+export async function publishWebsiteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run([PUBLISH], 'saved', async (c) => { await publishService.publish(c, { note: str(f, 'note') }); }, 'website.publish');
+}
+export async function rollbackWebsiteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run([PUBLISH], 'saved', async (c) => { await publishService.rollback(c, { version: Number(str(f, 'version')) }); }, 'website.publish');
+}
+export async function unpublishWebsiteFormAction(_prev: FormState, _f: FormData): Promise<FormState> {
+  return run([PUBLISH], 'saved', async (c) => { await publishService.unpublish(c); }, 'website.publish');
 }

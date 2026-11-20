@@ -22,6 +22,9 @@ const ISSUES: Array<[RegExp, PreviewIssue]> = [
   [/too large to publish/i, 'too_large'],
 ];
 
+/** Maps the database's checklist message to a fixed code. Shared with publishing so both screens say the same thing. */
+export const issueFromDbMessage = (message: string | undefined): PreviewIssue => ISSUES.find(([re]) => re.test(message ?? ''))?.[1] ?? 'invalid_content';
+
 export type PreviewRpcResult = { data: unknown; error: { code?: string; message?: string } | null };
 export type PreviewRepository = { fetch(ctx: TenantServiceContext): Promise<PreviewRpcResult> };
 
@@ -36,7 +39,7 @@ export function makePreviewService(repo: PreviewRepository) {
       const { data, error } = await repo.fetch(ctx);
       if (error) {
         if (error.code === '42501') throw new AppError('forbidden');
-        if (error.code === '23514') return { ok: false, issue: ISSUES.find(([re]) => re.test(error.message ?? ''))?.[1] ?? 'invalid_content' };
+        if (error.code === '23514') return { ok: false, issue: issueFromDbMessage(error.message) };
         if (error.code === '22023') return { ok: false, issue: 'invalid_content' };
         throw new AppError('internal', { cause: new Error(`preview_website_draft failed (${error.code ?? 'unknown'})`) });
       }
