@@ -63,6 +63,11 @@ describe('database refusals become fixed errors', () => {
   ])('checklist "%s"', async (message, detail) => {
     await expect(mk({ publish: vi.fn().mockResolvedValue(err('23514', message)) }).svc.publish(pub, {})).rejects.toMatchObject({ code: 'business_rule', detail });
   });
+  it('an oversized site (54000, the code 0046 really raises) is a friendly business rule, not an internal error', async () => {
+    await expect(mk({ publish: vi.fn().mockResolvedValue(err('54000', 'site is too large to publish')) }).svc.publish(pub, {})).rejects.toMatchObject({ code: 'business_rule', detail: 'publish_too_large' });
+    await expect(mk({ publish: vi.fn().mockResolvedValue(err('54000', 'reworded')) }).svc.publish(pub, {})).rejects.toMatchObject({ code: 'business_rule', detail: 'publish_too_large' });
+    await expect(mk({ rollback: vi.fn().mockResolvedValue(err('54000', 'x')) }).svc.rollback(pub, { version: 1 })).rejects.toMatchObject({ code: 'business_rule', detail: 'publish_too_large' });
+  });
   it('invalid content, no subscription, version missing, permission', async () => {
     await expect(mk({ publish: vi.fn().mockResolvedValue(err('22023', 'secret <b>x</b>')) }).svc.publish(pub, {})).rejects.toMatchObject({ code: 'business_rule', detail: 'publish_invalid_content' });
     await expect(mk({ publish: vi.fn().mockResolvedValue(err('42501', 'no active subscription')) }).svc.publish(pub, {})).rejects.toMatchObject({ code: 'subscription_required' });

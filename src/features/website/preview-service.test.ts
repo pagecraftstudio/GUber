@@ -26,6 +26,11 @@ describe('preview service', () => {
   ])('checklist failure "%s" becomes a fixed code', async (message, issue) => {
     expect(await svc({ error: { code: '23514', message } }).service.getDraft(ctx)).toEqual({ ok: false, issue });
   });
+  it('an oversized site is a fixed code. The database raises 54000 for it (0046), NOT 23514: asserted in supabase/tests/41', async () => {
+    expect(await svc({ error: { code: '54000', message: 'site is too large to publish' } }).service.getDraft(ctx)).toEqual({ ok: false, issue: 'too_large' });
+    // the code decides, not the message: a reworded database message must not turn an oversized site into an internal error
+    expect(await svc({ error: { code: '54000', message: 'reworded' } }).service.getDraft(ctx)).toEqual({ ok: false, issue: 'too_large' });
+  });
   it('content validation (22023) is a fixed code and never echoes the database message', async () => {
     const r = await svc({ error: { code: '22023', message: 'secret <b>content</b>' } }).service.getDraft(ctx);
     expect(r).toEqual({ ok: false, issue: 'invalid_content' });

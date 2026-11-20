@@ -6,6 +6,11 @@ create or replace function t.err40(p_sql text) returns text language plpgsql as
 create or replace function t.cnt40(p_sql text) returns bigint language plpgsql security definer as
   $$ declare n bigint; begin execute p_sql into n; return n; end $$;
 
+-- audit baseline: earlier suites (39) leave website.* audit rows behind, so the read-only check below compares against this, not against zero
+create table if not exists t.base40 (n bigint);
+truncate t.base40;
+insert into t.base40 select count(*) from public.audit_logs where action like 'website.%';
+
 delete from app_private.rate_limit_counters;
 delete from public.website_publications;
 delete from public.website_sections;
@@ -40,7 +45,7 @@ select t.eq('preview: same shape as get_public_site (keys)',
 -- reads only: nothing published, nothing written
 select t.as_admin();
 select t.eq('preview: does not publish', t.cnt40('select count(*) from public.website_publications'), 0::bigint);
-select t.eq('preview: not audited (read only)', t.cnt40($$select count(*) from public.audit_logs where action like 'website.%'$$), 0::bigint);
+select t.eq('preview: not audited (read only)', t.cnt40($$select count(*) from public.audit_logs where action like 'website.%'$$), (select n from t.base40));
 select t.eq('preview: public site still not served', public.get_public_site(null, (select slug from public.companies where id = t.u(101))) is null, true);
 
 -- checklist errors surface (same as publish)

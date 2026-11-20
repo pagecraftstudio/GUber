@@ -40,6 +40,7 @@ export function makePreviewService(repo: PreviewRepository) {
       if (error) {
         if (error.code === '42501') throw new AppError('forbidden');
         if (error.code === '23514') return { ok: false, issue: issueFromDbMessage(error.message) };
+        if (error.code === '54000') return { ok: false, issue: 'too_large' }; // 0046 raises program_limit_exceeded for a snapshot over 1 MB
         if (error.code === '22023') return { ok: false, issue: 'invalid_content' };
         throw new AppError('internal', { cause: new Error(`preview_website_draft failed (${error.code ?? 'unknown'})`) });
       }

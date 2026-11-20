@@ -19,6 +19,7 @@ function unwrap(res: RpcOutcome): number | null {
   const text = `${e.message ?? ''}`;
   if (e.code === '23514') throw new AppError('business_rule', { detail: `publish_${issueFromDbMessage(text)}`, cause: e });
   if (e.code === '22023') throw new AppError('business_rule', { detail: 'publish_invalid_content', cause: e });
+  if (e.code === '54000') throw new AppError('business_rule', { detail: 'publish_too_large', cause: e }); // 0046: snapshot over 1 MB (program_limit_exceeded), not 23514
   if (e.code === '42501' && /no active subscription/i.test(text)) throw new AppError('subscription_required', { cause: e });
   if (e.code === 'P0002') throw new AppError('not_found', { cause: e });
   throw mapDbError(e); // 42501 -> forbidden, PT429 -> rate_limited, anything unknown -> internal
