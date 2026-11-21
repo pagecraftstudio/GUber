@@ -158,3 +158,15 @@ export async function addPageFormAction(_prev: FormState, f: FormData): Promise<
   revalidatePath(FLOW);
   redirect(`${FLOW}?${new URLSearchParams({ step: 'design', page: id })}`); // after the try: redirect() signals by throwing
 }
+
+/** Canvas: the look of one section (background, alignment, spacing). Checked against the fixed lists by the service and again by the content schema. */
+export async function setSectionStyleFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const style: Record<string, string> = {};
+  for (const k of ['background', 'align', 'spacing'] as const) { const v = str(f, k); if (v) style[k] = v; }
+  return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => {
+    const id = str(f, 'sectionId');
+    // The form sends the choices it changes; merge them over what is stored so one click never resets the other two.
+    const { section } = await pagesService.getSectionForStyle(c, id);
+    await pagesService.setSectionStyle(c, id, { ...section, ...style });
+  });
+}

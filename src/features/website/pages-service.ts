@@ -1,10 +1,11 @@
+import { compactStyle, sectionStyleWrite } from '@/features/site/section-style';
 import { AppError, parseInput } from '@/lib/errors';
 import { PERMISSIONS } from '@/lib/auth/permission-keys';
 import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { pagesRepository, type PagesRepository } from './pages-repository';
 import {
-  MANAGED_KEYS, pageCreateSchema, pageUpdateSchema, parseSectionContent, sectionCreateSchema, sectionInsertSchema, sectionReorderSchema, sectionUpdateSchema,
+  managedKeys, pageCreateSchema, pageUpdateSchema, parseSectionContent, sectionCreateSchema, sectionInsertSchema, sectionReorderSchema, sectionUpdateSchema,
 } from './content-schema';
 import { SECTION_DEFAULTS } from './section-fields';
 import type { DraftPage, DraftSection } from './pages-types';
@@ -90,11 +91,30 @@ export function makePagesService(repo: PagesRepository) {
         if (!current) throw new AppError('not_found');
         const parsed = parseSectionContent(current.type, patch.content); // validated against the section's STORED type, never a client-supplied one
         if (!parsed.success) throw new AppError('validation', { detail: 'invalid_section_content' });
-        const managed = MANAGED_KEYS[current.type] ?? [];
+        const managed = managedKeys(current.type);
         const kept = Object.fromEntries(managed.filter((k) => current.content[k] !== undefined).map((k) => [k, current.content[k]]));
         content = { ...Object.fromEntries(Object.entries(parsed.data).filter(([k]) => !managed.includes(k))), ...kept };
       }
       return repo.updateSection(ctx, id, { content, isEnabled: patch.isEnabled });
+    },
+    /** The stored style of one section (for merging a single change over it). Needs website.read. */
+    async getSectionForStyle(ctx: TenantServiceContext, id: string): Promise<{ section: Record<string, unknown> }> {
+      requirePermission(ctx, PERMISSIONS.websiteRead);
+      const current = await repo.getSection(ctx, id);
+      if (!current) throw new AppError('not_found');
+      const st = current.content.style;
+      return { section: st && typeof st === 'object' ? (st as Record<string, unknown>) : {} };
+    },
+    /** E4: set the look of one section. Only the style key changes; everything else in the content is carried over and re-validated. */
+    async setSectionStyle(ctx: TenantServiceContext, id: string, input: unknown): Promise<DraftSection> {
+      requirePermission(ctx, PERMISSIONS.websiteWrite);
+      const style = compactStyle(parseInput(sectionStyleWrite, input));
+      const current = await repo.getSection(ctx, id);
+      if (!current) throw new AppError('not_found');
+      const { style: _old, ...rest } = current.content;
+      const parsed = parseSectionContent(current.type, Object.keys(style).length > 0 ? { ...rest, style } : rest);
+      if (!parsed.success) throw new AppError('validation', { detail: 'invalid_section_content' });
+      return repo.updateSection(ctx, id, { content: parsed.data });
     },
     async deleteSection(ctx: TenantServiceContext, id: string): Promise<void> {
       requirePermission(ctx, PERMISSIONS.websiteWrite);

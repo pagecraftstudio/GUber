@@ -152,3 +152,29 @@ describe('managed keys (hero image) survive a text save', () => {
     expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2].content).toEqual({ title: { en: 'T' } });
   });
 });
+
+describe('section style (E4)', () => {
+  const upd = (r: PagesRepository) => (r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2];
+  it('needs website.write', async () => {
+    await expect(makePagesService(repo()).setSectionStyle(tenantCtx(['website.read']), ID, { background: 'tint' })).rejects.toMatchObject({ code: 'forbidden' });
+  });
+  it('stores only what differs from the default and keeps the rest of the content', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'about', content: { title: { en: 'Hi' } } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).setSectionStyle(tenantCtx(['website.write']), ID, { background: 'tint', align: 'start', spacing: 'normal' });
+    expect(upd(r)).toEqual({ content: { title: { en: 'Hi' }, style: { background: 'tint' } }, isEnabled: undefined });
+  });
+  it('going back to all defaults removes the key', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'about', content: { title: { en: 'Hi' }, style: { background: 'brand' } } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).setSectionStyle(tenantCtx(['website.write']), ID, { background: 'plain' });
+    expect(upd(r).content).toEqual({ title: { en: 'Hi' } });
+  });
+  it('refuses values outside the lists and unknown keys', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'about', content: {} })) });
+    for (const bad of [{ background: 'red' }, { align: 'left' }, { color: 'red' }]) await expect(makePagesService(r).setSectionStyle(tenantCtx(['website.write']), ID, bad)).rejects.toMatchObject({ code: 'validation' });
+  });
+  it('a text save keeps the stored style, whatever the form sends', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'about', content: { title: { en: 'Old' }, style: { background: 'tint' } } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'New' }, style: { background: 'brand' } } });
+    expect(upd(r).content).toEqual({ title: { en: 'New' }, style: { background: 'tint' } });
+  });
+});
