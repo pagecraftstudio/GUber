@@ -8,7 +8,8 @@ import { PageHeader } from '@/components/dashboard/PageHeader';
 import { Bi } from '@/components/dashboard/T';
 import { wizardService } from '@/features/website/wizard-service';
 import { CanvasStep } from '@/features/dashboard/website-flow/CanvasStep';
-import { FLOW_STEPS, FlowButtons, FlowProgress, type FlowStep } from '@/features/dashboard/website-flow/FlowNav';
+import { FlowButtons, FlowProgress } from '@/features/dashboard/website-flow/FlowNav';
+import { FLOW_STEPS, type FlowStep } from '@/features/dashboard/website-flow/flow-steps';
 import { PreviewStep } from '@/features/dashboard/website-wizard/PreviewStep';
 import { PublishStep } from '@/features/dashboard/website-wizard/PublishStep';
 
