@@ -33,6 +33,12 @@ export function makeMediaService(repo: MediaRepository) {
       }
       return { mediaId: reserved.id, path: reserved.path };
     },
+    /** Path for building the public URL of an own image. Needs media.read, like the table. */
+    async imagePath(ctx: TenantServiceContext, mediaId: string): Promise<string | null> {
+      requirePermission(ctx, PERMISSIONS.mediaRead);
+      parseInput(z.uuid(), mediaId);
+      return repo.findPath(ctx, mediaId);
+    },
     async removeImage(ctx: TenantServiceContext, mediaId: string): Promise<void> {
       requirePermission(ctx, PERMISSIONS.mediaWrite);
       parseInput(z.uuid(), mediaId);

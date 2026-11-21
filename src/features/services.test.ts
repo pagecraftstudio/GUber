@@ -104,7 +104,10 @@ describe('schemas reject tenant and server-owned fields (strict)', () => {
     expect(websiteSettingsUpdateSchema.safeParse({ primaryColor: 'red; background:url(x)' }).success).toBe(false);
     expect(websiteSettingsUpdateSchema.parse({ primaryColor: '#AABBCC' }).primaryColor).toBe('#aabbcc');
     expect(websiteSettingsUpdateSchema.safeParse({ isPublished: true }).success).toBe(false);
-    expect(websiteSettingsUpdateSchema.safeParse({ logoMediaId: ID }).success).toBe(false);
+    expect(websiteSettingsUpdateSchema.safeParse({ logoMediaId: ID }).success).toBe(true);   // since 0048 (media rows come only from reserve_media)
+    expect(websiteSettingsUpdateSchema.safeParse({ logoMediaId: null }).success).toBe(true);
+    expect(websiteSettingsUpdateSchema.safeParse({ logoMediaId: '../../x' }).success).toBe(false);
+    expect(websiteSettingsUpdateSchema.safeParse({ faviconMediaId: ID }).success).toBe(false);
   });
   it('company settings: tz, currency, locale consistency', () => {
     expect(companySettingsUpdateSchema.safeParse({ timezone: 'Africa/Cairo' }).success).toBe(true);

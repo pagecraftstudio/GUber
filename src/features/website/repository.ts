@@ -12,6 +12,7 @@ export type WebsiteRepository = {
 const COLUMNS = {
   siteTitle: 'site_title',
   metaDescription: 'meta_description',
+  logoMediaId: 'logo_media_id',
   primaryColor: 'primary_color',
   secondaryColor: 'secondary_color',
   fontHeading: 'font_heading',

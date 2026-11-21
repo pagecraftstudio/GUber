@@ -19,6 +19,8 @@ export default function config(phase: string): NextConfig {
   const headers = buildSecurityHeaders({ supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, production: phase !== PHASE_DEVELOPMENT_SERVER });
   return {
     poweredByHeader: false,
+    // Logo upload goes through a server action; the default 1 MB body limit would reject a 2 MB image before our own (clearer) check.
+    experimental: { serverActions: { bodySizeLimit: '3mb' } },
     // Build-time switch so the dev-only component gallery is not even compiled into a production build (tests/bundle-scan.sh checks it).
     env: { DS_GALLERY: phase === PHASE_DEVELOPMENT_SERVER || process.env.VERCEL_ENV === 'preview' ? '1' : '0' },
     async headers() {
