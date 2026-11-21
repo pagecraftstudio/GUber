@@ -17,10 +17,10 @@ export async function PublishStep({ ctx }: { ctx: TenantServiceContext }) {
   const [state, draft] = await Promise.all([publishService.getState(ctx), previewService.getDraft(ctx)]);
   const current = state.versions.find((v) => v.isCurrent);
   const liveUrl = state.isPublished && current ? tenantUrl(readTenantConfig(process.env), ctx.auth.membership.companySlug, '/') : null;
-  const tips: Array<{ en: string; ar: string; step: string }> = [];
+  const tips: Array<{ en: string; ar: string }> = [];
   if (draft.ok) {
     const st = draft.data.site.settings;
-    if (!st.logo_media_id) tips.push({ step: 'identity', en: 'No logo yet. Add one on the brand step.', ar: 'لا يوجد شعار بعد. أضفه في خطوة العلامة.' });
+    if (!st.logo_media_id) tips.push({ en: 'No logo yet. Add one on the brand step.', ar: 'لا يوجد شعار بعد. أضفه في خطوة العلامة.' });
   }
   return (
     <div className="space-y-5">
@@ -35,8 +35,8 @@ export async function PublishStep({ ctx }: { ctx: TenantServiceContext }) {
         <h3 id="rd" className="text-sm font-medium"><Bi en="Before you publish" ar="قبل النشر" /></h3>
         {draft.ok
           ? <p className="text-sm"><Bi en="Everything required is filled in." ar="كل ما هو مطلوب مكتمل." /></p>
-          : <p role="alert" className="text-sm text-status-error-fg"><Bi en={ISSUE_FIX[draft.issue].en} ar={ISSUE_FIX[draft.issue].ar} />{' '}<Link href={`/dashboard/website?step=${ISSUE_FIX[draft.issue].step}`} className="font-medium underline"><Bi en="Fix it" ar="أصلحه" /></Link></p>}
-        {tips.length > 0 && <ul className="list-disc space-y-1 ps-5 text-sm text-ink-secondary">{tips.map((t) => <li key={t.en}><Link href={`/dashboard/website?step=${t.step}`} className="underline"><Bi en={t.en} ar={t.ar} /></Link></li>)}</ul>}
+          : <p role="alert" className="text-sm text-status-error-fg"><Bi en={ISSUE_FIX[draft.issue].en} ar={ISSUE_FIX[draft.issue].ar} />{' '}<Link href="/dashboard/website?step=design" className="font-medium underline"><Bi en="Fix it" ar="أصلحه" /></Link></p>}
+        {tips.length > 0 && <ul className="list-disc space-y-1 ps-5 text-sm text-ink-secondary">{tips.map((t) => <li key={t.en}><Link href="/dashboard/website?step=design" className="underline"><Bi en={t.en} ar={t.ar} /></Link></li>)}</ul>}
         {canPublish
           ? <PublishForm ready={draft.ok} isPublished={state.isPublished} />
           : <p className="text-xs text-ink-muted"><Bi en="Only an owner or manager can publish." ar="النشر للمالك أو المدير فقط." /></p>}

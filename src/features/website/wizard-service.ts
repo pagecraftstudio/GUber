@@ -26,6 +26,8 @@ export const contactInputSchema = z.strictObject({
   email: z.string().max(254), phone: z.string().max(40), whatsapp: z.string().max(40),
   addressEn: z.string().max(300), addressAr: z.string().max(300), footerEn: z.string().max(500), footerAr: z.string().max(500),
 });
+/** Canvas "site details" panel: the name is required; contact details are optional (publishing does not need them). */
+export const detailsInputSchema = identityInputSchema.pick({ titleEn: true, titleAr: true }).extend(contactInputSchema.shape);
 export const contentInputSchema = z.strictObject({
   hero: z.strictObject({ title: lz(120), subtitle: lz(300), ctaLabel: lz(40), ctaHref: z.string().max(2048) }),
   about: z.strictObject({ title: lz(120), body: lz(4000) }),
@@ -97,6 +99,17 @@ export function makeWizardService(d: WizardDeps) {
       const v = parseInput(identityInputSchema, input);
       if (!filled(v.titleEn) && !filled(v.titleAr)) fail('title_required');
       await d.settings.updateSettings(ctx, { siteTitle: { en: v.titleEn, ar: v.titleAr }, primaryColor: v.primaryColor, secondaryColor: v.secondaryColor });
+    },
+
+    async saveDetails(ctx: TenantServiceContext, input: unknown): Promise<void> {
+      requirePermission(ctx, PERMISSIONS.websiteWrite);
+      const v = parseInput(detailsInputSchema, input);
+      if (!filled(v.titleEn) && !filled(v.titleAr)) fail('title_required');
+      await d.settings.updateSettings(ctx, {
+        siteTitle: { en: v.titleEn, ar: v.titleAr },
+        contactEmail: v.email.trim() || null, contactPhone: v.phone.trim() || null, contactWhatsapp: v.whatsapp.trim() || null,
+        contactAddress: { en: v.addressEn, ar: v.addressAr }, footerText: { en: v.footerEn, ar: v.footerAr },
+      });
     },
 
     async saveContact(ctx: TenantServiceContext, input: unknown): Promise<void> {
