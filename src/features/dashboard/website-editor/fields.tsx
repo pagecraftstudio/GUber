@@ -11,7 +11,7 @@ const asStr = (v: unknown) => (typeof v === 'string' ? v : '');
 function Label({ l }: { l: { en: string; ar: string } }) { return <Bi en={l.en} ar={l.ar} />; }
 
 /** Controlled editor for one level of a section's content, driven by FieldDef (see website/section-fields.ts). */
-export function FieldsForm({ defs, value, onChange, disabled, idPrefix }: { defs: FieldDef[]; value: Obj; onChange: (v: Obj) => void; disabled: boolean; idPrefix: string }) {
+export function FieldsForm({ defs, value, onChange, disabled, idPrefix, hints }: { defs: FieldDef[]; value: Obj; onChange: (v: Obj) => void; disabled: boolean; idPrefix: string; hints?: Record<string, { en: string; ar: string }> }) {
   const lang = useDashLang();
   const set = (key: string, v: unknown) => onChange({ ...value, [key]: v });
   return (
@@ -25,11 +25,18 @@ export function FieldsForm({ defs, value, onChange, disabled, idPrefix }: { defs
             const props = { id: `${id}-${code}`, value: asStr(loc[code]), disabled, maxLength: d.max, dir: code === 'ar' ? ('rtl' as const) : ('ltr' as const), lang: code,
               'aria-label': `${d.label[lang]} (${code === 'ar' ? 'العربية' : 'English'})`,
               onChange: (e: { target: { value: string } }) => set(d.key, { ...loc, [code]: e.target.value }), className: inputClass(false) };
-            return multi ? <textarea rows={d.kind === 'richtext' ? 6 : 3} {...props} /> : <input {...props} />;
+            // Each box says which language it is for, so the pair is never two anonymous inputs.
+            return (
+              <label htmlFor={props.id} className="block">
+                <span className="mb-1 block text-xs font-normal text-ink-muted">{code === 'ar' ? 'العربية' : 'English'}</span>
+                {multi ? <textarea rows={d.kind === 'richtext' ? 6 : 3} {...props} /> : <input {...props} />}
+              </label>
+            );
           };
           return (
             <fieldset key={d.key} className="space-y-1.5">
               <legend className="text-xs font-semibold text-ink-secondary"><Label l={d.label} /></legend>
+              {hints?.[d.key] && <p className="text-xs text-ink-muted"><Label l={hints[d.key]!} /></p>}
               <div className="grid gap-2 md:grid-cols-2">{one('en')}{one('ar')}</div>
               {d.kind === 'richtext' && <p className="text-xs text-ink-muted"><Bi en="Blank line = new paragraph. “- ” starts a list. **bold**. [label](https://link)." ar="سطر فارغ = فقرة جديدة. «- » لبدء قائمة. **غامق**. [نص](https://رابط)." /></p>}
             </fieldset>
@@ -38,6 +45,7 @@ export function FieldsForm({ defs, value, onChange, disabled, idPrefix }: { defs
         if (d.kind === 'href') {
           return (
             <label key={d.key} className="block text-xs font-semibold text-ink-secondary" htmlFor={id}><Label l={d.label} />
+              {hints?.[d.key] && <span className="mt-0.5 block text-xs font-normal text-ink-muted"><Label l={hints[d.key]!} /></span>}
               <input id={id} dir="ltr" value={asStr(value[d.key])} disabled={disabled} maxLength={2048} onChange={(e) => set(d.key, e.target.value)} className={`mt-1.5 ${inputClass(false)}`} />
               {d.hint && <span className="mt-1 block text-xs font-normal text-ink-muted"><Label l={d.hint} /></span>}
             </label>

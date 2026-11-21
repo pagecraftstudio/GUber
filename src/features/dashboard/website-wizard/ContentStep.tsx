@@ -1,5 +1,6 @@
 'use client';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { useLiveDraft } from './LiveDraft';
 import { StepForm } from './StepForm';
 import { FieldsForm } from '../website-editor/fields';
 import { SECTION_FIELDS } from '@/features/website/section-fields';
@@ -8,6 +9,17 @@ import { saveContentStepAction } from '../wizard-actions';
 import { useDashLang } from '../lang';
 
 type Obj = Record<string, unknown>;
+type Bi = { en: string; ar: string };
+const HERO_HINTS: Record<string, Bi> = {
+  title: { en: 'The big headline at the top of your home page.', ar: 'العنوان الكبير في أعلى صفحتك الرئيسية.' },
+  subtitle: { en: 'One or two lines under the headline.', ar: 'سطر أو سطران تحت العنوان.' },
+  cta_href: { en: 'Where the button takes riders.', ar: 'الوجهة التي يذهب إليها الراكب عند الضغط على الزر.' },
+  cta_label: { en: 'The words on the main button, like “Book a seat”.', ar: 'الكلمات على الزر الرئيسي، مثل «احجز مقعدك».' },
+};
+const ABOUT_HINTS: Record<string, Bi> = {
+  title: { en: 'The heading of the about section.', ar: 'عنوان قسم «عن شركتك».' },
+  body: { en: 'A short description of your company and service.', ar: 'وصف قصير لشركتك وخدمتك.' },
+};
 
 /**
  * The home page as three blocks plus two switches. The fields come from the same table the editor used (section-fields.ts), so the
@@ -22,6 +34,8 @@ export function ContentStep({ initial, canWrite, backHref, forwardHref }: { init
   const [faq, setFaq] = useState<Obj>(initial.faq);
   const [showRoutes, setShowRoutes] = useState(initial.showRoutes);
   const [showTrips, setShowTrips] = useState(initial.showTrips);
+  const live = useLiveDraft();
+  useEffect(() => { live?.setContent({ hero, about, faq, showRoutes, showTrips }); }, [hero, about, faq, showRoutes, showTrips]); // eslint-disable-line react-hooks/exhaustive-deps
   const t = (en: string, ar: string) => (lang === 'ar' ? ar : en);
   const card = 'space-y-4 rounded-ds-lg border border-line-default bg-surface-card p-5';
   return (
@@ -29,7 +43,7 @@ export function ContentStep({ initial, canWrite, backHref, forwardHref }: { init
       <input type="hidden" name="content" value={JSON.stringify({ hero, about, faq, showRoutes, showTrips })} />
       <section aria-labelledby={`${uid}-hero`} className={card}>
         <h3 id={`${uid}-hero`} className="text-sm font-medium">{t('Top banner', 'البانر العلوي')}</h3>
-        <FieldsForm defs={SECTION_FIELDS.hero} value={hero} onChange={setHero} disabled={!canWrite} idPrefix={`${uid}-hero`} />
+        <FieldsForm defs={SECTION_FIELDS.hero} hints={HERO_HINTS} value={hero} onChange={setHero} disabled={!canWrite} idPrefix={`${uid}-hero`} />
       </section>
       <section aria-labelledby={`${uid}-live`} className={card}>
         <h3 id={`${uid}-live`} className="text-sm font-medium">{t('Show from your live data', 'عرض من بياناتك المباشرة')}</h3>
@@ -40,7 +54,7 @@ export function ContentStep({ initial, canWrite, backHref, forwardHref }: { init
       </section>
       <section aria-labelledby={`${uid}-about`} className={card}>
         <h3 id={`${uid}-about`} className="text-sm font-medium">{t('About your company', 'عن شركتك')}</h3>
-        <FieldsForm defs={SECTION_FIELDS.about} value={about} onChange={setAbout} disabled={!canWrite} idPrefix={`${uid}-about`} />
+        <FieldsForm defs={SECTION_FIELDS.about} hints={ABOUT_HINTS} value={about} onChange={setAbout} disabled={!canWrite} idPrefix={`${uid}-about`} />
       </section>
       <section aria-labelledby={`${uid}-faq`} className={card}>
         <h3 id={`${uid}-faq`} className="text-sm font-medium">{t('Common questions', 'الأسئلة الشائعة')}</h3>

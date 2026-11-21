@@ -5,6 +5,7 @@ import { SaveStatus, viewOfForm } from '@/components/dashboard/SaveStatus';
 import { buttonClass } from '@/ds/primitives/button-class';
 import type { FormState } from '../form-state';
 import { useActionForm } from '../useActionForm';
+import { useLiveDraft } from './LiveDraft';
 import { useDashLang } from '../lang';
 import { BACK_LABEL, CONTINUE_LABEL, NEXT_LABEL } from './copy';
 
@@ -18,8 +19,9 @@ export function StepForm({ action, step, backHref, forwardHref, canWrite, childr
 }) {
   const lang = useDashLang();
   const { state, pending, ref, onSubmit } = useActionForm(action);
+  const live = useLiveDraft();
   return (
-    <form ref={ref} onSubmit={onSubmit} className="space-y-6">
+    <form ref={ref} onSubmit={onSubmit} onInput={(e) => live?.patchForm(new FormData(e.currentTarget))} className="space-y-6">
       <input type="hidden" name="step" value={step} />
       <fieldset disabled={!canWrite} className="min-w-0 space-y-5">{children}</fieldset>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-default pt-4">

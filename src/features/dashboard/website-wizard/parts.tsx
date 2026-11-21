@@ -1,5 +1,5 @@
 'use client';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { controlClass } from '@/ds/primitives/Input';
 import { useDashLang } from '../lang';
 
@@ -39,13 +39,14 @@ export function ColorField({ name, label, defaultValue }: { name: string; label:
   const id = useId();
   const lang = useDashLang();
   const [hex, setHex] = useState(defaultValue);
+  const hexInput = useRef<HTMLInputElement>(null);
   const valid = /^#[0-9a-fA-F]{6}$/.test(hex);
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-ink-primary">{label[lang]}</label>
       <div className="mt-1.5 flex items-center gap-2">
-        <input type="color" aria-label={label[lang]} value={valid ? hex : COLOR_INPUT_FALLBACK} onChange={(e) => setHex(e.target.value)} className="h-9 w-12 shrink-0 cursor-pointer rounded-ds-md border border-line-default bg-surface-card p-1" />
-        <input id={id} name={name} value={hex} onChange={(e) => setHex(e.target.value.trim())} dir="ltr" maxLength={7} spellCheck={false} aria-invalid={valid ? undefined : true} className={controlClass(!valid)} />
+        <input type="color" aria-label={label[lang]} value={valid ? hex : COLOR_INPUT_FALLBACK} onChange={(e) => { setHex(e.target.value); /* tell the form (and the live preview) once the hex field shows the new value */ requestAnimationFrame(() => hexInput.current?.dispatchEvent(new Event('input', { bubbles: true }))); }} className="h-9 w-12 shrink-0 cursor-pointer rounded-ds-md border border-line-default bg-surface-card p-1" />
+        <input ref={hexInput} id={id} name={name} value={hex} onChange={(e) => setHex(e.target.value.trim())} dir="ltr" maxLength={7} spellCheck={false} aria-invalid={valid ? undefined : true} className={controlClass(!valid)} />
       </div>
     </div>
   );
