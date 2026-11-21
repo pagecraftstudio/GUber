@@ -100,7 +100,7 @@ export function CanvasShell({ children, pageId, sections, canWrite, canUpload = 
         <div ref={rootRef} onClickCapture={onClickCapture} onKeyDown={onKeyDown}>{children}</div>
       </DeviceFrame>
       {canWrite && open?.kind === 'block' && section ? <BlockPopup ref={popRef} section={section} index={idx} count={count} pos={pos} onClose={() => close()} imageUrl={imageUrls[section.id] ?? null} canUpload={canUpload} /> : null}
-      {canWrite && open?.kind === 'add' ? <AddMenu ref={popRef} pageId={pageId} index={open.index} pos={pos} onClose={() => close()} /> : null}
+      {canWrite && open?.kind === 'add' ? <AddMenu ref={popRef} pageId={pageId} index={open.index} count={count} pos={pos} onClose={() => close()} /> : null}
     </>
   );
 }

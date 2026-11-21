@@ -6,17 +6,19 @@ import type { DraftSection } from '@/features/website/pages-types';
 import { overlayDetails, overlaySections } from './live-overlay';
 
 const saved: Record<string, string>[] = [];
+const inserted: Record<string, string>[] = [];
 vi.mock('../website-actions', () => {
   const ok = async () => ({ status: 'success' as const, message: 'saved', nonce: 1 });
   return {
     saveSectionFormAction: async (_p: unknown, fd: FormData) => { saved.push(Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)]))); return { status: 'success' as const, message: 'saved', nonce: saved.length }; },
-    moveSectionFormAction: ok, toggleSectionFormAction: ok, deleteSectionFormAction: ok, insertSectionFormAction: ok, uploadSectionImageFormAction: ok, removeSectionImageFormAction: ok, setSectionImagePositionFormAction: ok, setSectionStyleFormAction: ok,
+    moveSectionFormAction: ok, toggleSectionFormAction: ok, deleteSectionFormAction: ok,
+    insertSectionFormAction: async (_p: unknown, fd: FormData) => { inserted.push(Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)]))); return new Promise(() => undefined); }, uploadSectionImageFormAction: ok, removeSectionImageFormAction: ok, setSectionImagePositionFormAction: ok, setSectionStyleFormAction: ok,
   };
 });
 import { LiveCanvas, LiveProvider } from './LiveCanvas';
 import { AUTOSAVE_MS } from './PopupFields';
 
-beforeEach(() => { vi.useFakeTimers(); saved.length = 0; });
+beforeEach(() => { vi.useFakeTimers(); saved.length = 0; inserted.length = 0; });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe('overlaySections', () => {
@@ -77,5 +79,21 @@ describe('typing in the canvas', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(saved).toHaveLength(1);
     expect(JSON.parse(saved[0]!.content!)).toEqual({ title: { en: 'Quick edit' } });
+  });
+  it('adding a section shows it at once, before the server has answered', async () => {
+    mount();
+    fireEvent.click(document.querySelector('[data-insert-at="1"]')!);
+    fireEvent.click(screen.getByRole('button', { name: 'FAQ' }));
+    expect(document.querySelectorAll('[data-block-id]')).toHaveLength(2);
+    expect(document.querySelector('[data-block-id^="pending-"]')).toBeTruthy();
+    expect(inserted).toEqual([{ pageId: P, index: '1', type: 'faq' }]);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+  it('a style choice changes the section at once', async () => {
+    mount();
+    fireEvent.click(document.querySelector('[data-block-id="a"]')!);
+    const before = document.querySelector('[data-block-id="a"]')!.innerHTML;
+    fireEvent.click(screen.getByRole('button', { name: 'Brand colour' }));
+    expect(document.querySelector('[data-block-id="a"]')!.innerHTML).not.toBe(before);
   });
 });
