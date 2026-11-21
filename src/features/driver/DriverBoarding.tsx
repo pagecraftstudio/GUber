@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSupabaseBrowser } from '@/ui/lib/real/supabaseBrowser';
-import { BOARD_MESSAGES, BoardError, MASAR_ID_RE, createDriverApi, type BoardingStats, type DriverTrip } from './driverApi';
+import { BOARD_MESSAGES, BoardError, createDriverApi, type BoardingStats, type DriverTrip, type ScanCard } from './driverApi';
 import { DriverBoardingMasarView, type Outcome } from './masar/DriverBoardingMasarView';
 
 const RETRYABLE = new Set(['network', 'rate_limited', 'unknown']);
@@ -17,6 +17,7 @@ export function DriverBoarding() {
   const [manual, setManual] = useState('');
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [card, setCard] = useState<ScanCard | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastToken, setLastToken] = useState('');
   const [online, setOnline] = useState(true);
@@ -35,36 +36,46 @@ export function DriverBoarding() {
   }, []);
   useEffect(() => { setStats(null); if (tripId) api.stats(tripId).then(setStats).catch(() => setStats(null)); }, [api, tripId]);
 
+  // Step 1: any code (signed MASAR QR, typed MASAR ID, ticket QR) -> one card. Reading it changes nothing on the server.
   const submit = useCallback(async (raw: string) => {
-    const token = raw.trim();
-    if (!tripId || !token || busy) return;
-    setLastToken(token);
+    const code = raw.trim();
+    if (!tripId || !code || busy) return;
+    setLastToken(code);
     setBusy(true);
+    setOutcome(null);
     try {
-      if (MASAR_ID_RE.test(token)) {
-        const m = await api.scanMasar(tripId, token.toUpperCase());
-        setStats({ expected: m.expected, boarded: m.boarded, remaining: m.remaining });
-        setOutcome({ kind: 'ok', text: `Boarded: ${m.member_name} (Subscriber, ${m.direction === 'go' ? 'go' : 'return'})` });
-      } else {
-        const r = await api.board(tripId, token);
-        setStats({ expected: r.expected, boarded: r.boarded, remaining: r.remaining });
-        const who = r.subscriber ? ` ${r.subscriber.member_name} (Subscriber, ${r.subscriber.direction})` : ` ticket ${r.ticket_index}`;
-        setOutcome(r.result === 'boarded'
-          ? { kind: 'ok', text: `Boarded:${who}` }
-          : { kind: 'dup', text: `Already boarded (${who.trim()}, ${fmt(r.boarded_at)})` });
-      }
+      setCard(await api.scanIdentity(tripId, code));
       setManual('');
     } catch (e) {
-      const code = e instanceof BoardError ? e.code : 'unknown';
-      setOutcome({ kind: 'bad', text: BOARD_MESSAGES[code], retryable: RETRYABLE.has(code) });
+      setCard(null);
+      const c = e instanceof BoardError ? e.code : 'unknown';
+      setOutcome({ kind: 'bad', text: BOARD_MESSAGES[c], retryable: RETRYABLE.has(c) });
     } finally { setBusy(false); }
   }, [api, tripId, busy]);
+
+  // Step 2: the driver confirms (D2). The server checks every rule again; the card is only what the driver saw.
+  const confirm = useCallback(async () => {
+    const ticketId = card?.booking?.ticket_id;
+    if (!tripId || !card?.can_board || !ticketId || busy) return;
+    setBusy(true);
+    try {
+      const r = await api.confirmBoarding(tripId, ticketId);
+      setStats({ expected: r.expected, boarded: r.boarded, remaining: r.remaining });
+      const who = card.student?.name ? ` ${card.student.name}${r.subscriber ? ` (Subscriber, ${r.subscriber.direction})` : ''}` : ` ticket ${r.ticket_index}`;
+      setOutcome(r.result === 'boarded' ? { kind: 'ok', text: `Boarded:${who}` } : { kind: 'dup', text: `Already boarded (${who.trim()}, ${fmt(r.boarded_at)})` });
+      setCard(null);
+    } catch (e) {
+      const c = e instanceof BoardError ? e.code : 'unknown';
+      setOutcome({ kind: 'bad', text: BOARD_MESSAGES[c], retryable: false });
+      setCard(null);
+    } finally { setBusy(false); }
+  }, [api, tripId, card, busy]);
 
   return (
     <DriverBoardingMasarView
       trips={trips} loadError={loadError} onReload={loadTrips}
-      tripId={tripId} onSelectTrip={(id) => { setTripId(id); setOutcome(null); }}
-      stats={stats} outcome={outcome} onRetry={() => void submit(lastToken)}
+      tripId={tripId} onSelectTrip={(id) => { setTripId(id); setOutcome(null); setCard(null); }}
+      stats={stats} outcome={outcome} card={card} onConfirm={() => void confirm()} onCloseCard={() => setCard(null)} onRetry={() => void submit(lastToken)}
       scanning={scanning} onToggleScan={() => setScanning((x) => !x)} onScanToken={(t) => void submit(t)}
       manual={manual} onManualChange={setManual} onSubmitManual={() => void submit(manual)} busy={busy} online={online}
     />

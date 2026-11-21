@@ -50,7 +50,7 @@ export function DriverPreview() {
             loadError={scenario === 'loadError' ? 'No connection. Check your signal, then try again. This scan was not recorded.' : null}
             onReload={() => setScenario('trips')}
             tripId={tripId} onSelectTrip={(id) => { setTripId(id); setOutcome(null); }}
-            stats={stats} outcome={outcome} onRetry={() => board(last === 'net' ? 'ok' : last)}
+            stats={stats} outcome={outcome} card={null} onConfirm={() => undefined} onCloseCard={() => undefined} onRetry={() => board(last === 'net' ? 'ok' : last)}
             scanning={scanning} onToggleScan={() => setScanning((s) => !s)} onScanToken={board}
             manual={manual} onManualChange={setManual} onSubmitManual={() => board(manual)} busy={false} online={scenario !== 'offline'}
           />

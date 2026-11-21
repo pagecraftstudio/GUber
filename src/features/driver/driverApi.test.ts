@@ -5,6 +5,7 @@ describe('classifyBoardError', () => {
   it.each([
     ['P0002', 'trip not found', 'trip_not_found'],
     ['P0002', 'invalid ticket', 'invalid_ticket'],
+    ['P0002', 'invalid code', 'invalid_code'],
     ['23514', 'ticket is for another trip', 'wrong_trip'],
     ['23514', 'ticket is cancelled', 'cancelled'],
     ['23514', 'boarding has not opened yet', 'not_open'],

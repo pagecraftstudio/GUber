@@ -11,8 +11,9 @@ import { formatDate, formatNumber, formatPercent, formatTime } from '@/ds/format
 import { Button } from '@/ds/primitives/Button';
 import { cx, FOCUS } from '@/ds/primitives/cx';
 import { Input } from '@/ds/primitives/Input';
-import type { BoardingStats, DriverTrip } from '../driverApi';
+import type { BoardingStats, DriverTrip, ScanCard as ScanCardData } from '../driverApi';
 import { QrScanner } from '../QrScanner';
+import { ScanCard } from './ScanCard';
 
 export type Outcome = { kind: 'ok' | 'dup' | 'bad'; text: string; /** a retry can help (no signal, rate limit, unknown) */ retryable?: boolean };
 
@@ -27,6 +28,9 @@ export interface DriverBoardingViewProps {
   onSelectTrip: (id: string) => void;
   stats: BoardingStats | null;
   outcome: Outcome | null;
+  card: ScanCardData | null;
+  onConfirm: () => void;
+  onCloseCard: () => void;
   onRetry: () => void;
   scanning: boolean;
   onToggleScan: () => void;
@@ -117,6 +121,8 @@ export function DriverBoardingMasarView(p: DriverBoardingViewProps) {
         {p.stats ? <OccupancyBar tone="action" booked={p.stats.boarded} capacity={Math.max(p.stats.expected, 1)} label="Boarding progress" figures={`${formatNumber(p.stats.boarded, 'en')} of ${formatNumber(p.stats.expected, 'en')} (${formatPercent(pct, 'en')})`} /> : null}
       </section>
 
+      {p.card ? <ScanCard card={p.card} busy={p.busy} onBoard={p.onConfirm} onClose={p.onCloseCard} /> : null}
+
       {p.outcome ? (
         <div key={`${p.outcome.kind}:${p.outcome.text}`} data-testid="scan-outcome" className="ds-outcome">
           <InlineAlert
@@ -133,11 +139,11 @@ export function DriverBoardingMasarView(p: DriverBoardingViewProps) {
       <form onSubmit={(e) => { e.preventDefault(); p.onSubmitManual(); }} className="space-y-2">
         <label className="block text-sm font-medium text-ink-primary" htmlFor="manual-code">Or enter the ticket code or MASAR ID</label>
         <Input id="manual-code" size="lg" dir="ltr" value={p.manual} onChange={(e) => p.onManualChange(e.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="MALAKY:TICKET:… or MSR-XXXX-XXXX" maxLength={200} className="!h-12" />
-        <Button type="submit" variant="secondary" size="lg" fullWidth loading={p.busy} disabled={!p.manual.trim()} className="!h-12">Board passenger</Button>
+        <Button type="submit" variant="secondary" size="lg" fullWidth loading={p.busy} disabled={!p.manual.trim()} className="!h-12">Check passenger</Button>
       </form>
 
       <div className="sticky bottom-0 -mx-4 border-t border-line-default bg-surface-page px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <Button size="lg" fullWidth variant={p.scanning ? 'secondary' : 'primary'} onClick={p.onToggleScan} className="!h-14 text-lg">{p.scanning ? 'Stop camera' : 'Scan ticket with camera'}</Button>
+        <Button size="lg" fullWidth variant={p.scanning ? 'secondary' : 'primary'} onClick={p.onToggleScan} className="!h-14 text-lg">{p.scanning ? 'Stop camera' : 'Scan QR with camera'}</Button>
       </div>
     </div>
   );
