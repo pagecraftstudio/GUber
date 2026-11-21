@@ -7,6 +7,7 @@ import { distinctRoutes } from './trip-routes';
 import { Block, InsertSlot, Placeholder, type EditorBlock } from './editor-markup';
 import { Fragment } from 'react';
 import type { SiteTrip } from './trips-data';
+import { planRequestPath, type SitePlan } from './plans';
 
 export interface SectionsCtx {
   site: PublicSite['site'];
@@ -14,6 +15,8 @@ export interface SectionsCtx {
   supabaseUrl: string;
   /** Loaded lazily by the page only when a trips/routes section exists. */
   trips: SiteTrip[];
+  /** Loaded lazily by the page only when a subscriptions section exists. */
+  plans?: SitePlan[];
 }
 
 const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="text-2xl font-semibold mb-4">{children}</h2>;
@@ -31,6 +34,16 @@ function formatPrice(t: SiteTrip, locale: SiteLocale): string {
   try {
     return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { style: 'currency', currency: t.currency }).format(Number(t.price));
   } catch { return `${t.price} ${t.currency}`; }
+}
+
+function formatMoney(price: number | string, currency: string, locale: SiteLocale): string {
+  try { return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { style: 'currency', currency }).format(Number(price)); } catch { return `${price} ${currency}`; }
+}
+
+function planValidity(p: SitePlan, locale: SiteLocale): string {
+  const ar = locale === 'ar';
+  if (p.validity_type === 'duration' && p.duration_months !== null) return ar ? `${p.duration_months} ${p.duration_months === 1 ? 'شهر' : 'أشهر'}` : `${p.duration_months} ${p.duration_months === 1 ? 'month' : 'months'}`;
+  return p.starts_on && p.ends_on ? (ar ? `من ${p.starts_on} إلى ${p.ends_on}` : `${p.starts_on} to ${p.ends_on}`) : '';
 }
 
 /** Applies the section's chosen look (E4). A section with no style (everything published before E4) is returned exactly as before: no wrapper. */
@@ -124,6 +137,24 @@ function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
               <li key={t.trip_id} className="flex flex-wrap items-center justify-between gap-2 p-4">
                 <span className="font-medium">{t.origin_name} → {t.destination_name}</span>
                 <span className="text-ink-secondary">{formatDeparture(t, locale)} · {formatPrice(t, locale)} · {t.seats_available} {locale === 'ar' ? 'مقعد' : 'seats'}</span>
+              </li>))}</ul>}
+        </Wrap>
+      );
+    }
+    case 'subscriptions': {
+      const plans = ctx.plans ?? [];
+      const ar = locale === 'ar';
+      return (
+        <Wrap id="subscriptions">
+          <H2>{pick(s.content.title, locale)}</H2>
+          {plans.length === 0 ? <p className="text-ink-secondary">{ar ? 'لا توجد باقات اشتراك متاحة حاليًا.' : 'No subscription plans available right now.'}</p>
+            : <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{plans.map((p) => (
+              <li key={p.plan_id} className="flex flex-col rounded-lg border border-line-default p-4">
+                <h3 className="font-semibold">{p.name}</h3>
+                <p className="text-sm text-ink-secondary">{p.origin_name} <span aria-hidden>→</span><span className="sr-only">{ar ? 'إلى' : 'to'}</span> {p.destination_name}</p>
+                <p className="mt-2 text-xl font-semibold">{formatMoney(p.price, p.currency, locale)}</p>
+                <p className="text-sm text-ink-secondary">{planValidity(p, locale)}</p>
+                <a href={planRequestPath(p.plan_id)} className="mt-3 inline-block self-start rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-accent,var(--ds-action-primary))] px-4 py-2 text-sm font-medium text-[var(--site-on-accent,var(--ds-action-on-primary))]">{ar ? 'اطلب الاشتراك' : 'Request subscription'}</a>
               </li>))}</ul>}
         </Wrap>
       );

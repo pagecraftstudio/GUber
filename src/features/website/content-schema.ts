@@ -39,6 +39,7 @@ export const sectionWriteSchemas = {
   trips: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), limit: z.number().int().min(1).max(20).optional() }),
   faq: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), items: z.array(qa).max(40).optional() }),
   contact: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional() }),
+  subscriptions: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional() }),
   rich_text: z.strictObject({ style: sectionStyleWrite.optional(), body: loc(8000).optional() }),
   image: z.strictObject({ style: sectionStyleWrite.optional(), image_media_id: mediaId.optional(), caption: loc(200).optional() }),
   footer: z.strictObject({}),

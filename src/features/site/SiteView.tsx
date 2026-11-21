@@ -4,6 +4,7 @@ import type { EditorBlock } from './editor-markup';
 import type { PublicSite, SitePage } from './schema';
 import { mediaUrl, pick, type SiteLocale } from './text';
 import { readTheme, themeVars } from './theme';
+import type { SitePlan } from './plans';
 import type { SiteTrip } from './trips-data';
 
 /** Where the links inside the rendered site point: the public site, or (for the dashboard preview) back into the preview. */
@@ -18,8 +19,8 @@ export function findPage(pages: SitePage[], pageSlug: string | null): SitePage |
  * Pure presentation of one site page. No data fetching, no notFound(): the caller loads the data (published snapshot for the public
  * site, draft for the dashboard preview) and decides what a missing page means. Everything the page may show comes from `data`.
  */
-export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, links, editor }: {
-  data: PublicSite; page: SitePage; pageSlug: string | null; locale: SiteLocale; supabaseUrl: string; trips: SiteTrip[]; links: SiteLinks;
+export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, plans = [], links, editor }: {
+  data: PublicSite; page: SitePage; pageSlug: string | null; locale: SiteLocale; supabaseUrl: string; trips: SiteTrip[]; plans?: SitePlan[]; links: SiteLinks;
   /** Dashboard canvas only: makes each section clickable (see editor-markup.tsx). Never set for the public site. */
   editor?: EditorBlock[];
 }) {
@@ -28,7 +29,7 @@ export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, lin
   const accent = tenantAccent(st.primary_color);
   const logo = mediaUrl(supabaseUrl, st.logo_media_id ? data.site.media[st.logo_media_id] : undefined);
   const name = pick(st.site_title, locale) || data.company.name;
-  const ctx: SectionsCtx = { site: data.site, locale, supabaseUrl, trips };
+  const ctx: SectionsCtx = { site: data.site, locale, supabaseUrl, trips, plans };
   const other: SiteLocale = locale === 'ar' ? 'en' : 'ar';
   const navPages = data.site.pages.filter((p) => !p.is_home);
   return (

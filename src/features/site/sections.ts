@@ -19,6 +19,7 @@ export const sectionSchemas = {
   trips: z.object({ style: sectionStyleRead, title: L.optional(), limit: z.number().int().min(1).max(20).optional() }),
   faq: z.object({ style: sectionStyleRead, title: L.optional(), items: z.array(qa).max(40).optional() }),
   contact: z.object({ style: sectionStyleRead, title: L.optional() }),
+  subscriptions: z.object({ style: sectionStyleRead, title: L.optional() }),
   rich_text: z.object({ style: sectionStyleRead, body: L.optional() }),
   image: z.object({ style: sectionStyleRead, image_media_id: z.string().optional(), caption: L.optional() }),
   footer: z.object({}),

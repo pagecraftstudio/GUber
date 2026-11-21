@@ -4,7 +4,7 @@
  */
 import { COMPANY_LOGIN_PATH, CUSTOMER_LOGIN_PATH, CUSTOMER_HOME_PATH } from './paths';
 
-const ALLOWED_PREFIXES = ['/dashboard', '/admin', '/invite/', '/reset-password', '/my-bookings'] as const;
+const ALLOWED_PREFIXES = ['/dashboard', '/admin', '/invite/', '/reset-password', '/my-bookings', '/my-subscriptions'] as const;
 
 export function safeNextPath(raw: string | null | undefined, fallback: string): string {
   if (typeof raw !== 'string' || raw.length === 0 || raw.length > 512) return fallback;
@@ -24,7 +24,7 @@ export function safeNextPath(raw: string | null | undefined, fallback: string): 
  */
 export function loginPathFor(target: string | null | undefined): string {
   const pathOnly = (typeof target === 'string' ? target : '').split(/[?#]/)[0] ?? '';
-  const customer = ['/my-bookings', '/reset-password'].some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`));
+  const customer = ['/my-bookings', '/my-subscriptions', '/reset-password'].some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`));
   return customer ? CUSTOMER_LOGIN_PATH : COMPANY_LOGIN_PATH;
 }
 

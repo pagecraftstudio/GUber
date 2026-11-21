@@ -19,10 +19,10 @@ export const SECTION_LABELS: Record<SectionType, Label> = {
   hero: { en: 'Hero banner', ar: 'البانر الرئيسي' }, about: { en: 'About', ar: 'من نحن' }, features: { en: 'Features', ar: 'المزايا' },
   routes: { en: 'Routes (live from your routes)', ar: 'الخطوط (مباشرة من خطوطك)' }, trips: { en: 'Upcoming trips (live)', ar: 'الرحلات القادمة (مباشرة)' },
   faq: { en: 'FAQ', ar: 'الأسئلة الشائعة' }, contact: { en: 'Contact', ar: 'التواصل' }, rich_text: { en: 'Text block', ar: 'نص' },
-  image: { en: 'Image', ar: 'صورة' }, footer: { en: 'Footer', ar: 'التذييل' },
+  image: { en: 'Image', ar: 'صورة' }, subscriptions: { en: 'Subscription plans (live)', ar: 'باقات الاشتراك (مباشرة)' }, footer: { en: 'Footer', ar: 'التذييل' },
 };
 /** Types the editor can add today (image waits for the media picker). */
-export const ADDABLE_SECTIONS: SectionType[] = ['hero', 'about', 'features', 'routes', 'trips', 'faq', 'contact', 'rich_text', 'footer'];
+export const ADDABLE_SECTIONS: SectionType[] = ['hero', 'about', 'features', 'routes', 'trips', 'faq', 'contact', 'rich_text', 'footer', 'subscriptions'];
 
 export const SECTION_FIELDS: Record<SectionType, FieldDef[]> = {
   hero: [title,
@@ -37,13 +37,14 @@ export const SECTION_FIELDS: Record<SectionType, FieldDef[]> = {
   faq: [title, { key: 'items', kind: 'list', max: 40, label: { en: 'Questions', ar: 'الأسئلة' }, itemLabel: { en: 'Question', ar: 'سؤال' },
     fields: [{ key: 'question', kind: 'text', localized: true, label: { en: 'Question', ar: 'السؤال' }, max: 200 }, { key: 'answer', kind: 'textarea', localized: true, label: { en: 'Answer', ar: 'الجواب' }, max: 1200 }] }],
   contact: [title],
+  subscriptions: [title],
   rich_text: [{ key: 'body', kind: 'richtext', localized: true, label: { en: 'Text', ar: 'النص' }, max: 8000 }],
   image: [],
   footer: [],
 };
 
 /** What the visual editor offers in its "add a section" menu (footer is always drawn from settings; image waits for the media picker). */
-export const CANVAS_SECTIONS: SectionType[] = ['hero', 'about', 'features', 'faq', 'routes', 'trips', 'contact', 'rich_text'];
+export const CANVAS_SECTIONS: SectionType[] = ['hero', 'about', 'features', 'faq', 'routes', 'trips', 'subscriptions', 'contact', 'rich_text'];
 
 /**
  * Content a section starts with when added from the visual editor: a heading only, never invented claims or body text. Every value
@@ -57,12 +58,14 @@ export const SECTION_DEFAULTS: Partial<Record<SectionType, Record<string, unknow
   routes: { title: { en: 'Our routes', ar: 'خطوطنا' } },
   trips: { title: { en: 'Upcoming trips', ar: 'الرحلات القادمة' }, limit: 8 },
   contact: { title: { en: 'Contact us', ar: 'تواصل معنا' } },
+  subscriptions: { title: { en: 'Subscription plans', ar: 'باقات الاشتراك' } },
 };
 
 /** Sections that take their data from elsewhere, shown as a hint under the form. */
 export const SECTION_NOTES: Partial<Record<SectionType, Label>> = {
   routes: { en: 'Shows your active routes automatically.', ar: 'يعرض خطوطك الفعّالة تلقائيًا.' },
   trips: { en: 'Shows upcoming bookable trips automatically.', ar: 'يعرض الرحلات القادمة المتاحة للحجز تلقائيًا.' },
+  subscriptions: { en: 'Shows your public subscription plans automatically. Students sign in to request one.', ar: 'يعرض باقات الاشتراك المتاحة تلقائيًا. يسجّل الطالب دخوله لطلب باقة.' },
   contact: { en: 'Uses the contact details and social links from Website settings.', ar: 'يستخدم بيانات التواصل والروابط من إعدادات الموقع.' },
   footer: { en: 'Uses the footer text from Website settings.', ar: 'يستخدم نص التذييل من إعدادات الموقع.' },
 };

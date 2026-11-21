@@ -2,6 +2,7 @@ import 'server-only';
 import { notFound, redirect } from 'next/navigation';
 import { getAuthContext } from './context';
 import { COMPANY_LOGIN_PATH, CUSTOMER_LOGIN_PATH, CUSTOMER_HOME_PATH } from './paths';
+import { safeNextPath } from './redirect';
 import { accessState, activeMembership, can, hasPlatformRole, homePathFor } from './permissions';
 import type { AuthContext, Membership, PlatformRole } from './types';
 
@@ -23,9 +24,10 @@ export async function requireUser(): Promise<AuthContext> {
  * bounced to their own area, so the customer portal and the operator areas never overlap. Data access is still
  * enforced by RLS (own customers rows only); this is routing + defence in depth.
  */
-export async function requireCustomer(): Promise<AuthContext> {
+export async function requireCustomer(next: string = CUSTOMER_HOME_PATH): Promise<AuthContext> {
   const ctx = await getAuthContext();
-  if (!ctx) redirect(`${CUSTOMER_LOGIN_PATH}?next=${encodeURIComponent(CUSTOMER_HOME_PATH)}`);
+  // `next` is where the sign-in brings them back to; it is re-checked against the allow-list on the login page and /continue.
+  if (!ctx) redirect(`${CUSTOMER_LOGIN_PATH}?next=${encodeURIComponent(safeNextPath(next, CUSTOMER_HOME_PATH))}`);
   if (accessState(ctx) !== 'customer') redirect(homePathFor(ctx));
   return ctx;
 }

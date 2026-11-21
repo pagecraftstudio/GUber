@@ -26,11 +26,11 @@ export type PublicPlanRow = {
   price: number | string; currency: string; validity_type: 'duration' | 'range'; duration_months: number | null; starts_on: string | null; ends_on: string | null;
 };
 export type PublicPlan = {
-  planId: string; companyName: string; originName: string; destinationName: string; name: string; price: number; currency: string;
+  planId: string; companyId: string; companyName: string; originName: string; destinationName: string; name: string; price: number; currency: string;
   validityType: 'duration' | 'range'; durationMonths: number | null; startsOn: string | null; endsOn: string | null;
 };
 export const toPublicPlan = (r: PublicPlanRow): PublicPlan => ({
-  planId: r.plan_id, companyName: r.company_name, originName: r.origin_name, destinationName: r.destination_name, name: r.name,
+  planId: r.plan_id, companyId: r.company_id, companyName: r.company_name, originName: r.origin_name, destinationName: r.destination_name, name: r.name,
   price: Number(r.price), currency: r.currency, validityType: r.validity_type, durationMonths: r.duration_months, startsOn: r.starts_on, endsOn: r.ends_on,
 });
 
