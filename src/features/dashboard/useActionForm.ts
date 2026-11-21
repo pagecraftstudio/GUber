@@ -20,5 +20,10 @@ export function useActionForm(action: (prev: FormState, fd: FormData) => Promise
     const fd = new FormData(e.currentTarget);
     startTransition(() => dispatch(fd));
   };
-  return { state, pending, ref, onSubmit };
+  /** Submits FormData built in code (button clicks, autosave): a submit button's name/value is NOT part of `new FormData(form)`. */
+  const submit = (fd: FormData) => {
+    if (opts.isBlocked?.(state)) return;
+    startTransition(() => dispatch(fd));
+  };
+  return { state, pending, ref, onSubmit, submit };
 }

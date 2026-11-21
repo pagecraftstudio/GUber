@@ -26,7 +26,7 @@ export default async function WebsiteFlowPage({ searchParams }: { searchParams: 
   const step: FlowStep = asked && FLOW_STEPS.includes(asked) ? asked : 'design';
   const ctx = createTenantServiceContext(await createClient(), auth);
   // Opening creates the starter site (home page with sections) once, as a draft, for someone who may write. Idempotent; never overwrites.
-  if (can(auth, PERMISSIONS.websiteWrite)) await wizardService.open(ctx);
+  if (step === 'design' && can(auth, PERMISSIONS.websiteWrite)) await wizardService.ensureStarter(ctx);
   return (
     <>
       <PageHeader title="Website" description={<Bi en="Customize your pages, check the preview, then publish." ar="خصّص صفحاتك، راجع المعاينة، ثم انشر." />} />

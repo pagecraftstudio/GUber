@@ -55,7 +55,7 @@ export const BlockPopup = forwardRef<HTMLDivElement, { section: DraftSection; in
       </div>
       {section.type === 'hero' ? <HeroImageCard key={`img:${section.id}:${section.updatedAt}`} section={section} imageUrl={imageUrl} canUpload={canUpload} /> : null}
       {SECTION_HAS_LOOK.has(section.type) ? <StyleCard key={`look:${section.id}:${section.updatedAt}`} section={section} /> : null}
-      <PopupFields key={`${section.id}:${section.updatedAt}`} section={section} />
+      <PopupFields key={section.id} section={section} />
     </Frame>
   );
 });

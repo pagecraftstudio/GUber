@@ -19,7 +19,12 @@ const SP: Record<(typeof SPACINGS)[number], Bi> = { compact: { en: 'Tight', ar: 
 export function StyleCard({ section }: { section: DraftSection }) {
   const lang = useDashLang();
   const id = useId();
-  const { state, pending, ref, onSubmit } = useActionForm(setSectionStyleFormAction);
+  const { state, pending, ref, onSubmit, submit } = useActionForm(setSectionStyleFormAction);
+  const choose = (name: string, value: string) => {
+    const fd = new FormData();
+    fd.set('pageId', section.pageId); fd.set('sectionId', section.id); fd.set(name, value);
+    submit(fd);
+  };
   const cur = readStyle(section.content.style);
   const t = (b: Bi) => b[lang];
   const group = (name: 'background' | 'align' | 'spacing', label: Bi, labels: Record<string, Bi>, values: readonly string[], active: string) => (
@@ -27,7 +32,7 @@ export function StyleCard({ section }: { section: DraftSection }) {
       <p id={`${id}-${name}`} className="text-xs text-ink-secondary">{t(label)}</p>
       <div className="flex flex-wrap gap-1">
         {values.map((v) => (
-          <button key={v} type="submit" name={name} value={v} aria-pressed={active === v} disabled={pending}
+          <button key={v} type="button" onClick={() => choose(name, v)} aria-pressed={active === v} disabled={pending}
             className={`rounded-ds-md border px-2.5 py-1 text-xs transition-colors duration-(--duration-ds-feedback) disabled:opacity-60 ${active === v ? 'border-line-strong bg-surface-sunken font-medium' : 'border-line-default hover:bg-surface-sunken'}`}>{t(labels[v]!)}</button>
         ))}
       </div>
