@@ -23,7 +23,7 @@ export const errorText = (lang: 'en' | 'ar', code: string, detail?: string): str
 export const MT = {
   en: {
     title: 'My subscriptions', back: 'My bookings', plansLink: 'Browse plans', language: 'العربية',
-    masarId: 'Your MASAR ID', masarHint: 'Show this ID when you board. It never changes.', copy: 'Copy', copied: 'Copied',
+    masarId: 'Your MASAR ID', masarHint: 'Show this ID when you board. It never changes.', qrAlt: 'Your MASAR QR code', qrHint: 'Show this QR to the driver. It refreshes by itself every minute, so a photo of it stops working.', qrError: 'Could not load your QR. Check your connection.', qrRetry: 'Try again', copy: 'Copy', copied: 'Copied',
     phoneTitle: 'Add your phone number', phoneText: 'A subscription request needs a phone number the company can reach.', phone: 'Phone', savePhone: 'Save phone',
     none: 'No subscriptions yet', noneText: 'Browse the plans of a company and request one.', 
     status: { pending: 'Pending', active: 'Active', rejected: 'Rejected', cancelled: 'Cancelled', expired: 'Expired' } as Record<string, string>,
@@ -43,7 +43,7 @@ export const MT = {
   },
   ar: {
     title: 'اشتراكاتي', back: 'حجوزاتي', plansLink: 'تصفّح الباقات', language: 'English',
-    masarId: 'رقم مسار الخاص بك', masarHint: 'اعرض هذا الرقم عند الصعود. لا يتغير أبداً.', copy: 'نسخ', copied: 'تم النسخ',
+    masarId: 'رقم مسار الخاص بك', masarHint: 'اعرض هذا الرقم عند الصعود. لا يتغير أبداً.', qrAlt: 'رمز مسار الخاص بك', qrHint: 'اعرض هذا الرمز للسائق. يتجدد تلقائيًا كل دقيقة، فلا تنفع صورته.', qrError: 'تعذّر تحميل الرمز. تحقق من الاتصال.', qrRetry: 'حاول مرة أخرى', copy: 'نسخ', copied: 'تم النسخ',
     phoneTitle: 'أضف رقم هاتفك', phoneText: 'طلب الاشتراك يحتاج رقماً تستطيع الشركة التواصل معك عليه.', phone: 'الهاتف', savePhone: 'حفظ الرقم',
     none: 'لا توجد اشتراكات بعد', noneText: 'تصفّح باقات شركة واطلب إحداها.',
     status: { pending: 'قيد المراجعة', active: 'فعّال', rejected: 'مرفوض', cancelled: 'ملغي', expired: 'منتهي' } as Record<string, string>,

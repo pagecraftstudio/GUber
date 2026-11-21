@@ -8,6 +8,7 @@ import { buttonClass } from '@/ds/primitives/button-class';
 import { controlClass } from '@/ds/primitives/Input';
 import { cancelSubscriberBookingAction, cancelSubscriptionAction, markNoticesReadAction, requestPlanAction, savePhoneAction } from '../actions';
 import type { MemberNotice, MemberProfile, MySubscription, SubscriberBooking } from '../types';
+import { MasarQr } from './MasarQr';
 import { MT } from './text';
 import { useMemberAction } from './useMemberAction';
 
@@ -24,6 +25,7 @@ function MasarIdCard({ lang, id }: { lang: 'en' | 'ar'; id: string }) {
         <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(id).then(() => setDone(true), () => undefined); }} className="!h-8 !px-3 text-[13px]">{done ? t.copied : t.copy}</Button>
       </div>
       <p className="mt-1 text-sm text-ink-secondary">{t.masarHint}</p>
+      <MasarQr lang={lang} />
     </section>
   );
 }

@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -20,6 +20,7 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   domain: 'Domain',
   website: 'Website',
   media: 'Media',
+  identity: 'Identity scan',
 };
 
 export const ACTOR_TYPES = ['platform_user', 'company_user', 'customer', 'system'] as const;
@@ -53,6 +54,7 @@ const ACTION_LABEL: Record<string, string> = {
   'booking.payment_status': 'Booking payment status changed',
   'booking.amount_paid': 'Booking paid amount changed',
   'ticket.boarded': 'Ticket boarded',
+  'identity.scanned': 'Passenger identity scanned',
   'route.stops_saved': 'Route stops saved',
   'route.pair_created': 'Route and return route created',
   'route_plan.created': 'Subscription plan created',
