@@ -7,6 +7,7 @@ import { Identifier } from '../format/Identifier';
 import { Button, IconButton } from '../primitives/Button';
 import { buttonClass } from '../primitives/button-class';
 import { cx, FOCUS } from '../primitives/cx';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 import { AccountMenu, MenuAction } from './AccountMenu';
 import { PoweredByMalaky } from './PoweredByMalaky';
 import { SHELL_TEXT } from './text';
@@ -47,11 +48,14 @@ export function MarketplaceHeaderMasar(p: MarketplaceHeaderMasarProps) {
           <span className="hidden sm:inline"><Button variant="ghost" onClick={p.onToggleLang}>{p.langLabel}</Button></span>
           <IconButton label={st.theme} icon={p.isDark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />} onClick={p.onToggleTheme} />
           {p.user ? (
+            <>
+            <NotificationBell lang={p.lang} />
             <AccountMenu label={st.account} name={p.user.fullName} detail={p.user.studentId ? <Identifier value={p.user.studentId} /> : p.user.email ?? undefined}>
               <MenuAction icon={<Ticket size={16} strokeWidth={1.5} />} onClick={p.onMyBookings}>{p.text.myBookings}</MenuAction>
               <MenuAction icon={<User size={16} strokeWidth={1.5} />} onClick={p.onPortal}>{p.text.portal}</MenuAction>
               <MenuAction tone="destructive" icon={<LogOut size={16} strokeWidth={1.5} />} onClick={p.onSignOut}>{p.text.signOut}</MenuAction>
             </AccountMenu>
+            </>
           ) : (
             <>
               <a href="/login" className={cx(linkCls, 'max-sm:hidden text-ink-primary')}>{p.text.logIn}</a>
