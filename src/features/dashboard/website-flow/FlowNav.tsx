@@ -4,8 +4,7 @@ import { Check } from 'lucide-react';
 import { buttonClass } from '@/ds/primitives/button-class';
 import { useDashLang } from '../lang';
 
-export const FLOW_STEPS = ['design', 'preview', 'publish'] as const;
-export type FlowStep = (typeof FLOW_STEPS)[number];
+import { FLOW_STEPS, type FlowStep } from './flow-steps';
 const LABEL: Record<FlowStep, { en: string; ar: string }> = {
   design: { en: 'Customize', ar: 'التخصيص' }, preview: { en: 'Preview', ar: 'المعاينة' }, publish: { en: 'Publish', ar: 'النشر' },
 };
