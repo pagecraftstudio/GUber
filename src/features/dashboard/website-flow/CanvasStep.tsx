@@ -11,6 +11,8 @@ import { websiteService } from '@/features/website/service';
 import { mediaService } from '@/features/media/media-service';
 import { buildCanvasSite } from '@/features/website/canvas-site';
 import { getSiteTrips, type SiteTrip } from '@/features/site/trips-data';
+import { getSitePlans } from '@/features/site/plans-data';
+import type { SitePlan } from '@/features/site/plans';
 import { DEFAULT_SITE_LOCALE, mediaUrl, parseLocale } from '@/features/site/text';
 import { SITE_FONT_CLASSES } from '@/ds/fonts/site-fonts';
 import { LiveCanvas, LiveProvider } from '../website-canvas/LiveCanvas';
@@ -41,10 +43,12 @@ export async function CanvasStep({ ctx, auth, sp }: { ctx: TenantServiceContext;
   const heroImageIds = sections.flatMap((s) => (typeof s.content.image_media_id === 'string' ? [s.content.image_media_id] : []));
   const canReadMedia = can(auth, PERMISSIONS.mediaRead);
   const wantsTrips = sections.some((s) => s.type === 'trips' || s.type === 'routes');
-  const [logoPath, images, trips] = await Promise.all([
+  const wantsPlans = sections.some((s) => s.type === 'subscriptions');
+  const [logoPath, images, trips, plans] = await Promise.all([
     settings.logoMediaId && canReadMedia ? mediaService.imagePath(ctx, settings.logoMediaId).catch(() => null) : Promise.resolve(null),
     mediaService.imageEntries(ctx, heroImageIds).catch(() => ({})),
     wantsTrips ? getSiteTrips(ctx.companyId).catch((): SiteTrip[] => []) : Promise.resolve([] as SiteTrip[]),   // a trips outage must not break editing
+    wantsPlans ? getSitePlans(ctx.companyId).catch((): SitePlan[] => []) : Promise.resolve([] as SitePlan[]),
   ]);
   const supabaseUrl = getEnv().NEXT_PUBLIC_SUPABASE_URL;
   const imageUrls = Object.fromEntries(sections.flatMap((s) => {
@@ -75,7 +79,7 @@ export async function CanvasStep({ ctx, auth, sp }: { ctx: TenantServiceContext;
       <SiteDetailsPanel canWrite={canWrite} logoUrl={mediaUrl(supabaseUrl, logoPath ? { path: logoPath, mime: 'image/png' } : undefined)} settings={{ titleEn: settings.siteTitle?.en ?? '', titleAr: settings.siteTitle?.ar ?? '', email: settings.contactEmail ?? '', phone: settings.contactPhone ?? '', whatsapp: settings.contactWhatsapp ?? '', addressEn: settings.contactAddress?.en ?? '', addressAr: settings.contactAddress?.ar ?? '', footerEn: settings.footerText?.en ?? '', footerAr: settings.footerText?.ar ?? '' }} />
       <LookPanel canWrite={canWrite} look={{ fontHeading: settings.fontHeading, fontBody: settings.fontBody, buttonStyle: settings.buttonStyle, primaryColor: settings.primaryColor, secondaryColor: settings.secondaryColor }} />
       <LiveCanvas key={selected.id} shell={{ pageId: selected.id, sections, canWrite, canUpload: can(auth, PERMISSIONS.mediaWrite), imageUrls }}
-        site={{ data: view.data, page: view.page, pageSlug: selected.isHome ? null : selected.slug, locale, supabaseUrl, trips, editor: view.blocks }} />
+        site={{ data: view.data, page: view.page, pageSlug: selected.isHome ? null : selected.slug, locale, supabaseUrl, trips, plans, editor: view.blocks }} />
     </div></LiveProvider>
   );
 }

@@ -9,7 +9,7 @@ import type { PublicPlan } from '../types';
 import { MT } from './text';
 import { useMemberAction } from './useMemberAction';
 
-function PlanCard({ lang, p, hasPhone }: { lang: 'en' | 'ar'; p: PublicPlan; hasPhone: boolean }) {
+function PlanCard({ lang, p, hasPhone, highlight }: { lang: 'en' | 'ar'; p: PublicPlan; hasPhone: boolean; highlight: boolean }) {
   const t = MT[lang];
   const { pending, error, run } = useMemberAction(lang);
   const [sent, setSent] = useState(false);
@@ -17,7 +17,7 @@ function PlanCard({ lang, p, hasPhone }: { lang: 'en' | 'ar'; p: PublicPlan; has
     ? t.months(formatNumber(p.durationMonths, lang), p.durationMonths === 1 ? t.monthsOne : t.monthsMany)
     : p.startsOn && p.endsOn ? t.range(formatDay(p.startsOn, lang, 'numeric'), formatDay(p.endsOn, lang, 'numeric')) : '';
   return (
-    <article className="rounded-2xl border border-line-default bg-surface-card p-5" aria-label={`${p.name} ${p.companyName}`}>
+    <article className={`rounded-2xl border bg-surface-card p-5 ${highlight ? 'border-line-strong ring-2 ring-focus' : 'border-line-default'}`} aria-label={`${p.name} ${p.companyName}`}>
       <h3 className="font-semibold">{p.name}</h3>
       <p className="text-sm text-ink-secondary">{p.companyName} · {p.originName} → {p.destinationName}</p>
       <p className="mt-2 text-xl font-semibold tabular-nums">{formatMoney(p.price, p.currency, lang)}</p>
@@ -29,7 +29,7 @@ function PlanCard({ lang, p, hasPhone }: { lang: 'en' | 'ar'; p: PublicPlan; has
   );
 }
 
-export function PlansView({ lang, plans, hasPhone }: { lang: 'en' | 'ar'; plans: PublicPlan[]; hasPhone: boolean }) {
+export function PlansView({ lang, plans, hasPhone, highlightPlanId = null }: { lang: 'en' | 'ar'; plans: PublicPlan[]; hasPhone: boolean; highlightPlanId?: string | null }) {
   const t = MT[lang];
   return (
     <div className="space-y-5">
@@ -39,7 +39,7 @@ export function PlansView({ lang, plans, hasPhone }: { lang: 'en' | 'ar'; plans:
       </div>
       {plans.length === 0
         ? <section className="rounded-2xl border border-dashed border-line-default p-8 text-center"><h2 className="font-semibold">{t.noPlans}</h2><p className="mt-1 text-sm text-ink-secondary">{t.noPlansText}</p></section>
-        : <div className="grid gap-4 md:grid-cols-2">{plans.map((p) => <PlanCard key={p.planId} lang={lang} p={p} hasPhone={hasPhone} />)}</div>}
+        : <div className="grid gap-4 md:grid-cols-2">{plans.map((p) => <PlanCard key={p.planId} lang={lang} p={p} hasPhone={hasPhone} highlight={p.planId === highlightPlanId} />)}</div>}
     </div>
   );
 }

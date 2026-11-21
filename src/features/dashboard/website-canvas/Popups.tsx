@@ -13,7 +13,7 @@ import { PopupFields } from './PopupFields';
 import { StyleCard } from './StyleCard';
 
 /** Every section that draws content has a look; the footer is always drawn from settings. */
-const SECTION_HAS_LOOK = new Set(['hero', 'about', 'features', 'routes', 'trips', 'faq', 'contact', 'rich_text', 'image']);
+const SECTION_HAS_LOOK = new Set(['hero', 'about', 'features', 'routes', 'trips', 'subscriptions', 'faq', 'contact', 'rich_text', 'image']);
 
 export type Pos = { top: number; left: number };
 const W = 320;

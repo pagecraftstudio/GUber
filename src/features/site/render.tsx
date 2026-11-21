@@ -9,6 +9,8 @@ import { needsTrips } from './Sections';
 import { findPage, SiteView, type SiteLinks } from './SiteView';
 import { DEFAULT_SITE_LOCALE, parseLocale, pick, type SiteLocale } from './text';
 import { getSiteTrips, type SiteTrip } from './trips-data';
+import { getSitePlans } from './plans-data';
+import { needsPlans, type SitePlan } from './plans';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const localeFrom = (sp: SearchParams): SiteLocale => parseLocale(Array.isArray(sp.lang) ? sp.lang[0] : sp.lang) ?? DEFAULT_SITE_LOCALE;
@@ -50,11 +52,17 @@ export async function renderSitePage(slug: string, pageSlug: string | null, sp: 
     if (!tenant) notFound();
     trips = await getSiteTrips(tenant.companyId);
   }
+  let plans: SitePlan[] = [];
+  if (needsPlans(data.site.pages.map((p) => p.sections))) {
+    const tenant = await resolveTenantBySlug(slug);
+    if (!tenant) notFound();
+    plans = await getSitePlans(tenant.companyId);
+  }
   const cs = data.company.slug;
   const links: SiteLinks = {
     home: () => tenantHref(cfg, cs, '/'),
     page: (p) => tenantHref(cfg, cs, `/${p}`),
     lang: (p, l) => `${tenantHref(cfg, cs, pagePath(p))}?lang=${l}`,
   };
-  return <SiteView data={data} page={page} pageSlug={pageSlug} locale={locale} supabaseUrl={env.NEXT_PUBLIC_SUPABASE_URL} trips={trips} links={links} />;
+  return <SiteView data={data} page={page} pageSlug={pageSlug} locale={locale} supabaseUrl={env.NEXT_PUBLIC_SUPABASE_URL} trips={trips} plans={plans} links={links} />;
 }

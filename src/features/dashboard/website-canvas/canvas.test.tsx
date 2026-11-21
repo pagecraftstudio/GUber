@@ -69,7 +69,7 @@ describe('canvas interaction', () => {
     const plus = document.querySelector<HTMLElement>('[data-insert-at="1"]')!;
     plus.focus(); fireEvent.click(plus);
     const dlg = screen.getByRole('dialog');
-    expect(dlg.querySelectorAll('li button')).toHaveLength(8);
+    expect(dlg.querySelectorAll('li button')).toHaveLength(9);
     expect(dlg.textContent).toContain('FAQ');
     fireEvent.keyDown(dlg, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();

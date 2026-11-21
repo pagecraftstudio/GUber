@@ -6,6 +6,8 @@ import { previewService, type PreviewIssue } from '@/features/website/preview-se
 import { findPage, SiteView, type SiteLinks } from '@/features/site/SiteView';
 import { needsTrips } from '@/features/site/Sections';
 import { getSiteTrips, type SiteTrip } from '@/features/site/trips-data';
+import { getSitePlans } from '@/features/site/plans-data';
+import { needsPlans, type SitePlan } from '@/features/site/plans';
 import { DEFAULT_SITE_LOCALE, parseLocale } from '@/features/site/text';
 import { buttonClass } from '@/ds/primitives/button-class';
 import { DeviceFrame } from './DeviceFrame';
@@ -35,12 +37,13 @@ export async function PreviewStep({ ctx, lang, pageSlug }: { ctx: TenantServiceC
   const slug = pageSlug && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(pageSlug) ? pageSlug : null;   // only chooses which of this company's own published pages to draw
   const page = findPage(data.site.pages, slug) ?? findPage(data.site.pages, null);
   const trips: SiteTrip[] = needsTrips(data.site) ? await getSiteTrips(ctx.companyId) : [];
+  const plans: SitePlan[] = needsPlans(data.site.pages.map((p) => p.sections)) ? await getSitePlans(ctx.companyId).catch(() => []) : [];
   const q = (p: string | null, l: string) => `/dashboard/website?${new URLSearchParams({ step: 'preview', ...(p ? { page: p } : {}), lang: l })}`;
   const links: SiteLinks = { home: () => q(null, locale), page: (p) => q(p, locale), lang: (p, l) => q(p, l) };
   return (
     <DeviceFrame>
       {page
-        ? <SiteView data={data} page={page} pageSlug={page.is_home ? null : page.slug} locale={locale} supabaseUrl={getEnv().NEXT_PUBLIC_SUPABASE_URL} trips={trips} links={links} />
+        ? <SiteView data={data} page={page} pageSlug={page.is_home ? null : page.slug} locale={locale} supabaseUrl={getEnv().NEXT_PUBLIC_SUPABASE_URL} trips={trips} plans={plans} links={links} />
         : <p className="p-6 text-sm"><Bi en="The home page has nothing to show yet." ar="لا يوجد ما يُعرض في الرئيسية بعد." /></p>}
     </DeviceFrame>
   );

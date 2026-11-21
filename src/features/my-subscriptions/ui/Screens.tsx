@@ -9,7 +9,7 @@ import { PlansView } from './PlansView';
 export const MySubscriptionsScreen = (p: { profile: MemberProfile; subs: MySubscription[]; bookings: Record<string, SubscriberBooking[]>; notices: MemberNotice[] }) => (
   <MemberShell>{(lang) => <MySubscriptionsView lang={lang} {...p} />}</MemberShell>
 );
-export const PlansScreen = (p: { plans: PublicPlan[]; hasPhone: boolean }) => (
+export const PlansScreen = (p: { plans: PublicPlan[]; hasPhone: boolean; highlightPlanId?: string | null }) => (
   <MemberShell backHref="/my-subscriptions">{(lang) => <PlansView lang={lang} {...p} />}</MemberShell>
 );
 export const BookScreen = (p: { sub: MySubscription; today: string }) => (
