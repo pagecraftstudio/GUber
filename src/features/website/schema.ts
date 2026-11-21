@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { atLeastOneField, hexColorSchema, httpsUrlSchema, localizedTextSchema, optionalEmail, phoneSchema } from '@/lib/validation/common';
 
-const font = z.string().regex(/^[a-z0-9-]{2,40}$/, 'invalid_font');
+import { BUTTON_STYLES, FONT_KEYS } from '@/features/site/theme';
+
+const font = z.enum(FONT_KEYS, { error: 'invalid_font' });
 const nullablePhone = z.union([z.literal('').transform(() => null), phoneSchema]).nullable().optional();
 
 // Only known networks, only https URLs: these values end up as <a href> on the public site (XSS / phishing).
@@ -29,6 +31,7 @@ export const websiteSettingsUpdateSchema = atLeastOneField(
     secondaryColor: hexColorSchema.optional(),
     fontHeading: font.optional(),
     fontBody: font.optional(),
+    buttonStyle: z.enum(BUTTON_STYLES, { error: 'invalid_button_style' }).optional(),
     contactEmail: optionalEmail,
     contactPhone: nullablePhone,
     contactWhatsapp: nullablePhone,

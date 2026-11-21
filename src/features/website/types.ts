@@ -10,6 +10,7 @@ export type WebsiteSettingsRow = {
   primary_color: string;
   secondary_color: string;
   font_heading: string;
+  button_style: string;
   font_body: string;
   contact_email: string | null;
   contact_phone: string | null;
@@ -30,6 +31,7 @@ export type WebsiteSettings = {
   primaryColor: string;
   secondaryColor: string;
   fontHeading: string;
+  buttonStyle: string;
   fontBody: string;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -42,7 +44,7 @@ export type WebsiteSettings = {
 };
 
 export const WEBSITE_SELECT =
-  'is_published,site_title,meta_description,logo_media_id,favicon_media_id,primary_color,secondary_color,font_heading,font_body,contact_email,contact_phone,contact_whatsapp,contact_address,social_links,footer_text,updated_at';
+  'is_published,site_title,meta_description,logo_media_id,favicon_media_id,primary_color,secondary_color,font_heading,font_body,button_style,contact_email,contact_phone,contact_whatsapp,contact_address,social_links,footer_text,updated_at';
 
 /** Mirrors the column defaults in migration 0003 for a company that has not saved settings yet. */
 export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
@@ -53,8 +55,9 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   faviconMediaId: null,
   primaryColor: '#1d4ed8',
   secondaryColor: '#0f172a',
-  fontHeading: 'cairo',
-  fontBody: 'cairo',
+  fontHeading: 'plex',
+  fontBody: 'plex',
+  buttonStyle: 'soft',
   contactEmail: null,
   contactPhone: null,
   contactWhatsapp: null,
@@ -73,6 +76,7 @@ export const toWebsiteSettings = (r: WebsiteSettingsRow): WebsiteSettings => ({
   primaryColor: r.primary_color,
   secondaryColor: r.secondary_color,
   fontHeading: r.font_heading,
+  buttonStyle: r.button_style,
   fontBody: r.font_body,
   contactEmail: r.contact_email,
   contactPhone: r.contact_phone,

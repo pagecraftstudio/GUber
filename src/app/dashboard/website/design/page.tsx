@@ -18,6 +18,8 @@ import { SiteView, type SiteLinks } from '@/features/site/SiteView';
 import { needsTrips } from '@/features/site/Sections';
 import { getSiteTrips, type SiteTrip } from '@/features/site/trips-data';
 import { DEFAULT_SITE_LOCALE, mediaUrl, parseLocale } from '@/features/site/text';
+import { LookPanel } from '@/features/dashboard/website-canvas/LookPanel';
+import { SITE_FONT_CLASSES } from '@/ds/fonts/site-fonts';
 import { CanvasShell } from '@/features/dashboard/website-canvas/CanvasShell';
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -59,7 +61,7 @@ export default async function WebsiteDesignPage({ searchParams }: { searchParams
   const q = (pageId: string | null, l: string) => `/dashboard/website/design?${new URLSearchParams({ ...(pageId ? { page: pageId } : {}), lang: l })}`;
   const tab = 'rounded-ds-md px-3 py-1.5 text-sm';
   return (
-    <>
+    <div className={SITE_FONT_CLASSES}>
       <PageHeader eyebrow="Brand presence" title={<Bi en="Customize your website" ar="خصّص موقعك" />}
         description={canWrite
           ? <Bi en="Click any section to edit it. Use the + between sections to add one. Changes are drafts until you publish." ar="اضغط على أي قسم لتعديله. استخدم + بين الأقسام لإضافة قسم. التغييرات مسودة حتى تنشر." />
@@ -78,9 +80,10 @@ export default async function WebsiteDesignPage({ searchParams }: { searchParams
           {(['en', 'ar'] as const).map((l) => <Link key={l} href={q(selected.isHome ? null : selected.id, l)} aria-current={l === locale ? 'true' : undefined} className={`px-3 py-1.5 ${l === locale ? 'bg-action text-on-action' : 'bg-surface-card hover:bg-surface-sunken'}`}>{l === 'ar' ? 'العربية' : 'English'}</Link>)}
         </div>
       </div>
+      <LookPanel canWrite={canWrite} look={{ fontHeading: settings.fontHeading, fontBody: settings.fontBody, buttonStyle: settings.buttonStyle, primaryColor: settings.primaryColor, secondaryColor: settings.secondaryColor }} />
       <CanvasShell pageId={selected.id} sections={sections} canWrite={canWrite} canUpload={can(auth, PERMISSIONS.mediaWrite)} imageUrls={imageUrls}>
         <SiteView data={view.data} page={view.page} pageSlug={selected.isHome ? null : selected.slug} locale={locale} supabaseUrl={supabaseUrl} trips={trips} links={inert} editor={view.blocks} />
       </CanvasShell>
-    </>
+    </div>
   );
 }
