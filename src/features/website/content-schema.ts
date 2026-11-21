@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sectionStyleWrite } from '@/features/site/section-style';
 import { localizedTextSchema } from '@/lib/validation/common';
 import { sectionSchemas, type SectionType } from '@/features/site/sections';
 
@@ -26,18 +27,20 @@ export type HeroImagePosition = (typeof HERO_IMAGE_POSITIONS)[number];
  * (which upload, validate and discard files). A text save keeps whatever is stored for these keys, so a stale form can never put
  * back an old image id, and a client can never point a section at an arbitrary media id through the save action.
  */
-export const MANAGED_KEYS: Partial<Record<SectionType, readonly string[]>> = { hero: ['image_media_id', 'image_position'] };
+const MANAGED_EXTRA: Partial<Record<SectionType, readonly string[]>> = { hero: ['image_media_id', 'image_position'] };
+/** `style` (E4) is managed for every type: it changes only through its own action, so a stale text form can never put an old look back. */
+export const managedKeys = (type: SectionType): readonly string[] => ['style', ...(MANAGED_EXTRA[type] ?? [])];
 
 export const sectionWriteSchemas = {
-  hero: z.strictObject({ title: loc(120).optional(), subtitle: loc(300).optional(), cta_label: loc(40).optional(), cta_href: hrefSchema.optional(), image_media_id: mediaId.optional(), image_position: z.enum(HERO_IMAGE_POSITIONS).optional() }),
-  about: z.strictObject({ title: loc(120).optional(), body: loc(4000).optional() }),
-  features: z.strictObject({ title: loc(120).optional(), items: z.array(item).max(24).optional() }),
-  routes: z.strictObject({ title: loc(120).optional() }),
-  trips: z.strictObject({ title: loc(120).optional(), limit: z.number().int().min(1).max(20).optional() }),
-  faq: z.strictObject({ title: loc(120).optional(), items: z.array(qa).max(40).optional() }),
-  contact: z.strictObject({ title: loc(120).optional() }),
-  rich_text: z.strictObject({ body: loc(8000).optional() }),
-  image: z.strictObject({ image_media_id: mediaId.optional(), caption: loc(200).optional() }),
+  hero: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), subtitle: loc(300).optional(), cta_label: loc(40).optional(), cta_href: hrefSchema.optional(), image_media_id: mediaId.optional(), image_position: z.enum(HERO_IMAGE_POSITIONS).optional() }),
+  about: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), body: loc(4000).optional() }),
+  features: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), items: z.array(item).max(24).optional() }),
+  routes: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional() }),
+  trips: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), limit: z.number().int().min(1).max(20).optional() }),
+  faq: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional(), items: z.array(qa).max(40).optional() }),
+  contact: z.strictObject({ style: sectionStyleWrite.optional(), title: loc(120).optional() }),
+  rich_text: z.strictObject({ style: sectionStyleWrite.optional(), body: loc(8000).optional() }),
+  image: z.strictObject({ style: sectionStyleWrite.optional(), image_media_id: mediaId.optional(), caption: loc(200).optional() }),
   footer: z.strictObject({}),
 } as const satisfies Record<SectionType, z.ZodType>;
 

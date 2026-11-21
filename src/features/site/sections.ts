@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sectionStyleRead } from './section-style';
 import { localizedSchema } from './schema';
 
 /**
@@ -11,15 +12,15 @@ const item = z.object({ title: L.optional(), body: L.optional() });
 const qa = z.object({ question: L.optional(), answer: L.optional() });
 
 export const sectionSchemas = {
-  hero: z.object({ title: L.optional(), subtitle: L.optional(), cta_label: L.optional(), cta_href: z.string().optional(), image_media_id: z.string().optional(), image_position: z.string().optional() }),
-  about: z.object({ title: L.optional(), body: L.optional() }),
-  features: z.object({ title: L.optional(), items: z.array(item).max(24).optional() }),
-  routes: z.object({ title: L.optional() }),
-  trips: z.object({ title: L.optional(), limit: z.number().int().min(1).max(20).optional() }),
-  faq: z.object({ title: L.optional(), items: z.array(qa).max(40).optional() }),
-  contact: z.object({ title: L.optional() }),
-  rich_text: z.object({ body: L.optional() }),
-  image: z.object({ image_media_id: z.string().optional(), caption: L.optional() }),
+  hero: z.object({ style: sectionStyleRead, title: L.optional(), subtitle: L.optional(), cta_label: L.optional(), cta_href: z.string().optional(), image_media_id: z.string().optional(), image_position: z.string().optional() }),
+  about: z.object({ style: sectionStyleRead, title: L.optional(), body: L.optional() }),
+  features: z.object({ style: sectionStyleRead, title: L.optional(), items: z.array(item).max(24).optional() }),
+  routes: z.object({ style: sectionStyleRead, title: L.optional() }),
+  trips: z.object({ style: sectionStyleRead, title: L.optional(), limit: z.number().int().min(1).max(20).optional() }),
+  faq: z.object({ style: sectionStyleRead, title: L.optional(), items: z.array(qa).max(40).optional() }),
+  contact: z.object({ style: sectionStyleRead, title: L.optional() }),
+  rich_text: z.object({ style: sectionStyleRead, body: L.optional() }),
+  image: z.object({ style: sectionStyleRead, image_media_id: z.string().optional(), caption: L.optional() }),
   footer: z.object({}),
 } as const;
 

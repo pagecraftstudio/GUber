@@ -7,6 +7,7 @@ import { AppError } from '@/lib/errors';
 import { createTenantServiceContext, type TenantServiceContext } from '@/lib/service/context';
 import { websiteService } from '@/features/website/service';
 import { FONT_PAIRS } from '@/features/site/theme';
+import { pageSlugFrom } from '@/features/website/page-slug';
 import { pagesService } from '@/features/website/pages-service';
 import { publishService } from '@/features/website/publish-service';
 import { sectionImageService } from '@/features/website/section-image-service';
@@ -20,6 +21,7 @@ import { errorState, successState, type FormState } from './form-state';
  */
 const str = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
 const LIST = '/dashboard/website/pages';
+const FLOW = '/dashboard/website';          // the three-step flow (customize, preview, publish) draws from the same draft
 const DESIGN = '/dashboard/website/design';   // the visual editor re-renders after every draft change made on either screen
 
 async function ctx(permission = 'website.write'): Promise<TenantServiceContext> {
@@ -27,7 +29,7 @@ async function ctx(permission = 'website.write'): Promise<TenantServiceContext> 
 }
 async function run(paths: string[], message: Extract<FormState, { status: 'success' }>['message'], work: (c: TenantServiceContext) => Promise<void>, permission = 'website.write'): Promise<FormState> {
   try { await work(await ctx(permission)); } catch (e) { return errorState(e); }
-  for (const p of [...paths, DESIGN]) revalidatePath(p);
+  for (const p of [...paths, DESIGN, FLOW]) revalidatePath(p);
   return successState(message);
 }
 const pagePath = (id: string) => `${LIST}/${id}`;
@@ -140,4 +142,31 @@ export async function saveLookFormAction(_prev: FormState, f: FormData): Promise
   for (const k of ['buttonStyle', 'primaryColor', 'secondaryColor'] as const) { const v = str(f, k); if (v) patch[k] = v; }
   if (Object.keys(patch).length === 0) return errorState(new AppError('validation', { detail: 'nothing_to_save' }));
   return run(['/dashboard/website/design', '/dashboard/website'], 'saved', async (c) => { await websiteService.updateSettings(c, patch); });
+}
+
+/** Canvas: add a page from its name(s). The address is made from the English name; the page starts with one section so it is never blank. Redirects into the new page. */
+export async function addPageFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  let id: string;
+  try {
+    const c = await ctx();
+    const taken = (await pagesService.listPages(c)).map((p) => p.slug);
+    const titleEn = str(f, 'titleEn'), titleAr = str(f, 'titleAr');
+    const page = await pagesService.createPage(c, { slug: pageSlugFrom(titleEn, taken), title: { en: titleEn, ar: titleAr } });
+    await pagesService.insertSection(c, page.id, { type: 'about', index: 0 });
+    id = page.id;
+  } catch (e) { return errorState(e); }
+  revalidatePath(FLOW);
+  redirect(`${FLOW}?${new URLSearchParams({ step: 'design', page: id })}`); // after the try: redirect() signals by throwing
+}
+
+/** Canvas: the look of one section (background, alignment, spacing). Checked against the fixed lists by the service and again by the content schema. */
+export async function setSectionStyleFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const style: Record<string, string> = {};
+  for (const k of ['background', 'align', 'spacing'] as const) { const v = str(f, k); if (v) style[k] = v; }
+  return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => {
+    const id = str(f, 'sectionId');
+    // The form sends the choices it changes; merge them over what is stored so one click never resets the other two.
+    const { section } = await pagesService.getSectionForStyle(c, id);
+    await pagesService.setSectionStyle(c, id, { ...section, ...style });
+  });
 }

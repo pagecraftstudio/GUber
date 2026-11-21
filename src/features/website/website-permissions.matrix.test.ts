@@ -17,7 +17,7 @@ import { makePublishService } from './publish-service';
 const R = PERMISSIONS.websiteRead, W = PERMISSIONS.websiteWrite, P = PERMISSIONS.websitePublish;
 
 const DECLARED = {
-  pages: { listPages: R, getPageWithSections: R, ensureHomePage: W, createPage: W, updatePage: W, deletePage: W, addSection: W, insertSection: W, updateSection: W, deleteSection: W, reorderSections: W },
+  pages: { listPages: R, getPageWithSections: R, ensureHomePage: W, createPage: W, updatePage: W, deletePage: W, addSection: W, insertSection: W, updateSection: W, deleteSection: W, reorderSections: W, setSectionStyle: W, getSectionForStyle: R },
   preview: { getDraft: R },
   publish: { getState: R, publish: P, rollback: P, unpublish: P },
 } as const;

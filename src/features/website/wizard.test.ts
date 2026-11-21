@@ -96,4 +96,12 @@ describe('wizard service', () => {
     const e = await deps({ ensureStarter: vi.fn().mockRejectedValue(Object.assign(new Error('x'), { code: 'forbidden' })) }).svc.open(tenantCtx(['website.read', 'website.write'])).catch((x) => x);
     expect(e).toMatchObject({ code: 'forbidden' });
   });
+  it('saveDetails needs website.write, requires a name, and treats contact details as optional', async () => {
+    const { d, svc } = deps();
+    const blank = { titleEn: '', titleAr: '', email: '', phone: '', whatsapp: '', addressEn: '', addressAr: '', footerEn: '', footerAr: '' };
+    await expect(svc.saveDetails(tenantCtx(['website.read']), { ...blank, titleEn: 'A' })).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(svc.saveDetails(tenantCtx(['website.write']), blank)).rejects.toMatchObject({ detail: 'title_required' });
+    await svc.saveDetails(tenantCtx(['website.write']), { ...blank, titleAr: 'شركتي' });
+    expect(d.settings.updateSettings).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ siteTitle: { en: '', ar: 'شركتي' }, contactEmail: null, contactPhone: null, contactWhatsapp: null }));
+  });
 });

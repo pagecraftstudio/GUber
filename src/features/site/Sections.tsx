@@ -1,5 +1,6 @@
 import type { PublicSite } from './schema';
 import { parseSection, type ParsedSection } from './sections';
+import { sectionWrap } from './section-style';
 import { mediaUrl, pick, safeHref, type SiteLocale } from './text';
 import { RichText } from './RichText';
 import { distinctRoutes } from './trip-routes';
@@ -16,7 +17,7 @@ export interface SectionsCtx {
 }
 
 const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="text-2xl font-semibold mb-4">{children}</h2>;
-const Wrap = ({ children, id }: { children: React.ReactNode; id?: string }) => <section id={id} className="mx-auto w-full max-w-5xl px-4 py-10">{children}</section>;
+const Wrap = ({ children, id }: { children: React.ReactNode; id?: string }) => <section id={id} className="mx-auto w-full max-w-5xl px-4 py-[var(--sec-py,2.5rem)]">{children}</section>;
 
 export const needsTrips = (site: PublicSite['site']): boolean =>
   site.pages.some((p) => p.sections.some((s) => s.type === 'trips' || s.type === 'routes'));
@@ -32,7 +33,14 @@ function formatPrice(t: SiteTrip, locale: SiteLocale): string {
   } catch { return `${t.price} ${t.currency}`; }
 }
 
+/** Applies the section's chosen look (E4). A section with no style (everything published before E4) is returned exactly as before: no wrapper. */
 function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
+  const inner = <SectionBody s={s} ctx={ctx} />;
+  const wrap = sectionWrap(s.type, (s.content as { style?: unknown }).style);
+  return wrap ? <div className={wrap.className} style={wrap.vars}>{inner}</div> : inner;
+}
+
+function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
   const { locale, site } = ctx;
   switch (s.type) {
     case 'hero': {
@@ -47,7 +55,7 @@ function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
           <section className="relative isolate overflow-hidden bg-[var(--ds-media-base)] text-[var(--ds-on-media)]">
             <img src={img} alt="" className="absolute inset-0 -z-20 size-full object-cover" loading="eager" />
             <div className="absolute inset-0 -z-10 bg-[var(--ds-media-scrim)]" aria-hidden="true" />
-            <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-20 md:py-28">
+            <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-[var(--hero-py,5rem)] md:py-[var(--hero-py,7rem)]">
               <h1 className="max-w-3xl text-3xl font-bold md:text-5xl">{title}</h1>
               <p className="max-w-2xl text-lg">{subtitle}</p>
               {href && cta ? <a href={href} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--ds-on-media)] px-5 py-2.5 font-medium text-[var(--ds-media-base)]">{cta}</a> : null}
@@ -57,7 +65,7 @@ function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
       }
       return (
         <section className="bg-[var(--site-accent,var(--ds-action-primary))] text-[var(--site-on-accent,var(--ds-action-on-primary))]">
-          <div className={`mx-auto grid w-full max-w-5xl gap-6 px-4 py-14 ${img ? 'md:grid-cols-2 md:items-center' : ''}`}>
+          <div className={`mx-auto grid w-full max-w-5xl gap-6 px-4 py-[var(--hero-py,3.5rem)] ${img ? 'md:grid-cols-2 md:items-center' : ''}`}>
             <div className="space-y-4">
               <h1 className="text-3xl font-bold md:text-4xl">{title}</h1>
               <p className="text-lg opacity-90">{subtitle}</p>

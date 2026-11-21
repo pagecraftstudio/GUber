@@ -9,6 +9,10 @@ import { MiniActionForm } from '../website-editor/MiniActionForm';
 import { useDashLang } from '../lang';
 import { HeroImageCard } from './HeroImageCard';
 import { PopupFields } from './PopupFields';
+import { StyleCard } from './StyleCard';
+
+/** Every section that draws content has a look; the footer is always drawn from settings. */
+const SECTION_HAS_LOOK = new Set(['hero', 'about', 'features', 'routes', 'trips', 'faq', 'contact', 'rich_text', 'image']);
 
 export type Pos = { top: number; left: number };
 const W = 320;
@@ -50,6 +54,7 @@ export const BlockPopup = forwardRef<HTMLDivElement, { section: DraftSection; in
         <MiniActionForm action={deleteSectionFormAction} fields={ids} className="text-status-error-fg" confirmText={lang === 'ar' ? 'حذف هذا القسم؟' : 'Delete this section?'}><Ico i={Trash2}><Bi en="Delete" ar="حذف" /></Ico></MiniActionForm>
       </div>
       {section.type === 'hero' ? <HeroImageCard key={`img:${section.id}:${section.updatedAt}`} section={section} imageUrl={imageUrl} canUpload={canUpload} /> : null}
+      {SECTION_HAS_LOOK.has(section.type) ? <StyleCard key={`look:${section.id}:${section.updatedAt}`} section={section} /> : null}
       <PopupFields key={`${section.id}:${section.updatedAt}`} section={section} />
     </Frame>
   );

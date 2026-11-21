@@ -9,7 +9,7 @@ import type { EditorBlock } from '@/features/site/editor-markup';
 
 vi.mock('../website-actions', () => {
   const ok = async () => ({ status: 'success' as const, message: 'saved', nonce: 1 });
-  return { saveSectionFormAction: ok, moveSectionFormAction: ok, toggleSectionFormAction: ok, deleteSectionFormAction: ok, insertSectionFormAction: ok, uploadSectionImageFormAction: ok, removeSectionImageFormAction: ok, setSectionImagePositionFormAction: ok };
+  return { saveSectionFormAction: ok, moveSectionFormAction: ok, toggleSectionFormAction: ok, deleteSectionFormAction: ok, insertSectionFormAction: ok, uploadSectionImageFormAction: ok, removeSectionImageFormAction: ok, setSectionImagePositionFormAction: ok, setSectionStyleFormAction: ok };
 });
 import { CanvasShell } from './CanvasShell';
 
