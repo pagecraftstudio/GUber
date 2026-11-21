@@ -23,22 +23,31 @@ export function LivePreview({ companyName, companySlug, logoPath, supabaseUrl, t
   if (!site || !page) return null;
   const t = (en: string, ar: string) => (dash === 'ar' ? ar : en);
   return (
-    <aside aria-label={t('Live preview', 'معاينة مباشرة')} className="min-w-0 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <aside aria-label={t('Live preview', 'معاينة مباشرة')} className="min-w-0 space-y-2">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-medium">{t('Live preview', 'معاينة مباشرة')}</h3>
-        <div role="group" aria-label={t('Preview language', 'لغة المعاينة')} className="inline-flex gap-1 rounded-ds-md bg-surface-sunken p-1">
-          {(['en', 'ar'] as const).map((l) => (
-            <button key={l} type="button" aria-pressed={locale === l} onClick={() => setLocale(l)} className={buttonClass(locale === l ? 'secondary' : 'ghost', 'md', false, 'h-8')}>{l === 'en' ? 'English' : 'العربية'}</button>
-          ))}
+        <div className="flex items-center gap-1">
+          {live!.open && (
+            <div role="group" aria-label={t('Preview language', 'لغة المعاينة')} className="inline-flex gap-0.5 rounded-ds-md bg-surface-sunken p-0.5">
+              {(['en', 'ar'] as const).map((l) => (
+                <button key={l} type="button" aria-pressed={locale === l} onClick={() => setLocale(l)} className={buttonClass(locale === l ? 'secondary' : 'ghost', 'md', false, 'h-7 px-2 text-xs')}>{l === 'en' ? 'EN' : 'عربي'}</button>
+              ))}
+            </div>
+          )}
+          <button type="button" aria-expanded={live!.open} onClick={() => live!.setOpen(!live!.open)} className={buttonClass('ghost', 'md', false, 'h-7 px-2 text-xs')}>{live!.open ? t('Hide', 'إخفاء') : t('Show preview', 'إظهار المعاينة')}</button>
         </div>
       </div>
-      {/* Anchors in the rendered site must not navigate: capture and cancel every click inside the frame. */}
-      <div onClickCapture={(e) => { if ((e.target as HTMLElement).closest('a')) e.preventDefault(); }} className="max-h-[75vh] overflow-auto rounded-ds-lg">
-        <DeviceFrame>
-          <SiteView data={site} page={page} pageSlug={null} locale={locale} supabaseUrl={supabaseUrl} trips={trips} links={links} />
-        </DeviceFrame>
-      </div>
-      <p className="text-xs text-ink-muted">{t('Changes show here as you type. They are saved when you press Save and continue.', 'تظهر التغييرات هنا أثناء الكتابة، وتُحفظ عند الضغط على حفظ ومتابعة.')}</p>
+      {live!.open && (
+        <>
+          {/* Anchors in the rendered site must not navigate: capture and cancel every click inside the frame. */}
+          <div onClickCapture={(e) => { if ((e.target as HTMLElement).closest('a')) e.preventDefault(); }} className="max-h-[78vh] overflow-auto rounded-ds-lg">
+            <DeviceFrame defaultPhone compact>
+              <SiteView data={site} page={page} pageSlug={null} locale={locale} supabaseUrl={supabaseUrl} trips={trips} links={links} />
+            </DeviceFrame>
+          </div>
+          <p className="text-xs text-ink-muted">{t('Updates as you type. Saved when you press Save and continue.', 'يتحدث أثناء الكتابة، ويُحفظ عند الضغط على حفظ ومتابعة.')}</p>
+        </>
+      )}
     </aside>
   );
 }
