@@ -78,6 +78,14 @@ export function makeWizardService(d: WizardDeps) {
 
   return {
     state,
+    /** Light version of `open`: creates the starter site when missing and reads nothing else (the canvas loads its own data). */
+    async ensureStarter(ctx: TenantServiceContext): Promise<StarterResult> {
+      requirePermission(ctx, PERMISSIONS.websiteWrite);
+      const parsed = starterSchema.safeParse(await d.ensureStarter(ctx));
+      if (!parsed.success) throw new AppError('internal', { cause: new Error('ensure_starter_site returned an unexpected shape') });
+      const s = parsed.data;
+      return { createdHome: s.created_home, seededSections: s.seeded_sections, createdSettings: s.created_settings };
+    },
     async open(ctx: TenantServiceContext): Promise<{ starter: StarterResult; state: WizardState }> {
       requirePermission(ctx, PERMISSIONS.websiteWrite);
       const parsed = starterSchema.safeParse(await d.ensureStarter(ctx));

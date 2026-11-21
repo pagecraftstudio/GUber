@@ -1,9 +1,12 @@
 'use client';
+import { useEffect, useRef, type FormEvent } from 'react';
 import { SaveStatus, viewOfForm } from '@/components/dashboard/SaveStatus';
-import { buttonClass } from '@/ds/primitives/button-class';
 import { useActionForm } from '../useActionForm';
 import { useDashLang } from '../lang';
 import { saveSiteDetailsFormAction } from '../wizard-actions';
+import { AUTOSAVE_MS } from '../website-canvas/PopupFields';
+import { useLiveDraft } from '../website-canvas/LiveCanvas';
+import type { DetailsDraft } from '../website-canvas/live-overlay';
 import { LogoCard } from '../website-wizard/LogoCard';
 import { AreaField, TextField } from '../website-wizard/parts';
 
@@ -13,13 +16,27 @@ export type SiteDetails = { titleEn: string; titleAr: string; email: string; pho
 export function SiteDetailsPanel({ settings: s, logoUrl, canWrite }: { settings: SiteDetails; logoUrl: string | null; canWrite: boolean }) {
   const lang = useDashLang();
   const t = (en: string, ar: string) => (lang === 'ar' ? ar : en);
-  const { state, pending, ref, onSubmit } = useActionForm(saveSiteDetailsFormAction);
+  const live = useLiveDraft();
+  const { state, pending, ref, submit } = useActionForm(saveSiteDetailsFormAction);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const read = (form: HTMLFormElement): { fd: FormData; draft: DetailsDraft } => {
+    const fd = new FormData(form), g = (k: string) => String(fd.get(k) ?? '');
+    return { fd, draft: { titleEn: g('titleEn'), titleAr: g('titleAr'), email: g('email'), phone: g('phone'), whatsapp: g('whatsapp'), addressEn: g('addressEn'), addressAr: g('addressAr'), footerEn: g('footerEn'), footerAr: g('footerAr') } };
+  };
+  // The name is required to save, so a half-erased name shows in the preview but is not sent until it is filled again.
+  const save = (form: HTMLFormElement) => { const { fd, draft } = read(form); if (draft.titleEn.trim() || draft.titleAr.trim()) submit(fd); };
+  const onInput = (e: FormEvent<HTMLFormElement>) => {
+    const form = e.currentTarget;
+    live.setDetails(read(form).draft);
+    clearTimeout(timer.current); timer.current = setTimeout(() => save(form), AUTOSAVE_MS);
+  };
+  useEffect(() => () => clearTimeout(timer.current), []);
   return (
     <details className="mb-3 rounded-ds-lg border border-line-default bg-surface-card">
       <summary className="cursor-pointer px-4 py-3 text-sm font-medium">{t('Website name, logo and contact details', 'اسم الموقع والشعار وبيانات التواصل')}</summary>
       <div className="space-y-5 border-t border-line-default p-4">
         <LogoCard logoUrl={logoUrl} canWrite={canWrite} />
-        <form ref={ref} onSubmit={onSubmit} className="space-y-5">
+        <form ref={ref} onInput={onInput} onSubmit={(e) => { e.preventDefault(); clearTimeout(timer.current); save(e.currentTarget); }} className="space-y-5">
           <fieldset disabled={!canWrite} className="min-w-0 space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <TextField name="titleEn" label={{ en: 'Website name (English)', ar: 'اسم الموقع (الإنجليزية)' }} defaultValue={s.titleEn} lang="en" maxLength={120} />
@@ -37,12 +54,7 @@ export function SiteDetailsPanel({ settings: s, logoUrl, canWrite }: { settings:
               <TextField name="footerAr" label={{ en: 'Footer text (Arabic)', ar: 'نص التذييل (العربية)' }} defaultValue={s.footerAr} dir="rtl" lang="ar" maxLength={500} />
             </div>
           </fieldset>
-          {canWrite && (
-            <div className="flex items-center justify-end gap-3">
-              <SaveStatus view={viewOfForm(state, pending)} />
-              <button type="submit" disabled={pending} className={buttonClass('secondary', 'md')}>{t('Save details', 'حفظ البيانات')}</button>
-            </div>
-          )}
+          {canWrite && <div className="flex items-center justify-end gap-3"><p className="text-xs text-ink-muted">{t('Saves automatically', 'يُحفظ تلقائيًا')}</p><SaveStatus view={viewOfForm(state, pending)} /></div>}
         </form>
       </div>
     </details>

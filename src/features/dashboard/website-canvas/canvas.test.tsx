@@ -47,7 +47,7 @@ describe('canvas interaction', () => {
     fireEvent.click(block('a'));
     const dlg = screen.getByRole('dialog');
     expect(dlg.textContent).toContain('Hero banner');
-    for (const name of [/Up/, /Down/, /Hide/, /Delete/, /Save/]) expect(screen.getAllByRole('button', { name }).length).toBeGreaterThan(0);
+    for (const name of [/Up/, /Down/, /Hide/, /Delete/]) expect(screen.getAllByRole('button', { name }).length).toBeGreaterThan(0);
     expect(block('a').dataset.selected).toBe('true');
     expect((screen.getByRole('button', { name: /Up/ }) as HTMLButtonElement).disabled).toBe(true);        // first block cannot move up
   });
