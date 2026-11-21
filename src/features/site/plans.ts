@@ -15,3 +15,6 @@ export const needsPlans = (sections: { type: string }[][]): boolean => sections.
 
 /** Where a visitor goes to request a plan: the platform's own member page (it asks them to sign in first and brings them back). */
 export const planRequestPath = (planId: string): string => `/my-subscriptions/plans?plan=${encodeURIComponent(planId)}`;
+
+/** Where a visitor goes to book a trip: the platform's own booking page (it asks them to sign in first and brings them back). */
+export const tripBookPath = (tripId: string): string => `/my-bookings/book/${encodeURIComponent(tripId)}`;

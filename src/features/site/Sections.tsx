@@ -7,7 +7,7 @@ import { distinctRoutes } from './trip-routes';
 import { Block, InsertSlot, Placeholder, type EditorBlock } from './editor-markup';
 import { Fragment } from 'react';
 import type { SiteTrip } from './trips-data';
-import { planRequestPath, type SitePlan } from './plans';
+import { planRequestPath, tripBookPath, type SitePlan } from './plans';
 
 export interface SectionsCtx {
   site: PublicSite['site'];
@@ -136,7 +136,10 @@ function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
             : <ul className="divide-y divide-line-default rounded-lg border border-line-default">{trips.map((t) => (
               <li key={t.trip_id} className="flex flex-wrap items-center justify-between gap-2 p-4">
                 <span className="font-medium">{t.origin_name} → {t.destination_name}</span>
-                <span className="text-ink-secondary">{formatDeparture(t, locale)} · {formatPrice(t, locale)} · {t.seats_available} {locale === 'ar' ? 'مقعد' : 'seats'}</span>
+                <span className="flex flex-wrap items-center gap-3">
+                  <span className="text-ink-secondary">{formatDeparture(t, locale)} · {formatPrice(t, locale)} · {t.seats_available} {locale === 'ar' ? 'مقعد' : 'seats'}</span>
+                  <a href={tripBookPath(t.trip_id)} className="rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-accent,var(--ds-action-primary))] px-3 py-1.5 text-sm font-medium text-[var(--site-on-accent,var(--ds-action-on-primary))]">{locale === 'ar' ? 'احجز' : 'Book'}</a>
+                </span>
               </li>))}</ul>}
         </Wrap>
       );
