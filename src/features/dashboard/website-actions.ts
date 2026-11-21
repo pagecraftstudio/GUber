@@ -89,7 +89,7 @@ export async function moveSectionFormAction(_prev: FormState, f: FormData): Prom
 }
 
 /** Going live is a separate permission (website.publish). Nothing else in this file can make content public. */
-const PUBLISH = '/dashboard/website/publish';
+const PUBLISH = '/dashboard/website';
 export async function publishWebsiteFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   return run([PUBLISH], 'saved', async (c) => { await publishService.publish(c, { note: str(f, 'note') }); }, 'website.publish');
 }

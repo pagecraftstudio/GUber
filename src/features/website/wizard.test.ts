@@ -55,10 +55,11 @@ describe('computeWizardState', () => {
 function deps(over: Partial<Record<keyof WizardDeps, unknown>> = {}) {
   const d = {
     ensureStarter: vi.fn().mockResolvedValue({ created_home: true, seeded_sections: 5, created_settings: true }),
-    settings: { getSettings: vi.fn().mockResolvedValue(full().settings) },
-    pages: { listPages: vi.fn().mockResolvedValue([home]), getPageWithSections: vi.fn().mockResolvedValue({ page: home, sections: [hero()] }) },
+    settings: { getSettings: vi.fn().mockResolvedValue(full().settings), updateSettings: vi.fn().mockResolvedValue({}) },
+    pages: { listPages: vi.fn().mockResolvedValue([home]), getPageWithSections: vi.fn().mockResolvedValue({ page: home, sections: [hero()] }), addSection: vi.fn(), updateSection: vi.fn(), deleteSection: vi.fn(), reorderSections: vi.fn() },
     preview: { getDraft: vi.fn().mockResolvedValue({ ok: true, data: site }) },
     publish: { getState: vi.fn().mockResolvedValue({ isPublished: false, versions: [] }) },
+    media: { uploadImage: vi.fn(), removeImage: vi.fn().mockResolvedValue(undefined), imagePath: vi.fn().mockResolvedValue(null) },
     ...over,
   } as unknown as WizardDeps;
   return { d, svc: makeWizardService(d) };
@@ -84,7 +85,7 @@ describe('wizard service', () => {
     expect((d.ensureStarter as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]).toBeLessThan((d.settings.getSettings as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]!);
   });
   it('a site without a home page reads sections as empty (no second query)', async () => {
-    const { d, svc } = deps({ pages: { listPages: vi.fn().mockResolvedValue([]), getPageWithSections: vi.fn() } });
+    const { d, svc } = deps({ pages: { listPages: vi.fn().mockResolvedValue([]), getPageWithSections: vi.fn(), addSection: vi.fn(), updateSection: vi.fn(), deleteSection: vi.fn(), reorderSections: vi.fn() } });
     expect((await svc.state(tenantCtx(['website.read']))).current).toBe('content');
     expect(d.pages.getPageWithSections).not.toHaveBeenCalled();
   });

@@ -6,6 +6,13 @@ import type { FormState } from '@/features/dashboard/form-state';
 import type { AutoResult } from '@/features/dashboard/autosave-actions';
 
 export const EXTRA: Record<string, { en: string; ar: string }> = {
+  title_required: { en: 'Add a website name in at least one language.', ar: 'أضف اسم الموقع بلغة واحدة على الأقل.' },
+  contact_required: { en: 'Add an email, phone or WhatsApp number.', ar: 'أضف بريدًا إلكترونيًا أو رقم هاتف أو واتساب.' },
+  hero_title_required: { en: 'Add a headline for the top banner.', ar: 'أضف عنوانًا للبانر العلوي.' },
+  home_page_missing: { en: 'The home page is missing. Reload and try again.', ar: 'الصفحة الرئيسية غير موجودة. أعد التحميل وحاول مرة أخرى.' },
+  image_too_large: { en: 'The image is larger than 2 MB.', ar: 'حجم الصورة أكبر من 2 ميجابايت.' },
+  image_type_not_supported: { en: 'Use a PNG, JPEG or WebP image.', ar: 'استخدم صورة PNG أو JPEG أو WebP.' },
+  invalid_section_content: { en: 'Some content is not allowed (HTML or an unsafe link).', ar: 'بعض المحتوى غير مسموح (HTML أو رابط غير آمن).' },
   subscription_not_active: { en: 'This subscription is no longer active.', ar: 'هذا الاشتراك لم يعد فعّالاً.' },
   revoke_booking_not_cancellable: { en: 'One of the selected bookings can no longer be cancelled. Reload and try again.', ar: 'لم يعد ممكناً إلغاء أحد الحجوزات المحددة. أعد التحميل وحاول مرة أخرى.' },
   amount_exceeds_total: { en: 'More than the booking total.', ar: 'أكثر من إجمالي الحجز.' },
