@@ -7,6 +7,7 @@ import type { DraftSection } from '@/features/website/pages-types';
 import { deleteSectionFormAction, insertSectionFormAction, moveSectionFormAction, toggleSectionFormAction } from '../website-actions';
 import { MiniActionForm } from '../website-editor/MiniActionForm';
 import { useDashLang } from '../lang';
+import { HeroImageCard } from './HeroImageCard';
 import { PopupFields } from './PopupFields';
 
 export type Pos = { top: number; left: number };
@@ -35,7 +36,7 @@ const Frame = forwardRef<HTMLDivElement, { title: ReactNode; pos: Pos; onClose: 
 const Ico = ({ i: I, children }: { i: typeof X; children: ReactNode }) => <span className="inline-flex items-center gap-1"><I size={14} aria-hidden="true" />{children}</span>;
 
 /** Click a block: its controls (move, hide/show, delete) and its fields, in one place. */
-export const BlockPopup = forwardRef<HTMLDivElement, { section: DraftSection; index: number; count: number; pos: Pos; onClose: () => void }>(function BlockPopup({ section, index, count, pos, onClose }, ref) {
+export const BlockPopup = forwardRef<HTMLDivElement, { section: DraftSection; index: number; count: number; pos: Pos; onClose: () => void; imageUrl?: string | null; canUpload?: boolean }>(function BlockPopup({ section, index, count, pos, onClose, imageUrl = null, canUpload = false }, ref) {
   const lang = useDashLang();
   const ids = { pageId: section.pageId, sectionId: section.id };
   return (
@@ -48,6 +49,7 @@ export const BlockPopup = forwardRef<HTMLDivElement, { section: DraftSection; in
         </MiniActionForm>
         <MiniActionForm action={deleteSectionFormAction} fields={ids} className="text-status-error-fg" confirmText={lang === 'ar' ? 'حذف هذا القسم؟' : 'Delete this section?'}><Ico i={Trash2}><Bi en="Delete" ar="حذف" /></Ico></MiniActionForm>
       </div>
+      {section.type === 'hero' ? <HeroImageCard key={`img:${section.id}:${section.updatedAt}`} section={section} imageUrl={imageUrl} canUpload={canUpload} /> : null}
       <PopupFields key={`${section.id}:${section.updatedAt}`} section={section} />
     </Frame>
   );

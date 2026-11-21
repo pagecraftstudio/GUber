@@ -111,6 +111,12 @@
   --tenant-accent: #0b3d2e;
   --tenant-on-accent: #ffffff;
   --tenant-accent-ink: #0b3d2e;
+
+  /* Text over a PHOTO (hero banner). The same in light and dark on purpose: what sits behind the text is the photo, not the page theme.
+     Scrim 60% near-black keeps white text at 5.7:1 or better even on a white photo; media-base shows while the photo loads or fails. */
+  --ds-media-base: #171717;
+  --ds-media-scrim: rgb(0 0 0 / 0.6);
+  --ds-on-media: #ffffff;
 }
 
 /* Dark column. Present so the existing toggle keeps working; NOT signed off until Phase 7 (D4). */
@@ -144,4 +150,9 @@
   --ds-status-info-bg: #12202e;
   --ds-status-neutral-fg: #c4c4c4;
   --ds-status-neutral-bg: #1f1f1f;
+
+  /* Banner text over a photo: deliberately identical to light (see the light block). */
+  --ds-media-base: #171717;
+  --ds-media-scrim: rgb(0 0 0 / 0.6);
+  --ds-on-media: #ffffff;
 }

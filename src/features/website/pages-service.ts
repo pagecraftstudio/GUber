@@ -4,7 +4,7 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { pagesRepository, type PagesRepository } from './pages-repository';
 import {
-  pageCreateSchema, pageUpdateSchema, parseSectionContent, sectionCreateSchema, sectionInsertSchema, sectionReorderSchema, sectionUpdateSchema,
+  MANAGED_KEYS, pageCreateSchema, pageUpdateSchema, parseSectionContent, sectionCreateSchema, sectionInsertSchema, sectionReorderSchema, sectionUpdateSchema,
 } from './content-schema';
 import { SECTION_DEFAULTS } from './section-fields';
 import type { DraftPage, DraftSection } from './pages-types';
@@ -90,7 +90,9 @@ export function makePagesService(repo: PagesRepository) {
         if (!current) throw new AppError('not_found');
         const parsed = parseSectionContent(current.type, patch.content); // validated against the section's STORED type, never a client-supplied one
         if (!parsed.success) throw new AppError('validation', { detail: 'invalid_section_content' });
-        content = parsed.data;
+        const managed = MANAGED_KEYS[current.type] ?? [];
+        const kept = Object.fromEntries(managed.filter((k) => current.content[k] !== undefined).map((k) => [k, current.content[k]]));
+        content = { ...Object.fromEntries(Object.entries(parsed.data).filter(([k]) => !managed.includes(k))), ...kept };
       }
       return repo.updateSection(ctx, id, { content, isEnabled: patch.isEnabled });
     },

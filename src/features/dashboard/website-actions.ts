@@ -7,6 +7,8 @@ import { AppError } from '@/lib/errors';
 import { createTenantServiceContext, type TenantServiceContext } from '@/lib/service/context';
 import { pagesService } from '@/features/website/pages-service';
 import { publishService } from '@/features/website/publish-service';
+import { sectionImageService } from '@/features/website/section-image-service';
+import { MAX_IMAGE_BYTES as IMAGE_MAX_BYTES } from '@/features/media/sniff';
 import { errorState, successState, type FormState } from './form-state';
 
 /**
@@ -105,4 +107,21 @@ export async function rollbackWebsiteFormAction(_prev: FormState, f: FormData): 
 }
 export async function unpublishWebsiteFormAction(_prev: FormState, _f: FormData): Promise<FormState> {
   return run([PUBLISH], 'saved', async (c) => { await publishService.unpublish(c); }, 'website.publish');
+}
+
+/** Section images (hero banner). The file is read here, but its type is decided by the server from the bytes, never by what the browser says. */
+export async function uploadSectionImageFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const file = f.get('file');
+  if (!(file instanceof File) || file.size === 0) return errorState(new AppError('validation', { detail: 'image_type_not_supported' }));
+  if (file.size > IMAGE_MAX_BYTES) return errorState(new AppError('validation', { detail: 'image_too_large' }));
+  const pageId = str(f, 'pageId');
+  return run([pagePath(pageId)], 'saved', async (c) => {
+    await sectionImageService.setImage(c, { sectionId: str(f, 'sectionId'), filename: file.name }, new Uint8Array(await file.arrayBuffer()));
+  });
+}
+export async function removeSectionImageFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => { await sectionImageService.removeImage(c, { sectionId: str(f, 'sectionId') }); });
+}
+export async function setSectionImagePositionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => { await sectionImageService.setPosition(c, { sectionId: str(f, 'sectionId'), position: str(f, 'position') }); });
 }

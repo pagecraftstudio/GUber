@@ -11,7 +11,7 @@ const item = z.object({ title: L.optional(), body: L.optional() });
 const qa = z.object({ question: L.optional(), answer: L.optional() });
 
 export const sectionSchemas = {
-  hero: z.object({ title: L.optional(), subtitle: L.optional(), cta_label: L.optional(), cta_href: z.string().optional(), image_media_id: z.string().optional() }),
+  hero: z.object({ title: L.optional(), subtitle: L.optional(), cta_label: L.optional(), cta_href: z.string().optional(), image_media_id: z.string().optional(), image_position: z.string().optional() }),
   about: z.object({ title: L.optional(), body: L.optional() }),
   features: z.object({ title: L.optional(), items: z.array(item).max(24).optional() }),
   routes: z.object({ title: L.optional() }),

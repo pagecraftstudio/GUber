@@ -12,11 +12,12 @@ import { Bi } from '@/components/dashboard/T';
 import { pagesService } from '@/features/website/pages-service';
 import { websiteService } from '@/features/website/service';
 import { wizardService } from '@/features/website/wizard-service';
+import { mediaService } from '@/features/media/media-service';
 import { buildCanvasSite } from '@/features/website/canvas-site';
 import { SiteView, type SiteLinks } from '@/features/site/SiteView';
 import { needsTrips } from '@/features/site/Sections';
 import { getSiteTrips, type SiteTrip } from '@/features/site/trips-data';
-import { DEFAULT_SITE_LOCALE, parseLocale } from '@/features/site/text';
+import { DEFAULT_SITE_LOCALE, mediaUrl, parseLocale } from '@/features/site/text';
 import { CanvasShell } from '@/features/dashboard/website-canvas/CanvasShell';
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -41,7 +42,17 @@ export default async function WebsiteDesignPage({ searchParams }: { searchParams
 
   const [{ sections }, settings] = await Promise.all([pagesService.getPageWithSections(ctx, selected.id), websiteService.getSettings(ctx)]);
   const logoPath = settings.logoMediaId ? (await wizardService.read(ctx).catch(() => null))?.logoPath ?? null : null;
-  const view = buildCanvasSite({ companyName: auth.membership.companyName, companySlug: auth.membership.companySlug, settings, pages, selected, sections, logoPath });
+  // Banner images of THIS page's hero sections: a company-filtered read of the signed-in company's own media. Without media.read (or on
+  // any failure) the blocks are drawn without their pictures, never an error: editing text must not depend on image lookups.
+  const heroImageIds = sections.flatMap((s) => (typeof s.content.image_media_id === 'string' ? [s.content.image_media_id] : []));
+  const images = await mediaService.imageEntries(ctx, heroImageIds).catch(() => ({}));
+  const supabaseUrl = getEnv().NEXT_PUBLIC_SUPABASE_URL;
+  const imageUrls = Object.fromEntries(sections.flatMap((s) => {
+    const id = s.content.image_media_id, entry = typeof id === 'string' ? (images as Record<string, { path: string; mime: string }>)[id] : undefined;
+    const url = mediaUrl(supabaseUrl, entry);
+    return url ? [[s.id, url]] : [];
+  }));
+  const view = buildCanvasSite({ companyName: auth.membership.companyName, companySlug: auth.membership.companySlug, settings, pages, selected, sections, logoPath, images });
   let trips: SiteTrip[] = [];
   if (needsTrips(view.data.site)) { try { trips = await getSiteTrips(ctx.companyId); } catch { trips = []; } }   // a trips outage must not break editing
 
@@ -67,8 +78,8 @@ export default async function WebsiteDesignPage({ searchParams }: { searchParams
           {(['en', 'ar'] as const).map((l) => <Link key={l} href={q(selected.isHome ? null : selected.id, l)} aria-current={l === locale ? 'true' : undefined} className={`px-3 py-1.5 ${l === locale ? 'bg-action text-on-action' : 'bg-surface-card hover:bg-surface-sunken'}`}>{l === 'ar' ? 'العربية' : 'English'}</Link>)}
         </div>
       </div>
-      <CanvasShell pageId={selected.id} sections={sections} canWrite={canWrite}>
-        <SiteView data={view.data} page={view.page} pageSlug={selected.isHome ? null : selected.slug} locale={locale} supabaseUrl={getEnv().NEXT_PUBLIC_SUPABASE_URL} trips={trips} links={inert} editor={view.blocks} />
+      <CanvasShell pageId={selected.id} sections={sections} canWrite={canWrite} canUpload={can(auth, PERMISSIONS.mediaWrite)} imageUrls={imageUrls}>
+        <SiteView data={view.data} page={view.page} pageSlug={selected.isHome ? null : selected.slug} locale={locale} supabaseUrl={supabaseUrl} trips={trips} links={inert} editor={view.blocks} />
       </CanvasShell>
     </>
   );

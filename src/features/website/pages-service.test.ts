@@ -133,3 +133,22 @@ describe('visual editor: insertSection', () => {
     expect(full.addSection).not.toHaveBeenCalled(); expect(r.addSection).not.toHaveBeenCalled();
   });
 });
+
+describe('managed keys (hero image) survive a text save', () => {
+  const OLD = '00000000-0000-4000-8000-000000000701', EVIL = '00000000-0000-4000-8000-000000000999';
+  it('a text save keeps the STORED image id and position, ignoring what the form sent', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'hero', content: { title: { en: 'Old' }, image_media_id: OLD, image_position: 'full' } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'New' }, image_media_id: EVIL, image_position: 'beside' } });
+    expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2]).toEqual({ content: { title: { en: 'New' }, image_media_id: OLD, image_position: 'full' }, isEnabled: undefined });
+  });
+  it('a stale form cannot bring back an image that was removed', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'hero', content: { title: { en: 'Old' } } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'New' }, image_media_id: OLD } });
+    expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2].content).toEqual({ title: { en: 'New' } });
+  });
+  it('other section types are unaffected', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'about' })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'T' } } });
+    expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2].content).toEqual({ title: { en: 'T' } });
+  });
+});

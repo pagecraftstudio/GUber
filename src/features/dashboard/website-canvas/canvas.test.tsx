@@ -9,7 +9,7 @@ import type { EditorBlock } from '@/features/site/editor-markup';
 
 vi.mock('../website-actions', () => {
   const ok = async () => ({ status: 'success' as const, message: 'saved', nonce: 1 });
-  return { saveSectionFormAction: ok, moveSectionFormAction: ok, toggleSectionFormAction: ok, deleteSectionFormAction: ok, insertSectionFormAction: ok };
+  return { saveSectionFormAction: ok, moveSectionFormAction: ok, toggleSectionFormAction: ok, deleteSectionFormAction: ok, insertSectionFormAction: ok, uploadSectionImageFormAction: ok, removeSectionImageFormAction: ok, setSectionImagePositionFormAction: ok };
 });
 import { CanvasShell } from './CanvasShell';
 
@@ -20,7 +20,7 @@ const blocks = (s: DraftSection[]): EditorBlock[] => s.map((x) => ({ id: x.id, t
 const ctx = { site: { schema_version: 1, settings: {}, pages: [], media: {} }, locale: 'en' as const, supabaseUrl: 'https://x.supabase.co', trips: [] };
 const site = (s: DraftSection[]) => <Sections sections={s.map((x) => ({ type: x.type, content: x.content }))} ctx={ctx as never} editor={blocks(s)} />;
 const SECS = [sec('a', 'hero', true, { title: { en: 'Welcome' }, cta_label: { en: 'Go' }, cta_href: 'https://x.example' }), sec('b', 'faq', false, { items: [{ question: { en: 'Q?' }, answer: { en: 'A' } }] })];
-const mount = (s = SECS, canWrite = true, lang: 'en' | 'ar' = 'en') => render(<DashboardLangProvider value={lang}><CanvasShell pageId={P} sections={s} canWrite={canWrite}>{site(s)}</CanvasShell></DashboardLangProvider>);
+const mount = (s = SECS, canWrite = true, lang: 'en' | 'ar' = 'en', extra: { canUpload?: boolean; imageUrls?: Record<string, string> } = {}) => render(<DashboardLangProvider value={lang}><CanvasShell pageId={P} sections={s} canWrite={canWrite} {...extra}>{site(s)}</CanvasShell></DashboardLangProvider>);
 const block = (id: string) => document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)!;
 
 describe('editor markup', () => {
@@ -112,5 +112,55 @@ describe('canvas interaction', () => {
     fireEvent.click(block('a'));
     const r = await axe.run(screen.getByRole('dialog'), { rules: { 'color-contrast': { enabled: false } } });
     expect(r.violations.map((v) => v.id)).toEqual([]);
+  });
+});
+
+describe('hero image card (E2)', () => {
+  const IMG = '00000000-0000-4000-8000-000000000701';
+  const withImg = [sec('a', 'hero', true, { title: { en: 'Welcome' }, image_media_id: IMG, image_position: 'full' }), sec('b', 'about')];
+  it('no image yet: offers Upload, no position choice, no Remove', () => {
+    mount(SECS, true, 'en', { canUpload: true });
+    fireEvent.click(block('a'));
+    expect(screen.getByText('Upload image')).toBeTruthy();
+    expect(screen.queryByText('Where it sits')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Remove' })).toBeNull();
+  });
+  it('with an image: Replace, Remove, and the two positions with the stored one selected', () => {
+    mount(withImg, true, 'en', { canUpload: true, imageUrls: { a: 'https://x.supabase.co/storage/v1/object/public/company-public/c/a.png' } });
+    fireEvent.click(block('a'));
+    expect(screen.getByText('Replace')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeTruthy();
+    const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+    expect(radios.map((r) => [r.value, r.checked])).toEqual([['beside', false], ['full', true]]);
+  });
+  it('without media permission the picture cannot be changed, and says why', () => {
+    mount(withImg, true, 'en', { canUpload: false });
+    fireEvent.click(block('a'));
+    expect(screen.queryByText('Replace')).toBeNull();
+    expect(screen.getByText(/need media permission/i)).toBeTruthy();
+  });
+  it('only a hero has the card', () => {
+    mount([sec('b', 'about')], true, 'en', { canUpload: true });
+    fireEvent.click(block('b'));
+    expect(screen.queryByText('Banner image')).toBeNull();
+  });
+  it('an oversize or wrong-type file is refused in the browser with a message and is not submitted', () => {
+    mount(SECS, true, 'en', { canUpload: true });
+    fireEvent.click(block('a'));
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const big = new File([new Uint8Array(10)], 'big.png', { type: 'image/png' });
+    Object.defineProperty(big, 'size', { value: 3_000_000 });
+    fireEvent.change(input, { target: { files: [big] } });
+    expect(screen.getByRole('alert').textContent).toMatch(/larger than 2 MB/);
+    fireEvent.change(input, { target: { files: [new File(['x'], 'a.svg', { type: 'image/svg+xml' })] } });
+    expect(screen.getByRole('alert').textContent).toMatch(/PNG, JPEG or WebP/);
+  });
+  it('Arabic labels, and no axe violations with the card open', async () => {
+    mount(withImg, true, 'ar', { canUpload: true });
+    fireEvent.click(block('a'));
+    expect(screen.getByText('صورة البانر')).toBeTruthy();
+    expect(screen.getByText('خلفية بعرض الصفحة')).toBeTruthy();
+    const res = await axe.run(screen.getByRole('dialog'));
+    expect(res.violations.map((v) => v.id)).toEqual([]);
   });
 });

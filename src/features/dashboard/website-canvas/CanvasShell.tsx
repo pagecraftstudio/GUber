@@ -23,7 +23,7 @@ export function placeFor(el: Element, anchor: 'block' | 'slot'): Pos {
  * [data-insert-at] "+" to the add menu. Every click inside the site is swallowed (links, FAQ toggles), so nothing can navigate away
  * from unsaved work. Read-only staff get the same canvas without any popup.
  */
-export function CanvasShell({ children, pageId, sections, canWrite }: { children: ReactNode; pageId: string; sections: DraftSection[]; canWrite: boolean }) {
+export function CanvasShell({ children, pageId, sections, canWrite, canUpload = false, imageUrls = {} }: { children: ReactNode; pageId: string; sections: DraftSection[]; canWrite: boolean; canUpload?: boolean; imageUrls?: Record<string, string> }) {
   const [open, setOpen] = useState<Open>(null);
   const [pos, setPos] = useState<Pos>({ top: 72, left: 12 });
   const rootRef = useRef<HTMLDivElement>(null);
@@ -99,7 +99,7 @@ export function CanvasShell({ children, pageId, sections, canWrite }: { children
       <DeviceFrame>
         <div ref={rootRef} onClickCapture={onClickCapture} onKeyDown={onKeyDown}>{children}</div>
       </DeviceFrame>
-      {canWrite && open?.kind === 'block' && section ? <BlockPopup ref={popRef} section={section} index={idx} count={count} pos={pos} onClose={() => close()} /> : null}
+      {canWrite && open?.kind === 'block' && section ? <BlockPopup ref={popRef} section={section} index={idx} count={count} pos={pos} onClose={() => close()} imageUrl={imageUrls[section.id] ?? null} canUpload={canUpload} /> : null}
       {canWrite && open?.kind === 'add' ? <AddMenu ref={popRef} pageId={pageId} index={open.index} pos={pos} onClose={() => close()} /> : null}
     </>
   );

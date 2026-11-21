@@ -35,3 +35,15 @@ describe('buildCanvasSite', () => {
     expect(w.data.site.settings.logo_media_id).toBe('logo'); expect(w.data.site.media.logo?.path).toBe('c/logo/x.png');
   });
 });
+
+describe('buildCanvasSite: section images', () => {
+  const home = pg('home', { isHome: true, slug: '' });
+  it('own images join the media map next to the logo; the logo key cannot be overwritten by an image', () => {
+    const r = buildCanvasSite({ ...base, logoPath: 'c/logo/x.png', pages: [home], selected: home, sections: [], images: { 'm-1': { path: 'c/website_image/h.webp', mime: 'image/webp' }, logo: { path: 'evil', mime: 'image/png' } } });
+    expect(r.data.site.media['m-1']).toEqual({ path: 'c/website_image/h.webp', mime: 'image/webp' });
+    expect(r.data.site.media.logo?.path).toBe('c/logo/x.png');
+  });
+  it('without images the map is unchanged', () => {
+    expect(buildCanvasSite({ ...base, pages: [home], selected: home, sections: [] }).data.site.media).toEqual({});
+  });
+});

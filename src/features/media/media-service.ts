@@ -39,6 +39,12 @@ export function makeMediaService(repo: MediaRepository) {
       parseInput(z.uuid(), mediaId);
       return repo.findPath(ctx, mediaId);
     },
+    /** Paths of own images, for drawing the editor. Needs media.read; at most 50 ids per call. */
+    async imageEntries(ctx: TenantServiceContext, ids: string[]): Promise<Record<string, { path: string; mime: string }>> {
+      requirePermission(ctx, PERMISSIONS.mediaRead);
+      const clean = parseInput(z.array(z.uuid()).max(50), [...new Set(ids)]);
+      return repo.findEntries(ctx, clean);
+    },
     async removeImage(ctx: TenantServiceContext, mediaId: string): Promise<void> {
       requirePermission(ctx, PERMISSIONS.mediaWrite);
       parseInput(z.uuid(), mediaId);

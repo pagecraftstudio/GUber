@@ -12,6 +12,8 @@ import type { WebsiteSettings } from './types';
  */
 export function buildCanvasSite(input: {
   companyName: string; companySlug: string; settings: WebsiteSettings; pages: DraftPage[]; selected: DraftPage; sections: DraftSection[]; logoPath: string | null;
+  /** Own images used by the sections (media id -> path + MIME), from a company-filtered read. Anything else a section names is simply not drawn. */
+  images?: Record<string, { path: string; mime: string }>;
 }): { data: PublicSite; page: SitePage; blocks: EditorBlock[] } {
   const { settings: s, selected } = input;
   const ordered = [...input.sections].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -34,7 +36,7 @@ export function buildCanvasSite(input: {
         social_links: s.socialLinks as Record<string, string>, footer_text: s.footerText,
       },
       pages,
-      media: input.logoPath ? { logo: { path: input.logoPath, mime: 'image/png' } } : {},
+      media: { ...(input.images ?? {}), ...(input.logoPath ? { logo: { path: input.logoPath, mime: 'image/png' } } : {}) },
     },
   };
   const blocks: EditorBlock[] = ordered.map((x) => ({ id: x.id, type: x.type, enabled: x.isEnabled, label: `${SECTION_LABELS[x.type].en} · ${SECTION_LABELS[x.type].ar}` }));
