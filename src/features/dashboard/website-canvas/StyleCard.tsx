@@ -1,11 +1,12 @@
 'use client';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { SaveStatus, viewOfForm } from '@/components/dashboard/SaveStatus';
 import type { DraftSection } from '@/features/website/pages-types';
 import { ALIGNS, BACKGROUNDS, SPACINGS, readStyle } from '@/features/site/section-style';
 import { setSectionStyleFormAction } from '../website-actions';
 import { useActionForm } from '../useActionForm';
 import { useDashLang } from '../lang';
+import { useLiveDraft } from './LiveCanvas';
 
 type Bi = { en: string; ar: string };
 const BG: Record<(typeof BACKGROUNDS)[number], Bi> = { plain: { en: 'Plain', ar: 'عادي' }, tint: { en: 'Soft', ar: 'هادئ' }, brand: { en: 'Brand colour', ar: 'لون العلامة' } };
@@ -20,12 +21,15 @@ export function StyleCard({ section }: { section: DraftSection }) {
   const lang = useDashLang();
   const id = useId();
   const { state, pending, ref, onSubmit, submit } = useActionForm(setSectionStyleFormAction);
+  const live = useLiveDraft();
   const choose = (name: string, value: string) => {
+    live.setStyle(section.id, { [name]: value }); setChosen((c) => ({ ...c, [name]: value }));
     const fd = new FormData();
     fd.set('pageId', section.pageId); fd.set('sectionId', section.id); fd.set(name, value);
     submit(fd);
   };
-  const cur = readStyle(section.content.style);
+  const [chosen, setChosen] = useState<Record<string, string>>({});
+  const cur = readStyle({ ...(section.content.style as object | undefined), ...chosen });
   const t = (b: Bi) => b[lang];
   const group = (name: 'background' | 'align' | 'spacing', label: Bi, labels: Record<string, Bi>, values: readonly string[], active: string) => (
     <div role="group" aria-labelledby={`${id}-${name}`} className="space-y-1">

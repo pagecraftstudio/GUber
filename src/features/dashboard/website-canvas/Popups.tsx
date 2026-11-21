@@ -4,10 +4,11 @@ import { ArrowDown, ArrowUp, Eye, EyeOff, Trash2, X } from 'lucide-react';
 import { Bi } from '@/components/dashboard/T';
 import { CANVAS_SECTIONS, SECTION_LABELS } from '@/features/website/section-fields';
 import type { DraftSection } from '@/features/website/pages-types';
-import { deleteSectionFormAction, insertSectionFormAction, moveSectionFormAction, toggleSectionFormAction } from '../website-actions';
+import { deleteSectionFormAction, moveSectionFormAction, toggleSectionFormAction } from '../website-actions';
 import { MiniActionForm } from '../website-editor/MiniActionForm';
 import { useDashLang } from '../lang';
 import { HeroImageCard } from './HeroImageCard';
+import { useLiveDraft } from './LiveCanvas';
 import { PopupFields } from './PopupFields';
 import { StyleCard } from './StyleCard';
 
@@ -61,13 +62,14 @@ export const BlockPopup = forwardRef<HTMLDivElement, { section: DraftSection; in
 });
 
 /** The "+" between two blocks: pick what to add. */
-export const AddMenu = forwardRef<HTMLDivElement, { pageId: string; index: number; pos: Pos; onClose: () => void }>(function AddMenu({ pageId, index, pos, onClose }, ref) {
+export const AddMenu = forwardRef<HTMLDivElement, { pageId: string; index: number; count?: number; pos: Pos; onClose: () => void }>(function AddMenu({ pageId, index, count = 0, pos, onClose }, ref) {
   const lang = useDashLang();
+  const live = useLiveDraft();
   return (
     <Frame ref={ref} labelledBy="pop-add" pos={pos} onClose={onClose} title={<Bi en="Add a section" ar="إضافة قسم" />}>
       <ul className="grid grid-cols-2 gap-2">
         {CANVAS_SECTIONS.map((t) => (
-          <li key={t}><MiniActionForm action={insertSectionFormAction} fields={{ pageId, index: String(index), type: t }} className="w-full text-start">{SECTION_LABELS[t][lang]}</MiniActionForm></li>
+          <li key={t}><button type="button" onClick={() => { live.insert(pageId, index, t, count); onClose(); }} className="w-full rounded-ds-md border border-line-default px-2.5 py-1.5 text-start text-sm hover:bg-surface-sunken">{SECTION_LABELS[t][lang]}</button></li>
         ))}
       </ul>
     </Frame>
