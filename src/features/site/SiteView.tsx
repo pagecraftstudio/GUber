@@ -1,5 +1,6 @@
 import { tenantAccent } from '@/ds/contrast';
 import { Sections, SiteFooter, type SectionsCtx } from './Sections';
+import type { EditorBlock } from './editor-markup';
 import type { PublicSite, SitePage } from './schema';
 import { mediaUrl, pick, type SiteLocale } from './text';
 import type { SiteTrip } from './trips-data';
@@ -16,8 +17,10 @@ export function findPage(pages: SitePage[], pageSlug: string | null): SitePage |
  * Pure presentation of one site page. No data fetching, no notFound(): the caller loads the data (published snapshot for the public
  * site, draft for the dashboard preview) and decides what a missing page means. Everything the page may show comes from `data`.
  */
-export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, links }: {
+export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, links, editor }: {
   data: PublicSite; page: SitePage; pageSlug: string | null; locale: SiteLocale; supabaseUrl: string; trips: SiteTrip[]; links: SiteLinks;
+  /** Dashboard canvas only: makes each section clickable (see editor-markup.tsx). Never set for the public site. */
+  editor?: EditorBlock[];
 }) {
   const st = data.site.settings;
   // Invalid / low-contrast company colour -> no override: the platform action colours (tokens) apply through the var() fallbacks.
@@ -28,7 +31,7 @@ export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, lin
   const other: SiteLocale = locale === 'ar' ? 'en' : 'ar';
   const navPages = data.site.pages.filter((p) => !p.is_home);
   return (
-    <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className="min-h-screen bg-surface-page text-ink-primary" style={accent ? { ['--site-accent' as string]: accent.accent, ['--site-on-accent' as string]: accent.onAccent } : undefined}>
+    <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${editor ? 'min-h-full' : 'min-h-screen'} bg-surface-page text-ink-primary`} style={accent ? { ['--site-accent' as string]: accent.accent, ['--site-on-accent' as string]: accent.onAccent } : undefined}>
       <header className="border-b border-line-default">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <a href={links.home()} className="flex items-center gap-2 font-semibold">
@@ -40,7 +43,7 @@ export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, lin
           </nav>
         </div>
       </header>
-      <main><Sections sections={page.sections} ctx={ctx} /></main>
+      <main><Sections sections={page.sections} ctx={ctx} {...(editor ? { editor } : {})} /></main>
       <SiteFooter ctx={ctx} name={name} />
     </div>
   );

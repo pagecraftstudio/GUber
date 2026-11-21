@@ -19,8 +19,17 @@ const mediaId = z.uuid();
 const item = z.strictObject({ title: loc(120).optional(), body: loc(600).optional() });
 const qa = z.strictObject({ question: loc(200).optional(), answer: loc(1200).optional() });
 
+export const HERO_IMAGE_POSITIONS = ['beside', 'full'] as const;
+export type HeroImagePosition = (typeof HERO_IMAGE_POSITIONS)[number];
+/**
+ * Keys of a section's content that are NOT edited through the text form: they change only through the image upload actions
+ * (which upload, validate and discard files). A text save keeps whatever is stored for these keys, so a stale form can never put
+ * back an old image id, and a client can never point a section at an arbitrary media id through the save action.
+ */
+export const MANAGED_KEYS: Partial<Record<SectionType, readonly string[]>> = { hero: ['image_media_id', 'image_position'] };
+
 export const sectionWriteSchemas = {
-  hero: z.strictObject({ title: loc(120).optional(), subtitle: loc(300).optional(), cta_label: loc(40).optional(), cta_href: hrefSchema.optional(), image_media_id: mediaId.optional() }),
+  hero: z.strictObject({ title: loc(120).optional(), subtitle: loc(300).optional(), cta_label: loc(40).optional(), cta_href: hrefSchema.optional(), image_media_id: mediaId.optional(), image_position: z.enum(HERO_IMAGE_POSITIONS).optional() }),
   about: z.strictObject({ title: loc(120).optional(), body: loc(4000).optional() }),
   features: z.strictObject({ title: loc(120).optional(), items: z.array(item).max(24).optional() }),
   routes: z.strictObject({ title: loc(120).optional() }),
@@ -61,6 +70,8 @@ export const sectionCreateSchema = z.strictObject({ type: sectionTypeSchema, con
 export const sectionUpdateSchema = z
   .strictObject({ content: z.unknown().optional(), isEnabled: z.boolean().optional() })
   .refine((v) => v.content !== undefined || v.isEnabled !== undefined, { message: 'no_changes' });
+/** Insert at a position: index 0 = top, n = bottom (clamped to the current length by the service). */
+export const sectionInsertSchema = z.strictObject({ type: sectionTypeSchema, index: z.number().int().min(0).max(60) });
 export const sectionReorderSchema = z.strictObject({ orderedIds: z.array(z.uuid()).min(1).max(60) });
 
 export type PageCreate = z.output<typeof pageCreateSchema>;

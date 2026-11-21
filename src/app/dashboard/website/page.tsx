@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { requireTenant } from '@/lib/auth/guards';
 import { can } from '@/lib/auth/permissions';
 import { PERMISSIONS } from '@/lib/auth/permission-keys';
@@ -52,7 +53,7 @@ export default async function WebsiteWizardPage({ searchParams }: { searchParams
   const common = { canWrite, backHref, forwardHref };
   return (
     <>
-      <PageHeader title="Website" description={<Bi en="Set up your public website in a few steps." ar="جهّز موقعك العام في بضع خطوات." />} />
+      <PageHeader title="Website" description={<Bi en="Set up your public website in a few steps." ar="جهّز موقعك العام في بضع خطوات." />} action={<Link href="/dashboard/website/design" className="text-sm font-semibold underline"><Bi en="Customize visually" ar="تخصيص مرئي" /></Link>} />
       <div className="space-y-6">
         <Stepper steps={state.steps} active={step} />
         <section aria-labelledby="wiz-h" className="min-w-0 space-y-5">

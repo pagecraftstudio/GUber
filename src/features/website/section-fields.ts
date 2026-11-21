@@ -42,6 +42,23 @@ export const SECTION_FIELDS: Record<SectionType, FieldDef[]> = {
   footer: [],
 };
 
+/** What the visual editor offers in its "add a section" menu (footer is always drawn from settings; image waits for the media picker). */
+export const CANVAS_SECTIONS: SectionType[] = ['hero', 'about', 'features', 'faq', 'routes', 'trips', 'contact', 'rich_text'];
+
+/**
+ * Content a section starts with when added from the visual editor: a heading only, never invented claims or body text. Every value
+ * must satisfy the strict write schema (a test enforces it), so adding can never fail on its own defaults.
+ */
+export const SECTION_DEFAULTS: Partial<Record<SectionType, Record<string, unknown>>> = {
+  hero: { title: { en: 'Welcome', ar: 'أهلًا بك' } },
+  about: { title: { en: 'About us', ar: 'من نحن' } },
+  features: { title: { en: 'Why ride with us', ar: 'لماذا تركب معنا' } },
+  faq: { title: { en: 'Frequently asked questions', ar: 'الأسئلة الشائعة' } },
+  routes: { title: { en: 'Our routes', ar: 'خطوطنا' } },
+  trips: { title: { en: 'Upcoming trips', ar: 'الرحلات القادمة' }, limit: 8 },
+  contact: { title: { en: 'Contact us', ar: 'تواصل معنا' } },
+};
+
 /** Sections that take their data from elsewhere, shown as a hint under the form. */
 export const SECTION_NOTES: Partial<Record<SectionType, Label>> = {
   routes: { en: 'Shows your active routes automatically.', ar: 'يعرض خطوطك الفعّالة تلقائيًا.' },

@@ -13,6 +13,8 @@ export type MediaRepository = {
   discard(ctx: TenantServiceContext, id: string): Promise<void>;
   /** Storage path of a live image of THIS company (null when missing or deleted). */
   findPath(ctx: TenantServiceContext, id: string): Promise<string | null>;
+  /** Live images of THIS company among `ids`: id -> storage path + stored (sniffed) MIME. Unknown, deleted or foreign ids are simply absent. */
+  findEntries(ctx: TenantServiceContext, ids: string[]): Promise<Record<string, { path: string; mime: string }>>;
 };
 
 export const mediaRepository: MediaRepository = {
@@ -31,6 +33,12 @@ export const mediaRepository: MediaRepository = {
     const res = await ctx.db.from('media').select('storage_path').eq('company_id', ctx.companyId).eq('id', id).eq('bucket', MEDIA_BUCKET).is('deleted_at', null).maybeSingle();
     if (res.error) throw mapDbError(res.error);
     return (res.data as { storage_path: string } | null)?.storage_path ?? null;
+  },
+  async findEntries(ctx, ids) {
+    if (ids.length === 0) return {};
+    const res = await ctx.db.from('media').select('id, storage_path, mime_type').eq('company_id', ctx.companyId).eq('bucket', MEDIA_BUCKET).is('deleted_at', null).in('id', ids);
+    if (res.error) throw mapDbError(res.error);
+    return Object.fromEntries(((res.data ?? []) as Array<{ id: string; storage_path: string; mime_type: string }>).map((r) => [r.id, { path: r.storage_path, mime: r.mime_type }]));
   },
   async discard(ctx, id) {
     const res = await ctx.db.rpc('discard_media', { p_id: id });

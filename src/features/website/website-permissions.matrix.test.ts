@@ -17,7 +17,7 @@ import { makePublishService } from './publish-service';
 const R = PERMISSIONS.websiteRead, W = PERMISSIONS.websiteWrite, P = PERMISSIONS.websitePublish;
 
 const DECLARED = {
-  pages: { listPages: R, getPageWithSections: R, ensureHomePage: W, createPage: W, updatePage: W, deletePage: W, addSection: W, updateSection: W, deleteSection: W, reorderSections: W },
+  pages: { listPages: R, getPageWithSections: R, ensureHomePage: W, createPage: W, updatePage: W, deletePage: W, addSection: W, insertSection: W, updateSection: W, deleteSection: W, reorderSections: W },
   preview: { getDraft: R },
   publish: { getState: R, publish: P, rollback: P, unpublish: P },
 } as const;
@@ -83,7 +83,7 @@ describe('website services: the editor/publisher split (D4) holds in both direct
   });
   it('a publisher cannot edit the draft', async () => {
     const { services } = build();
-    for (const m of ['createPage', 'updatePage', 'deletePage', 'addSection', 'updateSection', 'deleteSection', 'reorderSections', 'ensureHomePage']) expect(await outcome(() => services.pages[m]!(publisher, ID, {}))).toBe('forbidden');
+    for (const m of ['createPage', 'updatePage', 'deletePage', 'addSection', 'insertSection', 'updateSection', 'deleteSection', 'reorderSections', 'ensureHomePage']) expect(await outcome(() => services.pages[m]!(publisher, ID, {}))).toBe('forbidden');
   });
 });
 

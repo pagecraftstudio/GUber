@@ -3,6 +3,8 @@ import { parseSection, type ParsedSection } from './sections';
 import { mediaUrl, pick, safeHref, type SiteLocale } from './text';
 import { RichText } from './RichText';
 import { distinctRoutes } from './trip-routes';
+import { Block, InsertSlot, Placeholder, type EditorBlock } from './editor-markup';
+import { Fragment } from 'react';
 import type { SiteTrip } from './trips-data';
 
 export interface SectionsCtx {
@@ -37,12 +39,28 @@ function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
       const img = mediaUrl(ctx.supabaseUrl, s.content.image_media_id ? site.media[s.content.image_media_id] : undefined);
       const href = safeHref(s.content.cta_href);
       const cta = pick(s.content.cta_label, locale);
+      const title = pick(s.content.title, locale), subtitle = pick(s.content.subtitle, locale);
+      if (img && s.content.image_position === 'full') {
+        // Banner: the photo fills the section under a dark scrim, and the colours are fixed (white on near-black) so the text stays
+        // readable on ANY photo and while the photo is still loading or missing. The company colour is not used on top of a photo.
+        return (
+          <section className="relative isolate overflow-hidden bg-[var(--ds-media-base)] text-[var(--ds-on-media)]">
+            <img src={img} alt="" className="absolute inset-0 -z-20 size-full object-cover" loading="eager" />
+            <div className="absolute inset-0 -z-10 bg-[var(--ds-media-scrim)]" aria-hidden="true" />
+            <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-20 md:py-28">
+              <h1 className="max-w-3xl text-3xl font-bold md:text-5xl">{title}</h1>
+              <p className="max-w-2xl text-lg">{subtitle}</p>
+              {href && cta ? <a href={href} className="inline-block rounded-md bg-[var(--ds-on-media)] px-5 py-2.5 font-medium text-[var(--ds-media-base)]">{cta}</a> : null}
+            </div>
+          </section>
+        );
+      }
       return (
         <section className="bg-[var(--site-accent,var(--ds-action-primary))] text-[var(--site-on-accent,var(--ds-action-on-primary))]">
-          <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-14 md:grid-cols-2 md:items-center">
+          <div className={`mx-auto grid w-full max-w-5xl gap-6 px-4 py-14 ${img ? 'md:grid-cols-2 md:items-center' : ''}`}>
             <div className="space-y-4">
-              <h1 className="text-3xl font-bold md:text-4xl">{pick(s.content.title, locale)}</h1>
-              <p className="text-lg opacity-90">{pick(s.content.subtitle, locale)}</p>
+              <h1 className="text-3xl font-bold md:text-4xl">{title}</h1>
+              <p className="text-lg opacity-90">{subtitle}</p>
               {href && cta ? <a href={href} className="inline-block rounded-md bg-[var(--site-on-accent,var(--ds-action-on-primary))] px-5 py-2.5 font-medium text-[var(--site-accent,var(--ds-action-primary))]">{cta}</a> : null}
             </div>
             {img ? <img src={img} alt={(s.content.image_media_id && site.media[s.content.image_media_id]?.alt) || ''} className="max-h-80 w-full rounded-lg object-cover" loading="eager" /> : null}
@@ -140,9 +158,33 @@ export function SiteFooter({ ctx, name }: { ctx: SectionsCtx; name: string }) {
   );
 }
 
-export function Sections({ sections, ctx }: { sections: { type: string; content: unknown }[]; ctx: SectionsCtx }) {
-  return sections.map((raw, i) => {
-    const s = parseSection(raw);
-    return s ? <Section key={i} s={s} ctx={ctx} /> : null;     // unknown type / invalid content: skipped, the rest of the page still renders
-  });
+/**
+ * `editor` (dashboard canvas only, index-aligned with `sections`) wraps every section so it can be clicked, and adds "+" strips
+ * between them. Without it the output is exactly what it always was: the public site is never wrapped.
+ */
+export function Sections({ sections, ctx, editor }: { sections: { type: string; content: unknown }[]; ctx: SectionsCtx; editor?: EditorBlock[] }) {
+  if (!editor) {
+    return sections.map((raw, i) => {
+      const s = parseSection(raw);
+      return s ? <Section key={i} s={s} ctx={ctx} /> : null;     // unknown type / invalid content: skipped, the rest of the page still renders
+    });
+  }
+  return (
+    <>
+      {sections.length === 0 ? <InsertSlot index={0} prominent /> : null}
+      {sections.map((raw, i) => {
+        const block = editor[i];
+        if (!block) return null;
+        const s = parseSection(raw);
+        const inner = s ? <Section s={s} ctx={ctx} /> : null;
+        return (
+          <Fragment key={block.id}>
+            <InsertSlot index={i} />
+            <Block block={block}>{inner ?? <Placeholder label={s ? block.label : `${block.label} (cannot be shown · لا يمكن عرضه)`} />}</Block>
+          </Fragment>
+        );
+      })}
+      {sections.length > 0 ? <InsertSlot index={sections.length} /> : null}
+    </>
+  );
 }

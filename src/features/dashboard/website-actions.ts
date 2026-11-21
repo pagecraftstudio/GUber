@@ -7,6 +7,8 @@ import { AppError } from '@/lib/errors';
 import { createTenantServiceContext, type TenantServiceContext } from '@/lib/service/context';
 import { pagesService } from '@/features/website/pages-service';
 import { publishService } from '@/features/website/publish-service';
+import { sectionImageService } from '@/features/website/section-image-service';
+import { MAX_IMAGE_BYTES as IMAGE_MAX_BYTES } from '@/features/media/sniff';
 import { errorState, successState, type FormState } from './form-state';
 
 /**
@@ -16,13 +18,14 @@ import { errorState, successState, type FormState } from './form-state';
  */
 const str = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
 const LIST = '/dashboard/website/pages';
+const DESIGN = '/dashboard/website/design';   // the visual editor re-renders after every draft change made on either screen
 
 async function ctx(permission = 'website.write'): Promise<TenantServiceContext> {
   return createTenantServiceContext(await createClient(), await requireTenant(permission));
 }
 async function run(paths: string[], message: Extract<FormState, { status: 'success' }>['message'], work: (c: TenantServiceContext) => Promise<void>, permission = 'website.write'): Promise<FormState> {
   try { await work(await ctx(permission)); } catch (e) { return errorState(e); }
-  for (const p of paths) revalidatePath(p);
+  for (const p of [...paths, DESIGN]) revalidatePath(p);
   return successState(message);
 }
 const pagePath = (id: string) => `${LIST}/${id}`;
@@ -54,6 +57,12 @@ export async function deletePageFormAction(_prev: FormState, f: FormData): Promi
 export async function addSectionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   const id = str(f, 'pageId');
   return run([pagePath(id)], 'created', async (c) => { await pagesService.addSection(c, id, { type: str(f, 'type') }); });
+}
+
+/** Visual editor: add a section at a position (0 = top). Same permission, same service validation as every other draft change. */
+export async function insertSectionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const id = str(f, 'pageId');
+  return run([pagePath(id)], 'created', async (c) => { await pagesService.insertSection(c, id, { type: str(f, 'type'), index: Number(str(f, 'index')) }); });
 }
 
 export async function saveSectionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
@@ -98,4 +107,21 @@ export async function rollbackWebsiteFormAction(_prev: FormState, f: FormData): 
 }
 export async function unpublishWebsiteFormAction(_prev: FormState, _f: FormData): Promise<FormState> {
   return run([PUBLISH], 'saved', async (c) => { await publishService.unpublish(c); }, 'website.publish');
+}
+
+/** Section images (hero banner). The file is read here, but its type is decided by the server from the bytes, never by what the browser says. */
+export async function uploadSectionImageFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const file = f.get('file');
+  if (!(file instanceof File) || file.size === 0) return errorState(new AppError('validation', { detail: 'image_type_not_supported' }));
+  if (file.size > IMAGE_MAX_BYTES) return errorState(new AppError('validation', { detail: 'image_too_large' }));
+  const pageId = str(f, 'pageId');
+  return run([pagePath(pageId)], 'saved', async (c) => {
+    await sectionImageService.setImage(c, { sectionId: str(f, 'sectionId'), filename: file.name }, new Uint8Array(await file.arrayBuffer()));
+  });
+}
+export async function removeSectionImageFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => { await sectionImageService.removeImage(c, { sectionId: str(f, 'sectionId') }); });
+}
+export async function setSectionImagePositionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => { await sectionImageService.setPosition(c, { sectionId: str(f, 'sectionId'), position: str(f, 'position') }); });
 }

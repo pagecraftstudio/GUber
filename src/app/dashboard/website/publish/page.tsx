@@ -41,7 +41,7 @@ export default async function WebsitePublishPage() {
   return (
     <>
       <PageHeader eyebrow="Brand presence" title="Publish website" description="Make your draft public, go back to an earlier version, or take the site offline."
-        action={<span className="flex gap-4 text-sm font-semibold"><Link href="/dashboard/website/preview" className="underline"><Bi en="Preview draft" ar="معاينة المسودة" /></Link><Link href="/dashboard/website/pages" className="underline"><Bi en="Edit pages" ar="تحرير الصفحات" /></Link></span>} />
+        action={<span className="flex gap-4 text-sm font-semibold"><Link href="/dashboard/website/preview" className="underline"><Bi en="Preview draft" ar="معاينة المسودة" /></Link><Link href="/dashboard/website/design" className="underline"><Bi en="Edit visually" ar="تحرير مرئي" /></Link><Link href="/dashboard/website/pages" className="underline"><Bi en="Edit pages" ar="تحرير الصفحات" /></Link></span>} />
       <div className="space-y-6">
         <section className={card} aria-labelledby="st">
           <h2 id="st" className="font-bold"><Bi en="Status" ar="الحالة" /></h2>

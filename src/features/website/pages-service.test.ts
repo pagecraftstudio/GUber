@@ -4,6 +4,7 @@ import { makePagesService } from './pages-service';
 import type { PagesRepository } from './pages-repository';
 import { parseSectionContent, sectionWriteSchemas } from './content-schema';
 import { sectionSchemas } from '@/features/site/sections';
+import { CANVAS_SECTIONS, SECTION_DEFAULTS } from './section-fields';
 
 const ID = '00000000-0000-4000-8000-000000000301';
 const ID2 = '00000000-0000-4000-8000-000000000302';
@@ -94,5 +95,60 @@ describe('ensureHomePage', () => {
     await makePagesService(r2).ensureHomePage(tenantCtx(['website.write']));
     expect(r2.createHomePage).not.toHaveBeenCalled();
     await expect(makePagesService(repo()).ensureHomePage(tenantCtx(['website.read']))).rejects.toMatchObject({ code: 'forbidden' });
+  });
+});
+
+describe('visual editor: insertSection', () => {
+  const S = (n: number) => `00000000-0000-4000-8000-00000000050${n}`;
+  const secs = [section({ id: S(1) }), section({ id: S(2) }), section({ id: S(3) })];
+  const ctx = tenantCtx(['website.write']);
+  const make = () => repo({ getPage: vi.fn().mockResolvedValue(page()), listSections: vi.fn().mockResolvedValue(secs), addSection: vi.fn().mockResolvedValue(section({ id: S(9), type: 'about' })), setSectionOrder: vi.fn() });
+
+  it('every offered section starts from defaults that satisfy the strict write schema', () => {
+    for (const t of CANVAS_SECTIONS) expect(parseSectionContent(t, SECTION_DEFAULTS[t] ?? {}).success, t).toBe(true);
+  });
+  it('inserts in the middle: appended, then moved to the index', async () => {
+    const r = make();
+    await makePagesService(r).insertSection(ctx, ID, { type: 'about', index: 1 });
+    expect(r.addSection).toHaveBeenCalledWith(ctx, ID, 'about', { title: { en: 'About us', ar: 'من نحن' } });
+    expect(r.setSectionOrder).toHaveBeenCalledWith(ctx, ID, [S(1), S(9), S(2), S(3)]);
+  });
+  it('index 0 puts it first; an index past the end (or the end) is just an append with no reorder', async () => {
+    const a = make(); await makePagesService(a).insertSection(ctx, ID, { type: 'about', index: 0 });
+    expect(a.setSectionOrder).toHaveBeenCalledWith(ctx, ID, [S(9), S(1), S(2), S(3)]);
+    const b = make(); await makePagesService(b).insertSection(ctx, ID, { type: 'about', index: 3 });
+    await makePagesService(b).insertSection(ctx, ID, { type: 'about', index: 50 });
+    expect(b.setSectionOrder).not.toHaveBeenCalled();
+  });
+  it('read-only, unknown type, bad index, missing page and a full page are all refused before any write', async () => {
+    const r = make();
+    await expect(makePagesService(r).insertSection(tenantCtx(['website.read']), ID, { type: 'about', index: 0 })).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(makePagesService(r).insertSection(ctx, ID, { type: 'script', index: 0 })).rejects.toMatchObject({ code: 'validation' });
+    await expect(makePagesService(r).insertSection(ctx, ID, { type: 'about', index: -1 })).rejects.toMatchObject({ code: 'validation' });
+    await expect(makePagesService(r).insertSection(ctx, ID, { type: 'about', index: 0, pageId: 'x' })).rejects.toMatchObject({ code: 'validation' });
+    const none = repo({ getPage: vi.fn().mockResolvedValue(null) });
+    await expect(makePagesService(none).insertSection(ctx, ID, { type: 'about', index: 0 })).rejects.toMatchObject({ code: 'not_found' });
+    const full = repo({ getPage: vi.fn().mockResolvedValue(page()), listSections: vi.fn().mockResolvedValue(Array.from({ length: 40 }, () => section())), addSection: vi.fn() });
+    await expect(makePagesService(full).insertSection(ctx, ID, { type: 'about', index: 0 })).rejects.toMatchObject({ detail: 'too_many_sections' });
+    expect(full.addSection).not.toHaveBeenCalled(); expect(r.addSection).not.toHaveBeenCalled();
+  });
+});
+
+describe('managed keys (hero image) survive a text save', () => {
+  const OLD = '00000000-0000-4000-8000-000000000701', EVIL = '00000000-0000-4000-8000-000000000999';
+  it('a text save keeps the STORED image id and position, ignoring what the form sent', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'hero', content: { title: { en: 'Old' }, image_media_id: OLD, image_position: 'full' } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'New' }, image_media_id: EVIL, image_position: 'beside' } });
+    expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2]).toEqual({ content: { title: { en: 'New' }, image_media_id: OLD, image_position: 'full' }, isEnabled: undefined });
+  });
+  it('a stale form cannot bring back an image that was removed', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'hero', content: { title: { en: 'Old' } } })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'New' }, image_media_id: OLD } });
+    expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2].content).toEqual({ title: { en: 'New' } });
+  });
+  it('other section types are unaffected', async () => {
+    const r = repo({ getSection: vi.fn().mockResolvedValue(section({ type: 'about' })), updateSection: vi.fn().mockResolvedValue({}) });
+    await makePagesService(r).updateSection(tenantCtx(['website.write']), ID, { content: { title: { en: 'T' } } });
+    expect((r.updateSection as ReturnType<typeof vi.fn>).mock.calls[0]![2].content).toEqual({ title: { en: 'T' } });
   });
 });
