@@ -16,13 +16,14 @@ import { errorState, successState, type FormState } from './form-state';
  */
 const str = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
 const LIST = '/dashboard/website/pages';
+const DESIGN = '/dashboard/website/design';   // the visual editor re-renders after every draft change made on either screen
 
 async function ctx(permission = 'website.write'): Promise<TenantServiceContext> {
   return createTenantServiceContext(await createClient(), await requireTenant(permission));
 }
 async function run(paths: string[], message: Extract<FormState, { status: 'success' }>['message'], work: (c: TenantServiceContext) => Promise<void>, permission = 'website.write'): Promise<FormState> {
   try { await work(await ctx(permission)); } catch (e) { return errorState(e); }
-  for (const p of paths) revalidatePath(p);
+  for (const p of [...paths, DESIGN]) revalidatePath(p);
   return successState(message);
 }
 const pagePath = (id: string) => `${LIST}/${id}`;
@@ -54,6 +55,12 @@ export async function deletePageFormAction(_prev: FormState, f: FormData): Promi
 export async function addSectionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   const id = str(f, 'pageId');
   return run([pagePath(id)], 'created', async (c) => { await pagesService.addSection(c, id, { type: str(f, 'type') }); });
+}
+
+/** Visual editor: add a section at a position (0 = top). Same permission, same service validation as every other draft change. */
+export async function insertSectionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const id = str(f, 'pageId');
+  return run([pagePath(id)], 'created', async (c) => { await pagesService.insertSection(c, id, { type: str(f, 'type'), index: Number(str(f, 'index')) }); });
 }
 
 export async function saveSectionFormAction(_prev: FormState, f: FormData): Promise<FormState> {

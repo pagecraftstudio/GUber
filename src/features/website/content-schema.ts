@@ -61,6 +61,8 @@ export const sectionCreateSchema = z.strictObject({ type: sectionTypeSchema, con
 export const sectionUpdateSchema = z
   .strictObject({ content: z.unknown().optional(), isEnabled: z.boolean().optional() })
   .refine((v) => v.content !== undefined || v.isEnabled !== undefined, { message: 'no_changes' });
+/** Insert at a position: index 0 = top, n = bottom (clamped to the current length by the service). */
+export const sectionInsertSchema = z.strictObject({ type: sectionTypeSchema, index: z.number().int().min(0).max(60) });
 export const sectionReorderSchema = z.strictObject({ orderedIds: z.array(z.uuid()).min(1).max(60) });
 
 export type PageCreate = z.output<typeof pageCreateSchema>;

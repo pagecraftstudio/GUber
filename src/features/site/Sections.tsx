@@ -3,6 +3,8 @@ import { parseSection, type ParsedSection } from './sections';
 import { mediaUrl, pick, safeHref, type SiteLocale } from './text';
 import { RichText } from './RichText';
 import { distinctRoutes } from './trip-routes';
+import { Block, InsertSlot, Placeholder, type EditorBlock } from './editor-markup';
+import { Fragment } from 'react';
 import type { SiteTrip } from './trips-data';
 
 export interface SectionsCtx {
@@ -140,9 +142,33 @@ export function SiteFooter({ ctx, name }: { ctx: SectionsCtx; name: string }) {
   );
 }
 
-export function Sections({ sections, ctx }: { sections: { type: string; content: unknown }[]; ctx: SectionsCtx }) {
-  return sections.map((raw, i) => {
-    const s = parseSection(raw);
-    return s ? <Section key={i} s={s} ctx={ctx} /> : null;     // unknown type / invalid content: skipped, the rest of the page still renders
-  });
+/**
+ * `editor` (dashboard canvas only, index-aligned with `sections`) wraps every section so it can be clicked, and adds "+" strips
+ * between them. Without it the output is exactly what it always was: the public site is never wrapped.
+ */
+export function Sections({ sections, ctx, editor }: { sections: { type: string; content: unknown }[]; ctx: SectionsCtx; editor?: EditorBlock[] }) {
+  if (!editor) {
+    return sections.map((raw, i) => {
+      const s = parseSection(raw);
+      return s ? <Section key={i} s={s} ctx={ctx} /> : null;     // unknown type / invalid content: skipped, the rest of the page still renders
+    });
+  }
+  return (
+    <>
+      {sections.length === 0 ? <InsertSlot index={0} prominent /> : null}
+      {sections.map((raw, i) => {
+        const block = editor[i];
+        if (!block) return null;
+        const s = parseSection(raw);
+        const inner = s ? <Section s={s} ctx={ctx} /> : null;
+        return (
+          <Fragment key={block.id}>
+            <InsertSlot index={i} />
+            <Block block={block}>{inner ?? <Placeholder label={s ? block.label : `${block.label} (cannot be shown · لا يمكن عرضه)`} />}</Block>
+          </Fragment>
+        );
+      })}
+      {sections.length > 0 ? <InsertSlot index={sections.length} /> : null}
+    </>
+  );
 }

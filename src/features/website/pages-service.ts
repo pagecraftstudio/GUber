@@ -4,9 +4,12 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { pagesRepository, type PagesRepository } from './pages-repository';
 import {
-  pageCreateSchema, pageUpdateSchema, parseSectionContent, sectionCreateSchema, sectionReorderSchema, sectionUpdateSchema,
+  pageCreateSchema, pageUpdateSchema, parseSectionContent, sectionCreateSchema, sectionInsertSchema, sectionReorderSchema, sectionUpdateSchema,
 } from './content-schema';
+import { SECTION_DEFAULTS } from './section-fields';
 import type { DraftPage, DraftSection } from './pages-types';
+
+export const MAX_SECTIONS_PER_PAGE = 40;
 
 const fail = (detail: string): never => { throw new AppError('validation', { detail }); };
 
@@ -56,6 +59,27 @@ export function makePagesService(repo: PagesRepository) {
       if (!parsed.success) throw new AppError('validation', { detail: 'invalid_section_content' });
       if (!(await repo.getPage(ctx, pageId))) throw new AppError('not_found');
       return repo.addSection(ctx, pageId, type, parsed.data);
+    },
+    /**
+     * Visual editor: add a section AT a position. Appends first (one insert, default heading only), then moves it into place with the
+     * same reorder the move buttons use, so a failure between the two leaves a valid page with the new section at the bottom.
+     */
+    async insertSection(ctx: TenantServiceContext, pageId: string, input: unknown): Promise<DraftSection> {
+      requirePermission(ctx, PERMISSIONS.websiteWrite);
+      const { type, index } = parseInput(sectionInsertSchema, input);
+      const parsed = parseSectionContent(type, SECTION_DEFAULTS[type] ?? {});
+      if (!parsed.success) throw new AppError('internal', { cause: new Error('section defaults do not satisfy the write schema') });
+      if (!(await repo.getPage(ctx, pageId))) throw new AppError('not_found');
+      const existing = await repo.listSections(ctx, pageId);
+      if (existing.length >= MAX_SECTIONS_PER_PAGE) throw new AppError('business_rule', { detail: 'too_many_sections' });
+      const created = await repo.addSection(ctx, pageId, type, parsed.data);
+      const at = Math.min(index, existing.length);
+      if (at < existing.length) {
+        const ids = existing.map((s) => s.id);
+        ids.splice(at, 0, created.id);
+        await repo.setSectionOrder(ctx, pageId, ids);
+      }
+      return created;
     },
     async updateSection(ctx: TenantServiceContext, id: string, input: unknown): Promise<DraftSection> {
       requirePermission(ctx, PERMISSIONS.websiteWrite);
