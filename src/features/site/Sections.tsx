@@ -50,7 +50,7 @@ function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
             <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-20 md:py-28">
               <h1 className="max-w-3xl text-3xl font-bold md:text-5xl">{title}</h1>
               <p className="max-w-2xl text-lg">{subtitle}</p>
-              {href && cta ? <a href={href} className="inline-block rounded-md bg-[var(--ds-on-media)] px-5 py-2.5 font-medium text-[var(--ds-media-base)]">{cta}</a> : null}
+              {href && cta ? <a href={href} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--ds-on-media)] px-5 py-2.5 font-medium text-[var(--ds-media-base)]">{cta}</a> : null}
             </div>
           </section>
         );
@@ -61,7 +61,7 @@ function Section({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
             <div className="space-y-4">
               <h1 className="text-3xl font-bold md:text-4xl">{title}</h1>
               <p className="text-lg opacity-90">{subtitle}</p>
-              {href && cta ? <a href={href} className="inline-block rounded-md bg-[var(--site-on-accent,var(--ds-action-on-primary))] px-5 py-2.5 font-medium text-[var(--site-accent,var(--ds-action-primary))]">{cta}</a> : null}
+              {href && cta ? <a href={href} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-on-accent,var(--ds-action-on-primary))] px-5 py-2.5 font-medium text-[var(--site-accent,var(--ds-action-primary))]">{cta}</a> : null}
             </div>
             {img ? <img src={img} alt={(s.content.image_media_id && site.media[s.content.image_media_id]?.alt) || ''} className="max-h-80 w-full rounded-lg object-cover" loading="eager" /> : null}
           </div>

@@ -17,6 +17,7 @@ const COLUMNS = {
   secondaryColor: 'secondary_color',
   fontHeading: 'font_heading',
   fontBody: 'font_body',
+  buttonStyle: 'button_style',
   contactEmail: 'contact_email',
   contactPhone: 'contact_phone',
   contactWhatsapp: 'contact_whatsapp',

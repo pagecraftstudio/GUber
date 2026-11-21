@@ -3,6 +3,7 @@ import { Sections, SiteFooter, type SectionsCtx } from './Sections';
 import type { EditorBlock } from './editor-markup';
 import type { PublicSite, SitePage } from './schema';
 import { mediaUrl, pick, type SiteLocale } from './text';
+import { readTheme, themeVars } from './theme';
 import type { SiteTrip } from './trips-data';
 
 /** Where the links inside the rendered site point: the public site, or (for the dashboard preview) back into the preview. */
@@ -31,7 +32,7 @@ export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, lin
   const other: SiteLocale = locale === 'ar' ? 'en' : 'ar';
   const navPages = data.site.pages.filter((p) => !p.is_home);
   return (
-    <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${editor ? 'min-h-full' : 'min-h-screen'} bg-surface-page text-ink-primary`} style={accent ? { ['--site-accent' as string]: accent.accent, ['--site-on-accent' as string]: accent.onAccent } : undefined}>
+    <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${editor ? 'min-h-full' : 'min-h-screen'} bg-surface-page font-[family-name:var(--site-font-body)] text-ink-primary [&_h1]:font-[family-name:var(--site-font-heading)] [&_h2]:font-[family-name:var(--site-font-heading)] [&_h3]:font-[family-name:var(--site-font-heading)]`} style={{ ...themeVars(readTheme(st.theme)), ...(accent ? { ['--site-accent' as string]: accent.accent, ['--site-on-accent' as string]: accent.onAccent } : {}) }}>
       <header className="border-b border-line-default">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <a href={links.home()} className="flex items-center gap-2 font-semibold">

@@ -32,6 +32,7 @@ export function buildCanvasSite(input: {
       settings: {
         site_title: s.siteTitle, meta_description: s.metaDescription, logo_media_id: input.logoPath ? 'logo' : null, favicon_media_id: null,
         primary_color: s.primaryColor, secondary_color: s.secondaryColor,
+        theme: { font_heading: s.fontHeading, font_body: s.fontBody, button_style: s.buttonStyle },
         contact_email: s.contactEmail, contact_phone: s.contactPhone, contact_whatsapp: s.contactWhatsapp, contact_address: s.contactAddress,
         social_links: s.socialLinks as Record<string, string>, footer_text: s.footerText,
       },

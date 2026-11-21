@@ -25,6 +25,7 @@ const settingsSchema = z.object({
   contact_phone: z.string().nullable().optional(),
   contact_whatsapp: z.string().nullable().optional(),
   contact_address: localizedSchema.nullable().optional(),
+  theme: z.record(z.string(), z.unknown()).nullable().optional().catch(null),
   social_links: z.record(z.string(), z.string()).nullable().optional().catch(null),
   footer_text: localizedSchema.nullable().optional(),
 });

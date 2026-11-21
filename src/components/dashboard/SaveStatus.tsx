@@ -6,6 +6,9 @@ import type { FormState } from '@/features/dashboard/form-state';
 import type { AutoResult } from '@/features/dashboard/autosave-actions';
 
 export const EXTRA: Record<string, { en: string; ar: string }> = {
+  invalid_font: { en: 'Choose one of the listed fonts.', ar: 'اختر خطًا من القائمة.' },
+  invalid_button_style: { en: 'Choose one of the listed button styles.', ar: 'اختر شكل زر من القائمة.' },
+  nothing_to_save: { en: 'Nothing to save.', ar: 'لا يوجد ما يُحفظ.' },
   title_required: { en: 'Add a website name in at least one language.', ar: 'أضف اسم الموقع بلغة واحدة على الأقل.' },
   contact_required: { en: 'Add an email, phone or WhatsApp number.', ar: 'أضف بريدًا إلكترونيًا أو رقم هاتف أو واتساب.' },
   hero_title_required: { en: 'Add a headline for the top banner.', ar: 'أضف عنوانًا للبانر العلوي.' },

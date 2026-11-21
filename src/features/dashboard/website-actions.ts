@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 import { requireTenant } from '@/lib/auth/guards';
 import { AppError } from '@/lib/errors';
 import { createTenantServiceContext, type TenantServiceContext } from '@/lib/service/context';
+import { websiteService } from '@/features/website/service';
+import { FONT_PAIRS } from '@/features/site/theme';
 import { pagesService } from '@/features/website/pages-service';
 import { publishService } from '@/features/website/publish-service';
 import { sectionImageService } from '@/features/website/section-image-service';
@@ -124,4 +126,18 @@ export async function removeSectionImageFormAction(_prev: FormState, f: FormData
 }
 export async function setSectionImagePositionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
   return run([pagePath(str(f, 'pageId'))], 'saved', async (c) => { await sectionImageService.setPosition(c, { sectionId: str(f, 'sectionId'), position: str(f, 'position') }); });
+}
+
+/** The Look panel (E3): fonts, colours and button shape. Every value is checked against the fixed lists in site/theme.ts and again by the settings schema and the database CHECKs. */
+export async function saveLookFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const patch: Record<string, string> = {};
+  const pairId = str(f, 'fontPair');
+  if (pairId) {
+    const pair = FONT_PAIRS.find((p) => p.id === pairId);
+    if (!pair) return errorState(new AppError('validation', { detail: 'invalid_font' }));
+    patch.fontHeading = pair.heading; patch.fontBody = pair.body;
+  }
+  for (const k of ['buttonStyle', 'primaryColor', 'secondaryColor'] as const) { const v = str(f, k); if (v) patch[k] = v; }
+  if (Object.keys(patch).length === 0) return errorState(new AppError('validation', { detail: 'nothing_to_save' }));
+  return run(['/dashboard/website/design', '/dashboard/website'], 'saved', async (c) => { await websiteService.updateSettings(c, patch); });
 }
