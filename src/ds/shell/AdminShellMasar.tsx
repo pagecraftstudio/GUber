@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { DsLangProvider } from '../lang';
 import { Logo } from '../brand/Logo';
 import { SubmitButton } from '../primitives/Button';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 import { AccountMenu } from './AccountMenu';
 import { ShellFrame, type ShellNavItem } from './ShellFrame';
 import { SHELL_TEXT } from './text';
@@ -32,9 +33,12 @@ export function AdminShellMasar({ fullName, roleLabel, items, logoutAction, chil
         items={nav}
         topbarStart={<p className="truncate text-base font-medium text-ink-primary">{current ?? 'Admin'}</p>}
         topbarEnd={
+          <>
+          <NotificationBell lang="en" />
           <AccountMenu label={st.account} name={fullName} detail={roleLabel}>
             <form action={logoutAction}><SubmitButton variant="ghost" fullWidth iconStart={<LogOut size={16} strokeWidth={1.5} />} className="!justify-start">{st.signOut}</SubmitButton></form>
           </AccountMenu>
+          </>
         }
         maxWidthClass="max-w-[1280px]"
       >

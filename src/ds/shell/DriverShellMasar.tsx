@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Logo } from '../brand/Logo';
 import { SubmitButton } from '../primitives/Button';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 import { SkipLink } from './SkipLink';
 import { SHELL_TEXT } from './text';
 
@@ -19,7 +20,10 @@ export function DriverShellMasar({ companyName, driverName, logoutAction, childr
             <Logo size="sm" tone="auto" />
             <p className="mt-1 truncate text-[13px] text-ink-secondary">{companyName} · {driverName}</p>
           </div>
-          <form action={logoutAction}><SubmitButton variant="secondary" size="lg">{st.signOut}</SubmitButton></form>
+          <div className="flex shrink-0 items-center gap-2">
+            <NotificationBell lang="en" />
+            <form action={logoutAction}><SubmitButton variant="secondary" size="lg">{st.signOut}</SubmitButton></form>
+          </div>
         </div>
       </header>
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-md px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] outline-none">{children}</main>
