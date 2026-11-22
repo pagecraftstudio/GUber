@@ -5,7 +5,7 @@ const ERR_EN: Record<string, string> = {
   subscription_not_valid_on_date: 'Your subscription is not valid on that date', profile_phone_required: 'Add a valid phone number first', trip_full: 'This trip has no seats left',
   phone_taken_in_company: 'This phone number is already used by another account of this company', plan_period_ended: 'This plan has ended', subscription_not_open: 'This subscription can no longer be changed', subscription_not_active: 'This subscription is no longer active',
   rate_limited: 'Too many attempts. Try again in a minute', not_found: 'We could not find that. Refresh the page and try again', invalid_phone: 'Enter a valid phone number',
-  validation: 'Check the details and try again', forbidden: 'You cannot do that', unauthenticated: 'Sign in again to continue', trip_not_bookable: 'This trip is not open for booking', trip_departed: 'This trip has already left',
+  validation: 'Check the details and try again', forbidden: 'You cannot do that', unauthenticated: 'Sign in again to continue', trip_not_bookable: 'This trip is not open for booking', trip_departed: 'This trip has already left', seats_per_booking_exceeded: 'That is more seats than one booking allows', conflict: 'This request clashes with an existing booking',
 };
 const ERR_AR: Record<string, string> = {
   subscription_active: 'لديك اشتراك فعّال لهذه الباقة بالفعل', renewal_too_early: 'يفتح التجديد في آخر ٧ أيام من اشتراكك',
@@ -13,7 +13,7 @@ const ERR_AR: Record<string, string> = {
   profile_phone_required: 'أضف رقم هاتف صالحاً أولاً', trip_full: 'لا توجد مقاعد متاحة في هذه الرحلة', phone_taken_in_company: 'رقم الهاتف مستخدم في حساب آخر لدى هذه الشركة',
   plan_period_ended: 'انتهت فترة هذه الباقة', subscription_not_open: 'لا يمكن تعديل هذا الاشتراك بعد الآن', subscription_not_active: 'هذا الاشتراك لم يعد فعّالاً', rate_limited: 'محاولات كثيرة. حاول بعد دقيقة',
   not_found: 'لم نجد ما طلبته. حدّث الصفحة وحاول مرة أخرى', invalid_phone: 'أدخل رقم هاتف صالحاً', validation: 'راجع البيانات وحاول مرة أخرى', forbidden: 'لا يمكنك تنفيذ ذلك',
-  unauthenticated: 'سجّل الدخول مرة أخرى للمتابعة', trip_not_bookable: 'هذه الرحلة غير متاحة للحجز', trip_departed: 'غادرت هذه الرحلة بالفعل',
+  unauthenticated: 'سجّل الدخول مرة أخرى للمتابعة', trip_not_bookable: 'هذه الرحلة غير متاحة للحجز', trip_departed: 'غادرت هذه الرحلة بالفعل', seats_per_booking_exceeded: 'عدد المقاعد أكبر من المسموح في حجز واحد', conflict: 'يتعارض هذا الطلب مع حجز قائم',
 };
 export const errorText = (lang: 'en' | 'ar', code: string, detail?: string): string => {
   const m = lang === 'ar' ? ERR_AR : ERR_EN;

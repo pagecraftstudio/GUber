@@ -10,6 +10,7 @@ import { DashboardLangProvider } from '@/features/dashboard/lang';
 import { DsLangProvider } from '../lang';
 import { HeaderLogo } from '../brand/HeaderLogo';
 import { Button, IconButton, SubmitButton } from '../primitives/Button';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 import { AccountMenu } from './AccountMenu';
 import { ShellFrame, type ShellNavItem } from './ShellFrame';
 import { SHELL_TEXT } from './text';
@@ -61,9 +62,12 @@ export function DashboardShellMasar({ initialLang = 'en', companyName, fullName,
         topbarEnd={<>
           <Button variant="secondary" onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}>{t.language}</Button>
           <IconButton label={st.theme} variant="secondary" icon={theme === 'light' ? <Moon size={16} strokeWidth={1.5} /> : <Sun size={16} strokeWidth={1.5} />} onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} />
+          <>
+          <NotificationBell lang={lang} />
           <AccountMenu label={st.account} name={fullName} detail={roleLabel}>
             <form action={logoutAction}><SubmitButton variant="ghost" fullWidth iconStart={<LogOut size={16} strokeWidth={1.5} />} className="!justify-start">{st.signOut}</SubmitButton></form>
           </AccountMenu>
+          </>
         </>}
       >
         <DashboardLangProvider value={lang}><Suspense fallback={null}><FlashNotice /></Suspense>{children}</DashboardLangProvider>
