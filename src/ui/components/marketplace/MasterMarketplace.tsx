@@ -7,6 +7,7 @@ import { MarketplaceHeader } from './MarketplaceHeader';
 
 import { CompanyProfileModal } from './CompanyProfileModal';
 import { BookingFlowModal } from '../public/BookingFlowModal';
+import { openBookingWizard } from '../../lib/book-redirect';
 import { isMockMode } from '../../lib/runtime';
 import { QuietFooter } from '@/ds/shell/MarketplaceHeaderMasar';
 import { SHELL_TEXT } from '@/ds/shell/text';
@@ -113,6 +114,7 @@ export const MasterMarketplace: React.FC = () => {
   };
 
   const handleStartBooking = async (marketTrip: MarketplaceTripItem) => {
+    if (openBookingWizard(marketTrip.id)) return;
     const fullTrip = await transportService.getTripById(marketTrip.id);
     if (fullTrip) {
       // getTripById also loads this trip's pickup/drop-off stops (real mode): refresh the lists the modal reads
