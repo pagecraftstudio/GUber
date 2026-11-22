@@ -64,7 +64,7 @@ export function BookingsMasarView(p: BookingsMasarViewProps) {
   const tabs = [['upcoming', t.upcoming], ['past', t.past], ['all', t.all]] as const;
   return (
     <>
-      <PageHeaderMasar title={t.bookings} />
+      <PageHeaderMasar title={t.bookings} actions={p.canWrite ? <Link href="/dashboard/bookings/new" className="inline-flex h-9 items-center rounded-ds-md bg-action px-3 text-sm text-on-action">{lang === 'ar' ? 'حجز جديد' : 'New booking'}</Link> : undefined} />
       <nav aria-label={t.period} className="mb-3 flex gap-2">
         {tabs.map(([v, l]) => { const on = f.view === v && !p.hasDates; return <Link key={v} href={bookingsHref({ ...f, view: v, from: '', to: '' })} aria-current={on ? 'page' : undefined} className={`inline-flex h-9 items-center rounded-ds-md px-3 text-sm ${on ? 'bg-action text-on-action' : 'border border-line-strong text-ink-primary hover:bg-surface-sunken'}`}>{l}</Link>; })}
       </nav>
