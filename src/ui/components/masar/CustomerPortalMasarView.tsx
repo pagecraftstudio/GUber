@@ -33,6 +33,8 @@ export interface CustomerPortalMasarProps {
   profile: { name: string; phone: string; studentId: string; university: string; saving: boolean; saved: boolean; onName: (v: string) => void; onPhone: (v: string) => void; onStudentId: (v: string) => void; onUniversity: (v: string) => void; onSubmit: (e: FormEvent) => void };
   companions: PortalCompanion[]; onRemoveCompanion: (id: string) => void; onOpenAddCompanion: () => void;
   onSignOut: () => void;
+  /** Real mode only: the member's MASAR ID and subscriptions, shown at the top of the profile tab. */
+  memberExtra?: ReactNode;
   cancel: { booking: Booking | null; reason: string; loading: boolean; error: string | null; onReason: (v: string) => void; onClose: () => void; onConfirm: () => void };
   add: { open: boolean; name: string; phone: string; studentId: string; relationship: string; saving: boolean; onName: (v: string) => void; onPhone: (v: string) => void; onStudentId: (v: string) => void; onRelationship: (v: string) => void; onClose: () => void; onSubmit: (e: FormEvent) => void };
 }
@@ -127,6 +129,7 @@ export function CustomerPortalMasarView(p: CustomerPortalMasarProps) {
   const pf = p.profile;
   const profilePanel = (
     <Panel title={x.profileTitle} text={x.profileText}>
+      {p.memberExtra}
       {pf.saved ? <div className="mb-4"><InlineAlert tone="success">{x.saved}</InlineAlert></div> : null}
       <form onSubmit={pf.onSubmit} className="flex max-w-xl flex-col gap-4">
         <Field label={t('fullNameLabel')} required><Input value={pf.name} onChange={(e) => pf.onName(e.target.value)} required /></Field>

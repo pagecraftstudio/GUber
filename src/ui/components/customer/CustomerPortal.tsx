@@ -13,6 +13,7 @@ import { EmptyState } from '@/ds/feedback/States';
 import { Button as DsButton } from '@/ds/primitives/Button';
 import { CustomerPortalMasarView } from '../masar/CustomerPortalMasarView';
 import { J6C } from '../masar/text6c';
+import { ProfileMasarSection } from '@/features/my-subscriptions/ui/ProfileMasarSection';
 
 export const CustomerPortal: React.FC = () => {
   const { user, profile, isAuthenticated, signOut, updateProfile, openAuthModal } = useAuth();
@@ -203,6 +204,7 @@ export const CustomerPortal: React.FC = () => {
     <CustomerPortalMasarView
       user={user ? { id: user.id, fullName: user.fullName, email: user.email, phone: user.phone, studentId: user.studentId, createdAt: user.createdAt } : null}
       mock={isMockMode()}
+      memberExtra={isMockMode() ? undefined : <ProfileMasarSection lang={locale} />}
       stats={{ trips: totalTripsCount, spent: totalSpentEgp }}
       filter={tripFilter} onFilter={setTripFilter}
       bookings={filteredBookings} trips={trips} routes={routes} stops={stops} loading={loading}
