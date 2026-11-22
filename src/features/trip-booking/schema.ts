@@ -8,9 +8,10 @@ const optional = (max: number) => z.string().trim().max(max).optional().transfor
  * session (create_my_booking, 0013). The idempotency key is made by the form once per booking attempt, so a double click or a retry after
  * a lost response returns the same booking instead of creating a second one.
  */
+export const seatsSchema = z.number().int().min(1).max(20);
 export const bookTripSchema = z.strictObject({
   tripId: idSchema,
-  seats: z.number().int().min(1).max(20),
+  seats: seatsSchema,
   fullName: z.string().trim().min(1).max(120),
   phone: phoneSchema,
   email: optional(254),

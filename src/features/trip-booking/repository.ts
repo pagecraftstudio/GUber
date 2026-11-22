@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { mapDbError } from '@/lib/db/map-error';
 import type { BookTripInput } from './schema';
-import { toBooked, toStop, toTripDetail, type BookedTrip, type BookingRow, type StopRow, type TripDetail, type TripDetailRow, type TripStop } from './types';
+import { toBooked, toPayment, toQuote, toStop, toTripDetail, type BookedTrip, type BookingRow, type PaymentInfo, type PaymentRow, type Quote, type QuoteRow, type StopRow, type TripDetail, type TripDetailRow, type TripStop } from './types';
 
 /** Every call runs as the signed-in student's own client: the database derives the customer from auth.uid() and the company from the trip. */
 export type BookingDb = { readonly db: SupabaseClient };
@@ -17,6 +17,16 @@ export const tripBookingRepository = {
     const { data, error } = await db.rpc('public_trip_stops', { p_trip_id: tripId });
     if (error) throw mapDbError(error);
     return (Array.isArray(data) ? (data as StopRow[]) : []).map(toStop).sort((a, b) => a.order - b.order);
+  },
+  async quote({ db }: BookingDb, tripId: string, seats: number): Promise<Quote> {
+    const { data, error } = await db.rpc('quote_my_booking', { p_trip_id: tripId, p_seats: seats });
+    if (error) throw mapDbError(error);
+    return toQuote(data as QuoteRow);
+  },
+  async payment({ db }: BookingDb, bookingId: string): Promise<PaymentInfo> {
+    const { data, error } = await db.rpc('my_booking_payment', { p_booking_id: bookingId });
+    if (error) throw mapDbError(error);
+    return toPayment(data as PaymentRow);
   },
   async book({ db }: BookingDb, i: BookTripInput): Promise<BookedTrip> {
     const { data, error } = await db.rpc('create_my_booking', {

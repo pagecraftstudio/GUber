@@ -6,6 +6,8 @@ import { createTenantServiceContext } from '@/lib/service/context';
 import { companyService } from '@/features/companies/service';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { SettingsForm } from '@/features/dashboard/SettingsForm';
+import { PaymentSettingsForm } from '@/features/payment-settings/PaymentSettingsForm';
+import { paymentSettingsService } from '@/features/payment-settings/service';
 
 const field = (label: string, value: React.ReactNode, ltr = false) => (
   <div key={label}><dt className="text-xs font-semibold text-ink-secondary"><T>{label}</T></dt><dd className="mt-0.5 text-sm font-medium">{!value ? '—' : typeof value !== 'string' ? value : ltr ? <Ltr>{value}</Ltr> : <T>{value}</T>}</dd></div>
@@ -15,7 +17,7 @@ export default async function SettingsPage() {
   const auth = await requireTenant('settings.read'); // no settings.read => /dashboard?error=forbidden
   const ctx = createTenantServiceContext(await createClient(), auth);
   const canWrite = auth.membership.permissions.includes('settings.write');
-  const [profile, settings] = await Promise.all([companyService.getProfile(ctx), companyService.getSettings(ctx)]);
+  const [profile, settings, payments] = await Promise.all([companyService.getProfile(ctx), companyService.getSettings(ctx), canWrite ? paymentSettingsService.get(ctx) : Promise.resolve(null)]);
   return (
     <>
       <PageHeader eyebrow="Workspace" title="Settings" description="Your company profile and how booking and scheduling behave." />
@@ -28,6 +30,7 @@ export default async function SettingsPage() {
             {field('Contact email', profile.contactEmail, true)}{field('Contact phone', profile.contactPhone, true)}{field('Country', profile.country)}{field('Status', profile.status)}
           </dl>
         </section>
+        {canWrite && payments ? <PaymentSettingsForm settings={payments} /> : null}
         {canWrite ? <SettingsForm settings={settings} /> : (
           <section aria-labelledby="ro-h" className="max-w-3xl rounded-2xl border border-line-default bg-surface-card p-5">
             <h2 id="ro-h" className="font-bold"><T>Booking and operations</T></h2>

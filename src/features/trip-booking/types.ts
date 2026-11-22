@@ -16,6 +16,30 @@ export type StopRow = { stop_id: string; name: string; address: string | null; s
 export type TripStop = { id: string; name: string; address: string | null; order: number; kind: 'pickup' | 'dropoff' | 'both' };
 export const toStop = (r: StopRow): TripStop => ({ id: r.stop_id, name: r.name, address: r.address, order: r.stop_order, kind: r.stop_type });
 
-export type BookingRow = { id: string; reference: string; status: string; seats_count: number; total_amount: number | string; currency: string; idempotent_replay?: boolean };
-export type BookedTrip = { id: string; reference: string; seats: number; total: number; currency: string };
-export const toBooked = (r: BookingRow): BookedTrip => ({ id: r.id, reference: r.reference, seats: r.seats_count, total: Number(r.total_amount), currency: r.currency });
+export type BookingRow = { id: string; reference: string; status: string; seats_count: number; total_amount: number | string; currency: string; payment_due_at?: string | null; idempotent_replay?: boolean };
+/** `pending` = seats held until `paymentDueAt` (the company asks for payment first); `confirmed` = ticket ready. */
+export type BookedTrip = { id: string; reference: string; status: 'pending' | 'confirmed'; seats: number; total: number; currency: string; paymentDueAt: string | null };
+export const toBooked = (r: BookingRow): BookedTrip => ({
+  id: r.id, reference: r.reference, status: r.status === 'pending' ? 'pending' : 'confirmed', seats: r.seats_count, total: Number(r.total_amount), currency: r.currency, paymentDueAt: r.payment_due_at ?? null,
+});
+
+export type QuoteRow = { unit_price: number | string; total: number | string; currency: string; seats: number; seats_available: number; max_seats: number; requires_payment: boolean; deadline_hours: number | null };
+export type Quote = { unitPrice: number; total: number; currency: string; seats: number; requiresPayment: boolean; deadlineHours: number | null };
+export const toQuote = (r: QuoteRow): Quote => ({ unitPrice: Number(r.unit_price), total: Number(r.total), currency: r.currency, seats: r.seats, requiresPayment: r.requires_payment, deadlineHours: r.deadline_hours });
+
+export type PaymentRow = {
+  reference: string; status: string; payment_status: string; total: number | string; amount_paid: number | string; currency: string; payment_due_at: string | null; timezone: string;
+  instructions: { vodafone_cash_number: string | null; vodafone_cash_holder: string | null; instapay_address: string | null; instapay_holder: string | null; whatsapp: string | null; note_en: string | null; note_ar: string | null } | null;
+};
+export type PaymentInfo = {
+  reference: string; status: string; paymentStatus: string; total: number; amountPaid: number; currency: string; dueAt: string | null; timeZone: string;
+  vodafoneNumber: string | null; vodafoneHolder: string | null; instapayAddress: string | null; instapayHolder: string | null; whatsapp: string | null; noteEn: string | null; noteAr: string | null; hasInstructions: boolean;
+};
+export const toPayment = (r: PaymentRow): PaymentInfo => ({
+  reference: r.reference, status: r.status, paymentStatus: r.payment_status, total: Number(r.total), amountPaid: Number(r.amount_paid), currency: r.currency, dueAt: r.payment_due_at, timeZone: r.timezone,
+  vodafoneNumber: r.instructions?.vodafone_cash_number ?? null, vodafoneHolder: r.instructions?.vodafone_cash_holder ?? null, instapayAddress: r.instructions?.instapay_address ?? null,
+  instapayHolder: r.instructions?.instapay_holder ?? null, whatsapp: r.instructions?.whatsapp ?? null, noteEn: r.instructions?.note_en ?? null, noteAr: r.instructions?.note_ar ?? null, hasInstructions: r.instructions !== null,
+});
+
+/** The WhatsApp link the student taps to send the transfer proof; the text names the booking so staff can match it. Digits only in the number (wa.me form). */
+export const proofWhatsappUrl = (whatsappE164: string, text: string): string => `https://wa.me/${whatsappE164.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
