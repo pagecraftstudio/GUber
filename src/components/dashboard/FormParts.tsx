@@ -39,7 +39,7 @@ export function FormResult({ state, resource }: { state: FormState; resource?: U
 
 export const inputClass = controlClass;
 
-export function FormField(p: { name: string; label: string; hint?: string; error?: string | null; required?: boolean; type?: string; min?: number; max?: number; step?: string; inputMode?: 'numeric' | 'decimal' | 'text'; defaultValue?: string; autoComplete?: string; dir?: 'ltr' | 'rtl' }) {
+export function FormField(p: { name: string; label: string; hint?: string; error?: string | null; required?: boolean; type?: string; min?: number; max?: number; step?: string; inputMode?: 'numeric' | 'decimal' | 'text' | 'tel'; defaultValue?: string; autoComplete?: string; dir?: 'ltr' | 'rtl' }) {
   const id = useId();
   const described = [p.hint ? `${id}-h` : '', p.error ? `${id}-e` : ''].filter(Boolean).join(' ') || undefined;
   return (

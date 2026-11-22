@@ -22,7 +22,7 @@ insert into public.notification_templates (company_id, key, channel, locale, sub
 
 -- 1. the catalogue and its rules ---------------------------------------------------------------------------------------------------------
 select t.eq('catalogue: the plan''s events are seeded', t.cnt49($$select count(*) from public.notification_events where key not like 'test.%'$$), 21::bigint);
-select t.eq('catalogue: only platform.job_failed is live out of the box', t.cnt49($$select count(*) from public.notification_events where is_live and key not like 'test.%'$$), 1::bigint);
+select t.eq('catalogue: only platform.job_failed is live out of the box', t.cnt49($$select count(*) from public.notification_events where is_live and key not like 'test.%' and key not like 'booking.%'$$), 1::bigint);
 select t.as_user(t.u(3001));
 select t.eq('catalogue: a signed-in user can read it', t.rows($$select 1 from public.notification_events$$) >= 21, true);
 select t.eq('catalogue: nobody can write it', t.err49($$insert into public.notification_events (key, audience, default_channels, description) values ('x.y','student',array['in_app'],'x')$$), '42501');
@@ -100,6 +100,8 @@ update public.companies set status = 'active' where id = t.u(101);
 -- 5. scheduler ---------------------------------------------------------------------------------------------------------------------------
 create or replace function app_private.t49_ok() returns integer language plpgsql security definer as $$ begin perform app_private.write_audit('system', null, 'test.job_ran', 'job', null, '{}'::jsonb); return 1; end $$;
 create or replace function app_private.t49_fail() returns integer language plpgsql security definer as $$ begin perform app_private.write_audit('system', null, 'test.job_half_done', 'job', null, '{}'::jsonb); raise exception 'boom secret detail'; end $$;
+drop table if exists t.jobs_saved;
+create table t.jobs_saved as select * from app_private.jobs;      -- later migrations register real jobs; put them back at the end
 delete from app_private.jobs;
 insert into app_private.jobs (name, fn, every_seconds, stale_after_seconds) values
   ('t49-a-fail', 't49_fail', 60, 120), ('t49-b-ok', 't49_ok', 60, 120), ('t49-never', 't49_ok', 3600, 7200);
@@ -136,6 +138,7 @@ select t.eq('status: anon refused', t.err49($$select * from public.platform_job_
 select t.as_admin();
 delete from app_private.jobs where name like 't49-%';
 insert into app_private.jobs (name, fn, every_seconds, stale_after_seconds) values ('purge-old-notifications', 'purge_old_notifications', 21600, 90000) on conflict do nothing;
+insert into app_private.jobs select * from t.jobs_saved on conflict (name) do nothing;
 insert into public.notifications (recipient_user_id, channel, body, status, read_at, created_at) values
   (t.u(3001), 'in_app', 'old read', 'read', now() - interval '200 days', now() - interval '200 days'),
   (t.u(3001), 'in_app', 'old unread', 'sent', null, now() - interval '200 days'),
