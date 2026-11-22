@@ -47,3 +47,12 @@ export async function loadReturnOptionsAction(subscriptionId: string, outboundTr
 export async function bookSubscriberAction(subscriptionId: string, outboundTripId: string, returnTripId: string | null) {
   return run((c) => memberSubscriptionService.book(c, { subscriptionId, outboundTripId, ...(returnTripId ? { returnTripId } : {}) }), ['/my-subscriptions', `/my-subscriptions/${subscriptionId}/book`]);
 }
+
+/** What the marketplace profile tab shows: the member's MASAR ID and a summary of their subscriptions. Everything comes from the session. */
+export type ProfileOverview = { masarId: string; subs: { id: string; planName: string; companyName: string; status: string; validTo: string | null }[] };
+export async function loadProfileOverviewAction(): Promise<MemberResult<ProfileOverview>> {
+  return run(async (c) => {
+    const [profile, subs] = await Promise.all([memberSubscriptionService.profile(c), memberSubscriptionService.mine(c)]);
+    return { masarId: profile.masarId, subs: subs.map((s) => ({ id: s.id, planName: s.planName, companyName: s.companyName, status: s.status, validTo: s.validTo })) };
+  });
+}

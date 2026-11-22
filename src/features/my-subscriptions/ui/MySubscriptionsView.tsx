@@ -14,7 +14,7 @@ import { useMemberAction } from './useMemberAction';
 
 const Err = ({ text }: { text: string | null }) => (text ? <p role="alert" className="mt-1 text-sm font-medium text-status-error-fg">{text}</p> : null);
 
-function MasarIdCard({ lang, id }: { lang: 'en' | 'ar'; id: string }) {
+export function MasarIdCard({ lang, id }: { lang: 'en' | 'ar'; id: string }) {
   const t = MT[lang];
   const [done, setDone] = useState(false);
   return (
