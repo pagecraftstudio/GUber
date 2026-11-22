@@ -5,6 +5,7 @@ import { transportService } from '../../lib/transportService';
 import { Route, Trip, Bus, Driver, Stop, Booking } from '../../types';
 import { TripDetailsModal } from './TripDetailsModal';
 import { BookingFlowModal } from './BookingFlowModal';
+import { openBookingWizard } from '../../lib/book-redirect';
 import { DigitalTicketView } from './DigitalTicketView';
 import { demoDate } from '../../lib/demoDefaults';
 import { PublicHeaderMasar, PublicFooterMasar, PublicSiteMasarView } from '../masar/PublicSiteMasarView';
@@ -26,7 +27,8 @@ export const PublicWebsite: React.FC = () => {
 
   // Modals state
   const [inspectTrip, setInspectTrip] = useState<Trip | null>(null);
-  const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
+  const [bookingTrip, setBookingTripRaw] = useState<Trip | null>(null);
+  const setBookingTrip = (trip: Trip | null) => { if (trip && openBookingWizard(trip.id)) return; setBookingTripRaw(trip); };
   const [activeTicket, setActiveTicket] = useState<{ booking: Booking; trip: Trip } | null>(null);
 
   const loadData = async () => {
