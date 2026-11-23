@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { CanonicalLocation, MarketplaceTripItem, MarketplaceSearchParams, Trip, Booking, Route, Bus, Stop } from '../../types';
 import { useLocale } from '../../context/LocaleContext';
 import { useTenant } from '../../context/TenantContext';
+import { useAuth } from '../../context/AuthContext';
+import { loadTripCoverageAction } from '@/features/trip-booking/actions';
 import { transportService } from '../../lib/transportService';
 import { MarketplaceHeader } from './MarketplaceHeader';
 
@@ -41,6 +43,8 @@ export const MasterMarketplace: React.FC = () => {
 
   // Modal States
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [freeFor, setFreeFor] = useState<Record<string, { planName: string; available: boolean }>>({});
   const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
   const [activeTicket, setActiveTicket] = useState<{ booking: Booking; trip: Trip } | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -90,6 +94,14 @@ export const MasterMarketplace: React.FC = () => {
     setStops(s);
     setLoading(false);
   };
+
+  // Subscribers see their own free trips labelled. The database decides (company, route, dates, daily limit); no labels for signed-out visitors or demo data.
+  useEffect(() => {
+    if (isMockMode() || !isAuthenticated || trips.length === 0) { setFreeFor({}); return; }
+    let live = true;
+    loadTripCoverageAction(trips.slice(0, 200).map((x) => x.id)).then((r) => { if (live) setFreeFor(r.ok ? r.coverage : {}); }, () => { if (live) setFreeFor({}); });
+    return () => { live = false; };
+  }, [trips, isAuthenticated]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -164,7 +176,7 @@ export const MasterMarketplace: React.FC = () => {
           locations={locations} companies={companies} params={searchParams} trips={trips} total={totalResults} loading={loading}
           page={currentPage} pageSize={pageSize} onPage={setCurrentPage}
           onSearch={handleSearch} onFilter={handleFilterChange} onReset={handleResetFilters}
-          onBook={handleStartBooking} onOperator={(cid) => setSelectedCompanyId(cid)}
+          freeFor={freeFor} onBook={handleStartBooking} onOperator={(cid) => setSelectedCompanyId(cid)}
         />
       </div>
       <QuietFooter credit={SHELL_TEXT[locale].poweredBy}>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName}{isMockMode() ? ' · ' : ''}{isMockMode() ? t('demoDataNotice') : ''}</QuietFooter>

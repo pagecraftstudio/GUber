@@ -21,6 +21,6 @@ export default async function BookTripPage({ params }: { params: Promise<{ tripI
   const c = { db: await createClient(), userId: auth.userId };
   const trip = await tripBookingService.detail(c, tripId);
   if (!trip) return <TripUnavailable />;
-  const [stops, profile] = await Promise.all([tripBookingService.stops(c, tripId), memberSubscriptionService.profile(c).catch(() => null)]);
-  return <BookTripScreen trip={trip} stops={stops} defaults={{ fullName: profile?.fullName ?? '', phone: profile?.phone ?? '' }} />;
+  const [stops, profile, quote] = await Promise.all([tripBookingService.stops(c, tripId), memberSubscriptionService.profile(c).catch(() => null), tripBookingService.quote(c, tripId, 1).catch(() => null)]);
+  return <BookTripScreen trip={trip} stops={stops} subscription={quote?.subscription ?? null} defaults={{ fullName: profile?.fullName ?? '', phone: profile?.phone ?? '' }} />;
 }

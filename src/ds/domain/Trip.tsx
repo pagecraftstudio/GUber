@@ -15,6 +15,8 @@ export interface TripCardProps {
   note?: ReactNode;
   /** Shown under the price (e.g. the go-and-return price). */
   priceNote?: ReactNode;
+  /** Shown instead of the amount (e.g. "Free with your plan"). */
+  priceLabel?: ReactNode;
   /** Marks a low seat count in warning colour. */
   lowSeats?: boolean;
   arrivalAt?: string | null;
@@ -43,7 +45,7 @@ export function TripCard(p: TripCardProps) {
             ? <button type="button" onClick={p.operator.onClick} className="truncate rounded-ds-sm text-start text-sm font-medium text-ink-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">{p.operator.name}</button>
             : <p className="truncate text-sm font-medium text-ink-primary">{p.operator.name}</p>}
         </div>
-        {p.price ? <div className="shrink-0 text-end"><p className="text-lg font-medium text-ink-primary tabular-nums">{formatMoney(p.price.amount, p.price.currency, lang)}</p>{p.priceNote ? <p className="text-[13px] text-ink-muted">{p.priceNote}</p> : null}</div> : null}
+        {p.price ? <div className="shrink-0 text-end"><p className="text-lg font-medium text-ink-primary tabular-nums">{p.priceLabel ?? formatMoney(p.price.amount, p.price.currency, lang)}</p>{p.priceNote ? <p className="text-[13px] text-ink-muted">{p.priceNote}</p> : null}</div> : null}
       </header>
       <div className="flex items-baseline gap-3 tabular-nums">
         <span className="text-2xl font-medium text-ink-primary">{p.departureText ?? (p.departureAt ? formatTime(p.departureAt, lang, { timeZone: p.timeZone }) : '')}</span>

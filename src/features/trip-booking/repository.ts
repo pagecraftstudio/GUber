@@ -28,6 +28,20 @@ export const tripBookingRepository = {
     if (error) throw mapDbError(error);
     return toPayment(data as PaymentRow);
   },
+  /** Which of these trips the signed-in student rides free (own subscription, same company, plan route or its return, free seat of that day still unused). */
+  async coverage({ db }: BookingDb, tripIds: string[]): Promise<Record<string, { planName: string; leg: 'go' | 'return'; available: boolean }>> {
+    const { data, error } = await db.rpc('my_trip_coverage', { p_trip_ids: tripIds });
+    if (error) throw mapDbError(error);
+    const out: Record<string, { planName: string; leg: 'go' | 'return'; available: boolean }> = {};
+    for (const r of Array.isArray(data) ? (data as { trip_id: string; plan_name: string; leg: 'go' | 'return'; available: boolean }[]) : []) out[r.trip_id] = { planName: r.plan_name, leg: r.leg, available: r.available };
+    return out;
+  },
+  /** One free seat covered by the caller's subscription. The database re-checks coverage, validity, the daily limit and capacity. */
+  async bookFree({ db }: BookingDb, i: BookTripInput): Promise<BookedTrip> {
+    const { data, error } = await db.rpc('create_my_subscriber_trip_booking', { p_trip_id: i.tripId, p_pickup_stop_id: i.pickupStopId ?? null, p_dropoff_stop_id: i.dropoffStopId ?? null });
+    if (error) throw mapDbError(error);
+    return toBooked(data as BookingRow);
+  },
   async book({ db }: BookingDb, i: BookTripInput): Promise<BookedTrip> {
     const { data, error } = await db.rpc('create_my_booking', {
       p_trip_id: i.tripId, p_seats: i.seats, p_full_name: i.fullName, p_phone: i.phone, p_email: i.email ?? null, p_university: i.university ?? null,
