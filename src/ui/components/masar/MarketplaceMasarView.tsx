@@ -28,6 +28,8 @@ export interface MarketplaceMasarViewProps {
   onFilter: (u: Partial<MarketplaceSearchParams>) => void;
   onReset: () => void;
   onBook: (t: MarketplaceTripItem) => void;
+  /** Real mode, signed in: trips that are free for this student (their subscription), by trip id. */
+  freeFor?: Record<string, { planName: string; available: boolean }>;
   onOperator: (companyId: string) => void;
 }
 
@@ -145,7 +147,8 @@ export function MarketplaceMasarView(p: MarketplaceMasarViewProps) {
                         seatsLeft={trip.availableSeats}
                         lowSeats={trip.availableSeats > 0 && trip.availableSeats <= 6}
                         price={{ amount: trip.priceEgp, currency: 'EGP' }}
-                        priceNote={trip.roundTripPriceEgp !== undefined ? `${ar ? 'ذهاب وعودة' : 'Go & return'}: ${formatMoney(trip.roundTripPriceEgp, 'EGP', locale)}` : undefined}
+                        priceLabel={p.freeFor?.[trip.id]?.available ? (ar ? 'مجاني مع اشتراكك' : 'Free with your plan') : undefined}
+                        priceNote={p.freeFor?.[trip.id]?.available ? (ar ? `${p.freeFor[trip.id]!.planName} · العادي ${formatMoney(trip.priceEgp, 'EGP', locale)}` : `${p.freeFor[trip.id]!.planName} · regular ${formatMoney(trip.priceEgp, 'EGP', locale)}`) : trip.roundTripPriceEgp !== undefined ? `${ar ? 'ذهاب وعودة' : 'Go & return'}: ${formatMoney(trip.roundTripPriceEgp, 'EGP', locale)}` : undefined}
                         stops={[{ name: name(trip.originStopNameEn, trip.originStopNameAr) }, { name: name(trip.destStopNameEn, trip.destStopNameAr) }]}
                         note={trip.busModel}
                         seatsLeftLabel={(n) => `${n} ${t('seatsAvailable')}`}

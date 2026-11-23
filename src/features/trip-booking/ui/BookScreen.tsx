@@ -1,9 +1,9 @@
 'use client';
 import { MemberShell } from '@/features/my-subscriptions/ui/MemberShell';
 import { BookTripView } from './BookTripView';
-import type { TripDetail, TripStop } from '../types';
+import type { QuoteSubscription, TripDetail, TripStop } from '../types';
 
-export const BookTripScreen = (p: { trip: TripDetail; stops: TripStop[]; defaults: { fullName: string; phone: string } }) => (
+export const BookTripScreen = (p: { trip: TripDetail; stops: TripStop[]; subscription: QuoteSubscription | null; defaults: { fullName: string; phone: string } }) => (
   <MemberShell backHref="/my-bookings">{(lang) => <BookTripView lang={lang} {...p} />}</MemberShell>
 );
 

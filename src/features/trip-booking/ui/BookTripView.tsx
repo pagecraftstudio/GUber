@@ -7,7 +7,7 @@ import { buttonClass } from '@/ds/primitives/button-class';
 import { controlClass } from '@/ds/primitives/Input';
 import { errorText } from '@/features/my-subscriptions/ui/text';
 import { bookingPaymentAction, bookTripAction, quoteBookingAction } from '../actions';
-import { proofWhatsappUrl, type BookedTrip, type PaymentInfo, type Quote, type TripDetail, type TripStop } from '../types';
+import { proofWhatsappUrl, type BookedTrip, type PaymentInfo, type Quote, type QuoteSubscription, type TripDetail, type TripStop } from '../types';
 
 type Lang = 'en' | 'ar';
 type Step = 'trip' | 'passenger' | 'review' | 'pay' | 'done';
@@ -21,7 +21,8 @@ const T = {
     left2: 'Time left', expired: 'The payment time has ended', vf: 'Vodafone Cash', ip: 'InstaPay', holder: 'Account holder', amount: 'Amount to send', copy: 'Copy', copied: 'Copied',
     proof: 'Send proof on WhatsApp', proofText: (ref: string, name: string, trip: string, total: string) => `Hello, I paid for booking ${ref} (${trip}). Name: ${name}. Amount: ${total}.`,
     confirmedNote: 'Your seat is confirmed only after the company confirms your payment. You will get a notice here.', done: 'Your seat is booked', ref: 'Booking reference',
-    pay2: 'Pay the company when you travel.', mine: 'View my bookings', noInstr: 'The company has not added payment details yet. Contact the company to complete payment.',
+    pay2: 'Pay the company when you travel.', free: 'Free with your plan', freePlan: (p: string, leg: string) => `Free with your plan (${p}): one seat, ${leg}. One go and one return trip per day are free.`, goLeg: 'go trip', returnLeg: 'return trip',
+    limitUsed: (leg: string) => `You already used your free ${leg} today. This seat is a regular paid seat.`, mine: 'View my bookings', noInstr: 'The company has not added payment details yet. Contact the company to complete payment.',
   },
   ar: {
     title: 'احجز مقعدًا', steps: { trip: 'الرحلة', passenger: 'الراكب', review: 'الفاتورة', pay: 'الدفع', done: 'تم' } as Record<Step, string>,
@@ -32,7 +33,8 @@ const T = {
     left2: 'الوقت المتبقي', expired: 'انتهى وقت الدفع', vf: 'فودافون كاش', ip: 'إنستاباي', holder: 'اسم صاحب الحساب', amount: 'المبلغ المطلوب تحويله', copy: 'نسخ', copied: 'تم النسخ',
     proof: 'أرسل الإثبات عبر واتساب', proofText: (ref: string, name: string, trip: string, total: string) => `مرحبًا، دفعت قيمة الحجز ${ref} (${trip}). الاسم: ${name}. المبلغ: ${total}.`,
     confirmedNote: 'يتأكد مقعدك فقط بعد أن تؤكد الشركة استلام دفعتك. ستصلك رسالة هنا.', done: 'تم حجز مقعدك', ref: 'رقم الحجز',
-    pay2: 'ادفع للشركة عند السفر.', mine: 'عرض حجوزاتي', noInstr: 'لم تضف الشركة بيانات الدفع بعد. تواصل مع الشركة لإتمام الدفع.',
+    pay2: 'ادفع للشركة عند السفر.', free: 'مجاني مع اشتراكك', freePlan: (p: string, leg: string) => `مجاني مع اشتراكك (${p}): مقعد واحد، ${leg}. رحلة ذهاب ورحلة عودة يوميًا مجانًا.`, goLeg: 'رحلة الذهاب', returnLeg: 'رحلة العودة',
+    limitUsed: (leg: string) => `لقد استخدمت ${leg} المجانية اليوم. هذا المقعد بسعر عادي.`, mine: 'عرض حجوزاتي', noInstr: 'لم تضف الشركة بيانات الدفع بعد. تواصل مع الشركة لإتمام الدفع.',
   },
 } as const;
 
@@ -78,8 +80,10 @@ function CopyRow({ lang, label, value }: { lang: Lang; label: string; value: str
   );
 }
 
-export function BookTripView({ lang, trip, stops, defaults }: { lang: Lang; trip: TripDetail; stops: TripStop[]; defaults: { fullName: string; phone: string } }) {
+export function BookTripView({ lang, trip, stops, subscription, defaults }: { lang: Lang; trip: TripDetail; stops: TripStop[]; subscription: QuoteSubscription | null; defaults: { fullName: string; phone: string } }) {
   const t = T[lang];
+  const freeSeat = subscription?.free === true;                                  // the page asked the database for 1 seat; the booking service decides again
+  const legName = subscription ? (subscription.leg === 'go' ? t.goLeg : t.returnLeg) : '';
   const [step, setStep] = useState<Step>('trip');
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +127,7 @@ export function BookTripView({ lang, trip, stops, defaults }: { lang: Lang; trip
     <header className="space-y-1">
       <h1 className="text-2xl font-semibold">{t.title}</h1>
       <p className="font-medium">{trip.companyName} · {route}</p>
-      <p className="text-sm text-ink-secondary">{t.departs} {formatDateTime(trip.departureAt, lang, { timeZone: trip.timeZone })} · {formatMoney(trip.price, trip.currency, lang)} · {t.left(formatNumber(trip.seatsAvailable, lang))}</p>
+      <p className="text-sm text-ink-secondary">{t.departs} {formatDateTime(trip.departureAt, lang, { timeZone: trip.timeZone })} · {freeSeat ? t.free : formatMoney(trip.price, trip.currency, lang)} · {t.left(formatNumber(trip.seatsAvailable, lang))}</p>
     </header>
   );
   const err = error ? <p role="alert" className="text-sm font-medium text-status-error-fg">{error}</p> : null;
@@ -175,9 +179,11 @@ export function BookTripView({ lang, trip, stops, defaults }: { lang: Lang; trip
       <Steps lang={lang} current={step} order={order} />
       {step === 'trip' ? (
         <form onSubmit={(e) => { e.preventDefault(); setStep('passenger'); }} className="space-y-4">
+          {subscription && freeSeat ? <p role="status" className="rounded-xl border border-line-default bg-surface-sunken p-3 text-sm font-medium">{t.freePlan(subscription.planName, legName)}</p> : null}
+          {subscription?.dayLimitReached ? <p role="status" className="rounded-xl border border-line-default bg-surface-sunken p-3 text-sm">{t.limitUsed(legName)}</p> : null}
           <label className={field}>{t.seats}
-            <select value={form.seats} onChange={(e) => set('seats', Number(e.target.value))} className={`${controlClass(false)} mt-1`}>
-              {Array.from({ length: trip.maxSeats }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{formatNumber(n, lang)}</option>)}
+            <select value={freeSeat ? 1 : form.seats} onChange={(e) => set('seats', Number(e.target.value))} className={`${controlClass(false)} mt-1`} disabled={freeSeat}>
+              {Array.from({ length: freeSeat ? 1 : trip.maxSeats }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{formatNumber(n, lang)}</option>)}
             </select>
           </label>
           {pickups.length > 0 ? <label className={field}>{t.pickup}<select value={form.pickup} onChange={(e) => set('pickup', e.target.value)} className={`${controlClass(false)} mt-1`}><option value="">{t.any}</option>{pickups.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label> : null}
@@ -204,10 +210,10 @@ export function BookTripView({ lang, trip, stops, defaults }: { lang: Lang; trip
           <dl className="space-y-2 rounded-2xl border border-line-default bg-surface-card p-5 text-sm">
             <div className="flex justify-between"><dt>{t.passenger}</dt><dd>{form.fullName} · <span dir="ltr">{form.phone}</span></dd></div>
             <div className="flex justify-between"><dt>{t.seats}</dt><dd>{formatNumber(quote.seats, lang)}</dd></div>
-            <div className="flex justify-between"><dt>{t.unit}</dt><dd>{formatMoney(quote.unitPrice, quote.currency, lang)}</dd></div>
-            <div className="flex justify-between border-t border-line-default pt-2 text-base font-semibold"><dt>{t.total}</dt><dd>{formatMoney(quote.total, quote.currency, lang)}</dd></div>
+            <div className="flex justify-between"><dt>{t.unit}</dt><dd>{quote.subscription?.free ? t.free : formatMoney(quote.unitPrice, quote.currency, lang)}</dd></div>
+            <div className="flex justify-between border-t border-line-default pt-2 text-base font-semibold"><dt>{t.total}</dt><dd>{quote.subscription?.free ? t.free : formatMoney(quote.total, quote.currency, lang)}</dd></div>
           </dl>
-          {quote.requiresPayment && quote.deadlineHours ? <p className="text-sm text-ink-secondary">{t.holdText(`${formatNumber(quote.deadlineHours, lang)} ${lang === 'ar' ? 'ساعة من الحجز' : 'h after booking'}`)}</p> : <p className="text-sm text-ink-secondary">{t.pay2}</p>}
+          {quote.subscription?.free ? null : quote.requiresPayment && quote.deadlineHours ? <p className="text-sm text-ink-secondary">{t.holdText(`${formatNumber(quote.deadlineHours, lang)} ${lang === 'ar' ? 'ساعة من الحجز' : 'h after booking'}`)}</p> : <p className="text-sm text-ink-secondary">{t.pay2}</p>}
           {err}
           <div className="flex gap-2"><Button type="button" variant="secondary" onClick={() => setStep('passenger')}>{t.back}</Button><Button type="button" onClick={confirm} disabled={pending}>{pending ? t.confirming : t.confirm}</Button></div>
         </div>

@@ -23,9 +23,13 @@ export const toBooked = (r: BookingRow): BookedTrip => ({
   id: r.id, reference: r.reference, status: r.status === 'pending' ? 'pending' : 'confirmed', seats: r.seats_count, total: Number(r.total_amount), currency: r.currency, paymentDueAt: r.payment_due_at ?? null,
 });
 
-export type QuoteRow = { unit_price: number | string; total: number | string; currency: string; seats: number; seats_available: number; max_seats: number; requires_payment: boolean; deadline_hours: number | null };
-export type Quote = { unitPrice: number; total: number; currency: string; seats: number; requiresPayment: boolean; deadlineHours: number | null };
-export const toQuote = (r: QuoteRow): Quote => ({ unitPrice: Number(r.unit_price), total: Number(r.total), currency: r.currency, seats: r.seats, requiresPayment: r.requires_payment, deadlineHours: r.deadline_hours });
+export type QuoteRow = { unit_price: number | string; total: number | string; currency: string; seats: number; seats_available: number; max_seats: number; requires_payment: boolean; deadline_hours: number | null;
+  subscription?: { id: string; plan_name: string; leg: 'go' | 'return'; free: boolean; day_limit_reached: boolean } | null };
+/** The caller's own subscription for this trip's company and route (decided by the database). `free` = this seat costs nothing; `dayLimitReached` = the free go/return of that day is already used. */
+export type QuoteSubscription = { planName: string; leg: 'go' | 'return'; free: boolean; dayLimitReached: boolean };
+export type Quote = { unitPrice: number; total: number; currency: string; seats: number; requiresPayment: boolean; deadlineHours: number | null; subscription: QuoteSubscription | null };
+export const toQuote = (r: QuoteRow): Quote => ({ unitPrice: Number(r.unit_price), total: Number(r.total), currency: r.currency, seats: r.seats, requiresPayment: r.requires_payment, deadlineHours: r.deadline_hours,
+  subscription: r.subscription ? { planName: r.subscription.plan_name, leg: r.subscription.leg, free: r.subscription.free, dayLimitReached: r.subscription.day_limit_reached } : null });
 
 export type PaymentRow = {
   reference: string; status: string; payment_status: string; total: number | string; amount_paid: number | string; currency: string; payment_due_at: string | null; timezone: string;

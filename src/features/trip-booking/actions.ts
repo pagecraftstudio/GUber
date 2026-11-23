@@ -47,3 +47,14 @@ export async function bookingPaymentAction(bookingId: unknown): Promise<PaymentR
     return { ok: false, code: c.code, ...(c.detail ? { detail: c.detail } : {}) };
   }
 }
+
+export type CoverageResult = { ok: true; coverage: Record<string, { planName: string; leg: 'go' | 'return'; available: boolean }> } | { ok: false };
+/** Marketplace labels: which listed trips are free for the signed-in student. Never redirects (the marketplace is public): signed out or failing means "no labels". */
+export async function loadTripCoverageAction(tripIds: unknown): Promise<CoverageResult> {
+  try {
+    const auth = await requireCustomer();
+    return { ok: true, coverage: await tripBookingService.coverage({ db: await createClient(), userId: auth.userId }, tripIds) };
+  } catch {
+    return { ok: false };
+  }
+}
