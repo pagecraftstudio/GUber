@@ -105,7 +105,7 @@ select t.as_user(t.u(5661));
 select t.eq('profile: own name', (public.driver_my_profile())->>'full_name', 'T56 driver one');
 select t.eq('profile: licence expiry warning counts days (10 days away, one day of timezone slack)', ((public.driver_my_profile())->>'license_days_left')::int between 9 and 10, true);
 select t.eq('profile: trips completed counts only own completed trips', ((public.driver_my_profile())->>'trips_completed')::int, 2);
-select t.eq('profile: no rating key until P7c', (public.driver_my_profile()) ? 'rating', false);
+select t.eq('profile: no ratings yet (P7c): count 0, average null', (public.driver_my_profile())->>'rating_count' || coalesce((public.driver_my_profile())->>'rating_average', '-'), '0-');
 select t.as_user(t.u(5662));
 select t.eq('profile: driver without a licence expiry gets null days', (public.driver_my_profile())->>'license_days_left', null);
 select t.as_user(t.u(2));
