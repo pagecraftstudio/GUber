@@ -7,6 +7,8 @@ create or replace function t.enq49(p_event text, p_user int, p_company uuid, p_p
   language plpgsql security definer as $$ begin return app_private.enqueue_notification(p_event, t.u(p_user), p_company, p_params, 'test', null, p_dedupe, p_link); end $$;
 
 delete from public.notifications where event_key like 'test.%' or event_key = 'platform.job_failed';
+-- earlier suites created students/subscriptions/trips, which now (0056) write notices of their own: this suite is about the core, start from none
+delete from public.notifications where event_key is not null;
 update public.profiles set locale = 'ar' where id = t.u(3001);
 update public.profiles set locale = 'en' where id = t.u(3002);
 insert into public.notification_events (key, audience, default_channels, mandatory, is_live, description) values
@@ -22,7 +24,7 @@ insert into public.notification_templates (company_id, key, channel, locale, sub
 
 -- 1. the catalogue and its rules ---------------------------------------------------------------------------------------------------------
 select t.eq('catalogue: the plan''s events are seeded', t.cnt49($$select count(*) from public.notification_events where key not like 'test.%'$$), 21::bigint);
-select t.eq('catalogue: only platform.job_failed is live out of the box', t.cnt49($$select count(*) from public.notification_events where is_live and key not like 'test.%' and key not like 'booking.%'$$), 1::bigint);
+select t.eq('catalogue: only platform.job_failed is live out of the box', t.cnt49($$select count(*) from public.notification_events where is_live and key not like 'test.%' and key not like 'booking.%' and key not like 'trip.%' and key not like 'subscription.%' and key not like 'company.%'$$), 1::bigint);
 select t.as_user(t.u(3001));
 select t.eq('catalogue: a signed-in user can read it', t.rows($$select 1 from public.notification_events$$) >= 21, true);
 select t.eq('catalogue: nobody can write it', t.err49($$insert into public.notification_events (key, audience, default_channels, description) values ('x.y','student',array['in_app'],'x')$$), '42501');

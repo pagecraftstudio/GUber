@@ -52,6 +52,8 @@ select t.eq('renewable: anonymous is refused', left(t.err_of('select * from publ
 
 -- 3. the nightly notice: once per subscription, in the member's language, readable only by the member
 select t.as_admin();
+-- notices of the newer event system (0056: requested/approved/...) are tested in suite 52; this block is about the 0041 expiry notice only
+delete from public.notifications where event_key is not null;
 select t.eq('notice: the job writes at least this notice', (select app_private.notify_expiring_subscriptions() >= 1), true);
 select t.eq('notice: a second run adds nothing for it', t.n36(format($$select count(*) from public.notifications where related_entity_id = %L$$, t.sub36(3001, 'Renew Duration', 1))), 1::bigint);
 select t.eq('notice: second run creates none', (select app_private.notify_expiring_subscriptions()), 0);
