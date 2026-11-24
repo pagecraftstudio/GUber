@@ -76,7 +76,7 @@ select t.eq('book: a retry of the SAME booking (same key) returns it without a p
 select t.eq('redeem: a subscription pass does not open a booking', t.redeem53(t.u(3001), 'subscription', 'iiiiiiiiiiiiiiii'), 'ok');
 select t.eq('book: ...still refused', t.err50($$select public.create_my_booking(t.u(5301), 1, 'Student One', '+201000003001', p_idempotency_key => 'c53-d')$$), '42501');
 select t.eq('redeem: an expired pass is not usable (ttl 1 s, wait)', t.redeem53(t.u(3001), 'booking', 'jjjjjjjjjjjjjjjj', 1), 'ok');
-select pg_sleep(1.3);
+select pg_sleep(2.5);
 select t.eq('book: ...after it expired', t.err50($$select public.create_my_booking(t.u(5301), 1, 'Student One', '+201000003001', p_idempotency_key => 'c53-e')$$), '42501');
 
 -- 4. the other protected functions ------------------------------------------------------------------------------------------------------------------

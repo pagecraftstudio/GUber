@@ -63,6 +63,8 @@ update trips set departure_at = now() + interval '10 minutes',  arrival_at = now
 update trips set departure_at = now() + interval '90 minutes',  arrival_at = now() + interval '150 minutes' where id = t.u(4852);
 update trips set departure_at = now() + interval '1 day 10 minutes', arrival_at = now() + interval '1 day 40 minutes', status = 'boarding' where id = t.u(4853);
 select t.eq('setup: three subscriber tickets are valid', t.cnt48($$select count(*) from tickets tk join bookings b on b.id = tk.booking_id where b.subscription_id = t.sub48() and tk.status = 'valid'$$), 3::bigint);
+-- cumulative runs: earlier suites left other subscriptions for 3001/3002 in company A, which would make 3002 a non-stranger and hide lapses of Card Range
+update route_subscriptions set status = 'cancelled' where company_id = t.u(101) and user_id in (t.u(3001), t.u(3002)) and plan_id is distinct from t.plan48() and status in ('active', 'expired');
 
 -- 1. the student's QR -----------------------------------------------------------------------------------------------------------------
 select t.as_anon();
@@ -75,6 +77,7 @@ select t.eq('qr: the signing keys are not readable by a signed-in user', t.err_o
 select t.eq('qr: the HMAC helper is not callable by a signed-in user', t.err_of($$select app_private.hmac_sha256('\x00'::bytea, '\x00'::bytea)$$) like '42501%', true);
 
 -- 2. who may scan ---------------------------------------------------------------------------------------------------------------------
+select t.as_anon();
 select t.eq('auth: anon refused', t.err_of(format($$select public.scan_identity(%L, %L)$$, t.tok48('qr'), t.u(4851)::text)) like '42501%', true);
 select t.eq('auth: a driver of A who is NOT assigned to the trip gets nothing', t.sc48(92, t.tok48('qr'), t.u(4851))->>'err', 'P0002|trip not found');
 select t.eq('auth: a driver of another company gets nothing', t.sc48(93, t.tok48('qr'), t.u(4851))->>'err', 'P0002|trip not found');
@@ -154,9 +157,14 @@ select t.eq('expired: ...and boarding is refused under the lock too', t.cb48(489
 select t.as_admin();
 select t.eq('expired: the refused confirm did not board', t.tk48(t.u(4853)), 'valid');
 update route_subscriptions set valid_to = current_date + 120, valid_from = current_date - 1 where id = t.sub48();
+select t.as_admin();
+update trips set status = 'scheduled' where id = t.u(4853);   -- a boarding trip is closed to cancellation
 select t.as_user(t.u(3001));
 select public.cancel_my_booking(t.bk48(t.u(4853)), 'test');
+select t.as_admin();
+update trips set status = 'boarding' where id = t.u(4853);   -- scanning needs the trip open again
 select t.eq('cancelled: the card says cancelled', t.sc48(4891, t.tok48('tk3'), t.u(4853))->>'verdict', 'cancelled');
+select t.as_admin();
 select t.eq('cancelled: confirm is refused', t.cb48(4891, t.u(4853), (select id from tickets where booking_id = (select id from bookings where subscription_id = t.sub48() and trip_id = t.u(4853) limit 1) limit 1)), '23514|ticket is cancelled');
 
 -- 8. audit: every scan is recorded, without personal data ------------------------------------------------------------------------------

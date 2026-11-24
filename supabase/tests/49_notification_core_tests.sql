@@ -8,7 +8,7 @@ create or replace function t.enq49(p_event text, p_user int, p_company uuid, p_p
 
 delete from public.notifications where event_key like 'test.%' or event_key = 'platform.job_failed';
 -- earlier suites created students/subscriptions/trips, which now (0056) write notices of their own: this suite is about the core, start from none
-delete from public.notifications where event_key is not null;
+delete from public.notifications;
 update public.profiles set locale = 'ar' where id = t.u(3001);
 update public.profiles set locale = 'en' where id = t.u(3002);
 insert into public.notification_events (key, audience, default_channels, mandatory, is_live, description) values
@@ -74,7 +74,8 @@ select t.as_user(t.u(3002));
 select t.eq('prefs: another user''s opt-outs are not visible', t.rows($$select 1 from public.notification_preferences$$), 0::bigint);
 select t.as_admin();
 select t.eq('opt-out: the notice is NOT created for an opted-out user', t.enq49('test.live', 3001, null, '{"name":"x"}', 'p1'), 0);
-select t.eq('opt-out: a mandatory notice ignores any stored opt-out', (with i as (insert into public.notification_preferences (user_id, event_key, channel, enabled) values (t.u(3001), 'test.must', 'in_app', false) returning 1) select t.enq49('test.must', 3001, null, '{}', 'p2') from i), 1);
+insert into public.notification_preferences (user_id, event_key, channel, enabled) values (t.u(3001), 'test.must', 'in_app', false);
+select t.eq('opt-out: a mandatory notice ignores any stored opt-out', t.enq49('test.must', 3001, null, '{}', 'p2'), 1);
 
 -- 4. inbox -----------------------------------------------------------------------------------------------------------------------------
 select t.as_user(t.u(3002));
@@ -93,11 +94,11 @@ select t.as_anon();
 select t.eq('inbox: anon refused', t.err49($$select public.my_unread_count()$$), '42501');
 select t.as_admin();
 update public.notifications set company_id = t.u(101) where dedupe_key = 'd3';
-update public.companies set status = 'suspended' where id = t.u(101);
+update public.companies set status = 'suspended', suspended_at = now() where id = t.u(101);
 select t.as_user(t.u(3002));
 select t.eq('inbox: notices of a suspended company are hidden', t.rows($$select 1 from public.my_inbox(50) where id = (select id from public.notifications where dedupe_key = 'd3')$$), 0::bigint);
 select t.as_admin();
-update public.companies set status = 'active' where id = t.u(101);
+update public.companies set status = 'active', suspended_at = null where id = t.u(101);
 
 -- 5. scheduler ---------------------------------------------------------------------------------------------------------------------------
 create or replace function app_private.t49_ok() returns integer language plpgsql security definer as $$ begin perform app_private.write_audit('system', null, 'test.job_ran', 'job', null, '{}'::jsonb); return 1; end $$;
