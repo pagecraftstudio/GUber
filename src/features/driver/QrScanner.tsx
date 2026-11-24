@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-type Props = { active: boolean; onToken: (text: string) => void };
+type Props = { active: boolean; onToken: (text: string) => void; /** shown when the camera cannot start (driver-text) */ unavailableText?: string };
 type Detector = { detect: (s: CanvasImageSource) => Promise<{ rawValue: string }[]> };
 
 /**
@@ -10,11 +10,13 @@ type Detector = { detect: (s: CanvasImageSource) => Promise<{ rawValue: string }
  * (iOS Safari, Firefox). It only hands the decoded TEXT to the parent; the server decides whether it is a valid ticket.
  * Camera permission is requested only when `active`, and every track is stopped on unmount / deactivate.
  */
-export function QrScanner({ active, onToken }: Props) {
+export function QrScanner({ active, onToken, unavailableText = 'Camera unavailable. Allow camera access, or type the code below.' }: Props) {
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const cb = useRef(onToken);
   cb.current = onToken;
+  const msg = useRef(unavailableText);
+  msg.current = unavailableText;
 
   useEffect(() => {
     if (!active) return;
@@ -57,7 +59,7 @@ export function QrScanner({ active, onToken }: Props) {
         };
         void tick();
       } catch {
-        setError('Camera unavailable. Allow camera access, or type the code below.');
+        setError(msg.current);
       }
     })();
 

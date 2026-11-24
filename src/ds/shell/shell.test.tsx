@@ -11,6 +11,7 @@ import { MarketplaceHeaderMasar, QuietFooter } from './MarketplaceHeaderMasar';
 import { PERMISSIONS } from '@/lib/auth/permission-keys';
 
 let path = '/dashboard/bookings';
+vi.mock('@/features/driver/language-action', () => ({ setDriverLanguageAction: async () => undefined }));
 vi.mock('next/navigation', () => ({ usePathname: () => path, useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push() {}, replace() {}, refresh() {} }) }));
 
 beforeAll(polyfillDialog);
@@ -147,6 +148,20 @@ describe('driver shell', () => {
     expect(container.querySelector('aside')).toBeNull();
     expect(screen.getByRole('button', { name: 'Sign out' }).className).toContain('h-11');
     expect(screen.getByText(/Delta Express/)).toBeTruthy();
+  });
+
+  it('Arabic: RTL wrapper with lang=ar, Arabic sign-out, and a switch to English (44px)', () => {
+    const { container } = render(<DriverShellMasar companyName="Delta Express" driverName="Karim" logoutAction={() => {}} lang="ar"><p>x</p></DriverShellMasar>);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('dir')).toBe('rtl');
+    expect(root.getAttribute('lang')).toBe('ar');
+    expect(screen.getByRole('button', { name: 'تسجيل الخروج' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /English/ }).className).toContain('min-h-11');
+  });
+  it('English: LTR, and the switch offers Arabic', () => {
+    const { container } = render(<DriverShellMasar companyName="Delta Express" driverName="Karim" logoutAction={() => {}} lang="en"><p>x</p></DriverShellMasar>);
+    expect((container.firstElementChild as HTMLElement).getAttribute('dir')).toBe('ltr');
+    expect(screen.getByRole('button', { name: /العربية/ })).toBeTruthy();
   });
 });
 
