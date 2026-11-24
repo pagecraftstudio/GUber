@@ -119,6 +119,9 @@ export function mapDbError(error: DbErrorLike): AppError {
       return new AppError('rate_limited', { ...(/^\d{1,6}$/.test(error.hint ?? '') ? { detail: `retry_after_${error.hint}` } : {}), cause: error });
     case '42501': // RLS violation, missing grant, or trigger-raised
       if (/no active subscription/.test(text)) return new AppError('subscription_required', { cause: error });
+      // captcha passes (0057): stable details the UI translates; checked before the generic forbidden
+      if (/captcha proof invalid/.test(text)) return new AppError('forbidden', { detail: 'captcha_invalid', cause: error });
+      if (/captcha required/.test(text)) return new AppError('forbidden', { detail: 'captcha_required', cause: error });
       return new AppError('forbidden', { cause: error });
     case '53400': {
       const limit = /plan limit reached: (\w+)/.exec(text)?.[1];

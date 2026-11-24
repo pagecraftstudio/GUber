@@ -3,6 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { requireCustomer } from '@/lib/auth/guards';
 import { toClientError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/server';
+import { ensureCaptchaPass } from '@/lib/captcha/pass';
+import type { CaptchaPurpose } from '@/lib/captcha/proof';
 import { memberSubscriptionService, type MemberContext } from './service';
 import type { DayState, TripOption } from './types';
 
@@ -12,11 +14,13 @@ export type MemberResult<T = undefined> = ({ ok: true } & (T extends undefined ?
 
 const isNextSignal = (e: unknown) => typeof e === 'object' && e !== null && 'digest' in e && String((e as { digest: unknown }).digest).startsWith('NEXT_');
 
-async function run<T>(work: (c: MemberContext) => Promise<T>, paths: string[] = []): Promise<MemberResult<T>> {
+async function run<T>(work: (c: MemberContext) => Promise<T>, paths: string[] = [], captcha?: { purpose: CaptchaPurpose; token: string | null | undefined }): Promise<MemberResult<T>> {
   let data: T;
   try {
     const auth = await requireCustomer();
-    data = await work({ db: await createClient(), userId: auth.userId });
+    const db = await createClient();
+    if (captcha) await ensureCaptchaPass(db, auth.userId, captcha.purpose, captcha.token);   // before the protected RPC; no-op while enforcement is off
+    data = await work({ db, userId: auth.userId });
   } catch (e) {
     if (isNextSignal(e)) throw e;
     const c = toClientError(e);
@@ -27,7 +31,7 @@ async function run<T>(work: (c: MemberContext) => Promise<T>, paths: string[] = 
 }
 
 export async function savePhoneAction(phone: string) { return run((c) => memberSubscriptionService.savePhone(c, { phone }), ['/my-subscriptions']); }
-export async function requestPlanAction(planId: string) { return run((c) => memberSubscriptionService.request(c, { planId }), ['/my-subscriptions', '/my-subscriptions/plans']); }
+export async function requestPlanAction(planId: string, captchaToken?: string | null) { return run((c) => memberSubscriptionService.request(c, { planId }), ['/my-subscriptions', '/my-subscriptions/plans'], { purpose: 'subscription', token: captchaToken }); }
 export async function markNoticesReadAction() { return run((c) => memberSubscriptionService.markNoticesRead(c), ['/my-subscriptions']); }
 export async function cancelSubscriptionAction(id: string) { return run((c) => memberSubscriptionService.cancel(c, id), ['/my-subscriptions']); }
 export async function cancelSubscriberBookingAction(bookingId: string) { return run((c) => memberSubscriptionService.cancelBooking(c, bookingId), ['/my-subscriptions']); }
@@ -44,8 +48,8 @@ export async function loadReturnOptionsAction(subscriptionId: string, outboundTr
 }
 
 /** returnTripId = null means "not returning with this company today": only the go seat is booked. */
-export async function bookSubscriberAction(subscriptionId: string, outboundTripId: string, returnTripId: string | null) {
-  return run((c) => memberSubscriptionService.book(c, { subscriptionId, outboundTripId, ...(returnTripId ? { returnTripId } : {}) }), ['/my-subscriptions', `/my-subscriptions/${subscriptionId}/book`]);
+export async function bookSubscriberAction(subscriptionId: string, outboundTripId: string, returnTripId: string | null, captchaToken?: string | null) {
+  return run((c) => memberSubscriptionService.book(c, { subscriptionId, outboundTripId, ...(returnTripId ? { returnTripId } : {}) }), ['/my-subscriptions', `/my-subscriptions/${subscriptionId}/book`], { purpose: 'booking', token: captchaToken });
 }
 
 /** What the marketplace profile tab shows: the member's MASAR ID and a summary of their subscriptions. Everything comes from the session. */

@@ -15,8 +15,19 @@ const ERR_AR: Record<string, string> = {
   not_found: 'لم نجد ما طلبته. حدّث الصفحة وحاول مرة أخرى', invalid_phone: 'أدخل رقم هاتف صالحاً', validation: 'راجع البيانات وحاول مرة أخرى', forbidden: 'لا يمكنك تنفيذ ذلك',
   unauthenticated: 'سجّل الدخول مرة أخرى للمتابعة', trip_not_bookable: 'هذه الرحلة غير متاحة للحجز', trip_departed: 'غادرت هذه الرحلة بالفعل', seats_per_booking_exceeded: 'عدد المقاعد أكبر من المسموح في حجز واحد', conflict: 'يتعارض هذا الطلب مع حجز قائم',
 };
+// captcha (0057 + pass.ts): shown next to the widget, so they say what to do, not what the system did
+const CAPTCHA_EN: Record<string, string> = {
+  captcha_required: 'Please complete the security check, then try again.',
+  captcha_invalid: 'The security check expired or failed. Complete it again and retry.',
+  captcha_unavailable: 'The security check is unavailable right now. Please try again in a moment.',
+};
+const CAPTCHA_AR: Record<string, string> = {
+  captcha_required: 'يرجى إكمال التحقق الأمني ثم المحاولة مرة أخرى.',
+  captcha_invalid: 'انتهت صلاحية التحقق الأمني أو فشل. أكمله مرة أخرى ثم أعد المحاولة.',
+  captcha_unavailable: 'خدمة التحقق الأمني غير متاحة حالياً. حاول مرة أخرى بعد قليل.',
+};
 export const errorText = (lang: 'en' | 'ar', code: string, detail?: string): string => {
-  const m = lang === 'ar' ? ERR_AR : ERR_EN;
+  const m = { ...(lang === 'ar' ? ERR_AR : ERR_EN), ...(lang === 'ar' ? CAPTCHA_AR : CAPTCHA_EN) };
   return m[detail ?? ''] ?? m[code] ?? (lang === 'ar' ? 'حدث خطأ. حاول مرة أخرى' : 'Something went wrong. Try again');
 };
 

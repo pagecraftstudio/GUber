@@ -6,6 +6,7 @@ import { Button } from '@/ds/primitives/Button';
 import { buttonClass } from '@/ds/primitives/button-class';
 import { controlClass } from '@/ds/primitives/Input';
 import { errorText } from '@/features/my-subscriptions/ui/text';
+import { useCaptchaGate } from '@/components/captcha/useCaptchaGate';
 import { bookingPaymentAction, bookTripAction, quoteBookingAction } from '../actions';
 import { proofWhatsappUrl, type BookedTrip, type PaymentInfo, type Quote, type QuoteSubscription, type TripDetail, type TripStop } from '../types';
 
@@ -87,6 +88,7 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
   const [step, setStep] = useState<Step>('trip');
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const gate = useCaptchaGate('booking', lang);
   const [form, setForm] = useState<Form>({ seats: 1, fullName: defaults.fullName, phone: defaults.phone, email: '', university: '', studentId: '', pickup: '', dropoff: '', notes: '' });
   const [quote, setQuote] = useState<Quote | null>(null);
   const [booked, setBooked] = useState<BookedTrip | null>(null);
@@ -112,7 +114,8 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
       const r = await bookTripAction({
         tripId: trip.tripId, seats: form.seats, fullName: form.fullName, phone: form.phone, email: form.email, university: form.university, studentId: form.studentId,
         ...(form.pickup ? { pickupStopId: form.pickup } : {}), ...(form.dropoff ? { dropoffStopId: form.dropoff } : {}), notes: form.notes, idempotencyKey: key.current,
-      }).catch(() => ({ ok: false as const, code: 'internal' }));
+      }, gate.token).catch(() => ({ ok: false as const, code: 'internal' }));
+      gate.spent();   // the pass is one-time: a retry needs a fresh challenge
       if (!r.ok) { setError(errorText(lang, r.code, 'detail' in r ? r.detail : undefined)); return; }
       setBooked(r.booking);
       if (r.booking.status === 'pending') {
@@ -214,8 +217,9 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
             <div className="flex justify-between border-t border-line-default pt-2 text-base font-semibold"><dt>{t.total}</dt><dd>{quote.subscription?.free ? t.free : formatMoney(quote.total, quote.currency, lang)}</dd></div>
           </dl>
           {quote.subscription?.free ? null : quote.requiresPayment && quote.deadlineHours ? <p className="text-sm text-ink-secondary">{t.holdText(`${formatNumber(quote.deadlineHours, lang)} ${lang === 'ar' ? 'ساعة من الحجز' : 'h after booking'}`)}</p> : <p className="text-sm text-ink-secondary">{t.pay2}</p>}
+          {gate.widget}
           {err}
-          <div className="flex gap-2"><Button type="button" variant="secondary" onClick={() => setStep('passenger')}>{t.back}</Button><Button type="button" onClick={confirm} disabled={pending}>{pending ? t.confirming : t.confirm}</Button></div>
+          <div className="flex gap-2"><Button type="button" variant="secondary" onClick={() => setStep('passenger')}>{t.back}</Button><Button type="button" onClick={confirm} disabled={pending || !gate.ready}>{pending ? t.confirming : t.confirm}</Button></div>
         </div>
       ) : null}
     </div>

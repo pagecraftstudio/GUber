@@ -90,3 +90,25 @@ describe('Phase 8D: SKIP_ENV_VALIDATION on hosted deployments', () => {
     expect(shouldEnforce({ SKIP_ENV_VALIDATION: '1' }, 'build')).toEqual({ enforce: false, skippedBy: 'SKIP_ENV_VALIDATION=1' });
   });
 });
+
+describe('captcha variables (P6a)', () => {
+  const pass = 'p'.repeat(32), ts = 't'.repeat(24), site = '1x00000000000000000000AA';
+  it('are optional: enforcement is off until a super admin switches it on', () => expect(checkEnv(good).ok).toBe(true));
+  it('accepts a complete, well-shaped set (Cloudflare test keys included)', () => {
+    expect(checkEnv({ ...good, CAPTCHA_PASS_SECRET: pass, TURNSTILE_SECRET_KEY: ts, NEXT_PUBLIC_TURNSTILE_SITE_KEY: site }).ok).toBe(true);
+  });
+  it('rejects a short pass secret, a short Turnstile secret and a malformed site key, never echoing values', () => {
+    const r = checkEnv({ ...good, CAPTCHA_PASS_SECRET: 'short-value-xyz', TURNSTILE_SECRET_KEY: 'tiny', NEXT_PUBLIC_TURNSTILE_SITE_KEY: 'not a key!' });
+    expect(r.issues.map((i) => i.name)).toEqual(['CAPTCHA_PASS_SECRET', 'NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY']);
+    expect(JSON.stringify(r)).not.toMatch(/short-value-xyz|tiny|not a key/);
+  });
+  it('on a hosted deployment one secret without the other is an error', () => {
+    expect(names({ ...good, VERCEL_ENV: 'production', CAPTCHA_PASS_SECRET: pass })).toContain('TURNSTILE_SECRET_KEY');
+    expect(names({ ...good, VERCEL_ENV: 'production', TURNSTILE_SECRET_KEY: ts })).toContain('CAPTCHA_PASS_SECRET');
+    expect(checkEnv({ ...good, VERCEL_ENV: 'production', CAPTCHA_PASS_SECRET: pass, TURNSTILE_SECRET_KEY: ts }).ok).toBe(true);
+  });
+  it('the secrets cannot be published through NEXT_PUBLIC_', () => {
+    expect(names({ ...good, NEXT_PUBLIC_TURNSTILE_SECRET_KEY: ts })).toContain('NEXT_PUBLIC_TURNSTILE_SECRET_KEY');
+    expect(names({ ...good, NEXT_PUBLIC_CAPTCHA_PASS_SECRET: pass })).toContain('NEXT_PUBLIC_CAPTCHA_PASS_SECRET');
+  });
+});

@@ -1,5 +1,5 @@
 'use client';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { Button } from '@/ds/primitives/Button';
 import { Field } from '@/ds/primitives/Field';
 import { DigitInput, Input } from '@/ds/primitives/Input';
@@ -19,6 +19,8 @@ export interface BookingMasarViewProps {
   values: { name: string; phone: string; studentId: string };
   setValues: (v: { name: string; phone: string; studentId: string }) => void;
   showStudentId: boolean;
+  /** P6a: Turnstile widget (null while enforcement is off) and whether the confirm button may fire. */
+  captchaSlot?: ReactNode; captchaReady?: boolean;
   count: number; setCount: (n: number) => void;
   extraNames: string[]; setExtraName: (i: number, v: string) => void; showExtraNames: boolean;
   offersRoundTrip: boolean; roundTrip: boolean; setRoundTrip: (b: boolean) => void; roundTripPrice: number;
@@ -34,12 +36,13 @@ export function BookingMasarView(p: BookingMasarViewProps) {
   const money = (n: number) => formatMoney(n, 'EGP', locale);
   const fare = p.roundTrip ? p.roundTripPrice : p.oneWayFare;
   const blocked = p.isFullyBooked;
+  const captchaWaiting = p.captchaReady === false && !p.guestBlocked;
   return (
     <Modal open={p.open} onClose={p.onClose} size="lg" title={t('bookYourSeat')}
       subtitle={<>{p.routeTitle} · {formatDay(p.departureDate, locale)} {t('atTime')} {formatClock(p.departureTime, locale)}</>}
       footer={<>
         <Button variant="secondary" onClick={p.onClose}>{t('cancel')}</Button>
-        <Button type="submit" form="masar-booking" loading={p.loading} disabled={blocked}>
+        <Button type="submit" form="masar-booking" loading={p.loading} disabled={blocked || captchaWaiting}>
           {blocked ? t('fullyBooked') : p.guestBlocked ? (ar ? 'تسجيل الدخول للحجز' : 'Sign in to book') : (ar ? 'تأكيد الحجز' : 'Confirm booking')}
         </Button>
       </>}>
@@ -129,6 +132,7 @@ export function BookingMasarView(p: BookingMasarViewProps) {
           <div className="flex justify-between gap-3 border-t border-line-default pt-2 text-base font-medium"><dt>{t('totalToPay')}</dt><dd className="tabular-nums">{money(p.total)}</dd></div>
         </dl>
         <p className="text-[13px] text-ink-muted">{ar ? 'لا يوجد دفع إلكتروني. ادفع للمشغّل مباشرة حسب تعليماته.' : 'No online payment. Pay the operator directly, as they instruct.'}</p>
+        {p.captchaSlot}
         {p.errors.form ? <InlineAlert tone="error">{p.errors.form}</InlineAlert> : null}
       </form>
     </Modal>

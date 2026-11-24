@@ -48,6 +48,38 @@ Exactly three, names verified against `src/lib/env.ts` and `src/lib/env-check.ts
 - Never set `NEXT_PUBLIC_UI_DATA_MODE=mock`. `SKIP_ENV_VALIDATION` is ignored on Vercel; do not set it.
 - No service-role key belongs in Vercel: the app uses none. `grep -rn service_role src` still matches, but only `src/lib/env-check.ts` (rejects the key) and tests that assert its absence; any hit in other non-test code is a defect.
 
+### 2.1 Captcha variables (P6a): optional until enforcement is switched on, then FAIL CLOSED
+| Name | Where | Value |
+|---|---|---|
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public, inlined at build (redeploy to change) | Turnstile site key |
+| `TURNSTILE_SECRET_KEY` | **server only** (never `NEXT_PUBLIC_`) | Turnstile secret key |
+| `CAPTCHA_PASS_SECRET` | **server only** | 32+ random characters; **must be identical** to the secret given to `set_captcha_enforcement` |
+
+- Enforcement lives in the database (`app_private.captcha_config.enforced`, default **off**). With it off the app shows no widget and ignores tokens.
+- With it **on**, a missing/short secret, a missing site key, a Turnstile outage or an unreadable flag all **refuse** the booking/subscription (`captcha_unavailable`); nothing is ever waved through.
+- Env check reports wrong shapes always, and on a hosted deployment one secret without its partner.
+- **Rollout order:** (1) apply `0057` and `0058` to hosted Supabase, (2) set the three variables in Vercel and redeploy, (3) only then a super admin runs `select public.set_captcha_enforcement(true, '<CAPTCHA_PASS_SECRET value>')`. Rolling back = `set_captcha_enforcement(false)` (no redeploy).
+- Turnstile dashboard: widget mode Managed, hostnames = every platform host that serves booking/subscription pages. Actions used: `booking`, `subscription` (the server rejects a token minted for another action).
+- Needs `0058` too: `create_my_round_trip_booking` was not gated by `0057`.
+
+### 2.2 Auth captcha (P6c): login, sign-up, password reset (operators, platform admins and passengers)
+Supabase Auth is reachable with the public anon key, so the app cannot enforce this alone: **only Supabase's own CAPTCHA setting cannot be skipped.** The app sends the token; Supabase refuses a sign-in without a valid one.
+
+| Name | Where | Value |
+|---|---|---|
+| `NEXT_PUBLIC_AUTH_CAPTCHA` | public, inlined at build | `on` / `off` (default off). Anything else is rejected by the env check; `on` without a site key is rejected too |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public | same site key as 2.1 |
+
+**Rollout order (the two switches must flip together, or sign-in breaks):**
+1. Cloudflare Turnstile widget: add the platform host(s). Actions used by the forms: `login`, `signup`, `reset`.
+2. Vercel: set `NEXT_PUBLIC_AUTH_CAPTCHA=on` and the site key, redeploy a **preview** first.
+3. Supabase Dashboard > Authentication > Attack Protection: enable CAPTCHA, provider Turnstile, paste the **secret** (it lives in Supabase, not in Vercel). *(Verify that Turnstile is offered in the current dashboard before relying on this.)*
+4. **Prove the control works** (it is the only thing protecting platform login, because D5 has no 2FA):
+   `curl -s -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $ANON" -H 'content-type: application/json' -d '{"email":"x@y.test","password":"wrong-password-123"}'`
+   must answer with a **captcha** error (`captcha_failed` / "captcha verification process failed"), NOT `invalid_credentials`. If you get `invalid_credentials`, step 3 is not active.
+5. Rollback = set the Supabase switch off first, then `NEXT_PUBLIC_AUTH_CAPTCHA=off` and redeploy.
+- Not covered by this captcha: Google sign-in (Google is the challenge) and `/auth/confirm` email links.
+
 ## 3. Pre-deploy gate (run locally or in CI)
 ```
 npx tsc --noEmit

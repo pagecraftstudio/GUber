@@ -6,6 +6,7 @@ import type { TripBookingRepository } from './repository';
 import { toQuote, type BookedTrip, type Quote, type QuoteRow, type TripDetail } from './types';
 
 vi.mock('next/link', () => ({ default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a> }));
+vi.mock('@/features/captcha/actions', () => ({ captchaEnforcedAction: async () => false, obtainCaptchaPassAction: async () => ({ ok: true }) }));
 vi.mock('./actions', () => ({ quoteBookingAction: vi.fn(), bookTripAction: vi.fn(), bookingPaymentAction: vi.fn() }));
 import { BookTripView } from './ui/BookTripView';
 

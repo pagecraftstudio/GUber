@@ -42,4 +42,6 @@ export interface SignUpData {
   phone: string;
   studentId?: string;
   university?: string;
+  /** Turnstile token for Supabase's auth captcha (P6c). Absent while captcha is off. */
+  captchaToken?: string | null;
 }

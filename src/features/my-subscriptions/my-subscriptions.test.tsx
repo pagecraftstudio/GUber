@@ -17,6 +17,7 @@ const bookA = vi.fn();
 const markRead = vi.fn(async () => ({ ok: true as const }));
 const requestPlan = vi.fn(async (_id: string) => ({ ok: true as const }));
 const cancelBk = vi.fn(async (_id: string) => ({ ok: true as const }));
+vi.mock('@/features/captcha/actions', () => ({ captchaEnforcedAction: async () => false, obtainCaptchaPassAction: async () => ({ ok: true }) }));
 vi.mock('./actions', () => ({
   savePhoneAction: async () => ({ ok: true }), requestPlanAction: (id: string) => requestPlan(id), markNoticesReadAction: () => markRead(), cancelSubscriptionAction: async () => ({ ok: true }),
   cancelSubscriberBookingAction: (id: string) => cancelBk(id),
@@ -100,7 +101,7 @@ describe('BookView', () => {
     await userEvent.selectOptions(await screen.findByLabelText('Go trip'), ID);
     await userEvent.click(screen.getByRole('button', { name: 'No, only the go trip' }));
     await userEvent.click(screen.getByRole('button', { name: 'Confirm booking' }));
-    await waitFor(() => expect(bookA).toHaveBeenCalledWith(ID, ID, null));
+    await waitFor(() => expect(bookA).toHaveBeenCalledWith(ID, ID, null, null));
     expect(await screen.findByText('Booked')).toBeTruthy();
   });
   it('returning requires a return trip', async () => {
@@ -117,7 +118,7 @@ describe('BookView', () => {
     await userEvent.selectOptions(screen.getByLabelText('Return trip'), ID2);
     expect(confirm.disabled).toBe(false);
     await userEvent.click(confirm);
-    await waitFor(() => expect(bookA).toHaveBeenCalledWith(ID, ID, ID2));
+    await waitFor(() => expect(bookA).toHaveBeenCalledWith(ID, ID, ID2, null));
   });
   it('explains when no return trip fits', async () => {
     day({ goBooked: false, returnBooked: false }, [trip(ID, 6)]);

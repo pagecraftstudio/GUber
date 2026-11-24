@@ -3,6 +3,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: 'Incorrect email or password.',
   email_not_confirmed: 'Please confirm your email first. Check your inbox for the confirmation link.',
   rate_limited: 'Too many attempts. Please wait a few minutes and try again.',
+  captcha_failed: 'Please complete the security check and try again.',
   login_failed: 'We could not sign you in. Please try again.',
   invalid_form: 'Please check the form and try again.',
   weak_password: 'Password must be 10–72 characters and not too common.',

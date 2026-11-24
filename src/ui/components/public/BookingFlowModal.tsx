@@ -6,6 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 import { transportService } from '../../lib/transportService';
 import { BackendError, describeBackendError } from '../../lib/real/customerBackend';
 import { isMockMode } from '../../lib/runtime';
+import { useCaptchaGate } from '@/components/captcha/useCaptchaGate';
+import { obtainCaptchaPassAction } from '@/features/captcha/actions';
+import { errorText } from '@/features/my-subscriptions/ui/text';
 
 import { BookingMasarView } from '../masar/BookingMasarView';
 
@@ -32,6 +35,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   const { locale, t } = useLocale();
   const { currentCompany } = useTenant();
   const { user, profile, isAuthenticated, openAuthModal } = useAuth();
+  const gate = useCaptchaGate('booking', locale === 'ar' ? 'ar' : 'en');
 
   const [passengerName, setPassengerName] = useState('');
   const [passengerPhone, setPassengerPhone] = useState('');
@@ -158,6 +162,12 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
     setLoading(true);
 
     try {
+      // P6a: the wizard calls the booking RPC from the browser, so the pass is redeemed through a server action first (no-op while enforcement is off).
+      if (!isMockMode()) {
+        const pass = await obtainCaptchaPassAction('booking', gate.token);
+        gate.spent();   // one-time token: a retry needs a fresh challenge
+        if (!pass.ok) { setLoading(false); setErrors({ form: errorText(locale === 'ar' ? 'ar' : 'en', pass.code, pass.detail) }); return; }
+      }
       // Build full passenger list (Primary passenger + any extra companions)
       const allPassengerNames = [
         passengerName.trim(),
@@ -213,6 +223,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
       onSignIn={() => openAuthModal('login')} {...(isMockMode() ? { onBookForOther: handleResetToGuest } : {})}
       values={{ name: passengerName, phone: passengerPhone, studentId }}
       setValues={(v) => { setPassengerName(v.name); setPassengerPhone(v.phone); setStudentId(v.studentId); }}
+      captchaSlot={isMockMode() ? null : gate.widget} captchaReady={isMockMode() || gate.ready}
       showStudentId={isMockMode()} count={passengerCount} setCount={setPassengerCount}
       extraNames={extraPassengerNames} setExtraName={handleApplyCompanion} showExtraNames={isMockMode()}
       offersRoundTrip={offersRoundTrip} roundTrip={roundTrip} setRoundTrip={setRoundTrip} roundTripPrice={roundTripFare}
