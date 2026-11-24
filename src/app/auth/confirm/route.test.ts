@@ -2,11 +2,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const verifyOtp = vi.fn();
+const exchangeCodeForSession = vi.fn();
+const getUserIdentities = vi.fn();
+const unlinkIdentity = vi.fn();
+const signOut = vi.fn();
 const ctxHolder: { ctx: unknown } = { ctx: null };
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/supabase/server', () => ({ createClient: async () => ({ auth: { verifyOtp } }) }));
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: async () => ({ auth: { verifyOtp, exchangeCodeForSession, getUserIdentities, unlinkIdentity, signOut } }),
+}));
 vi.mock('@/lib/auth/context', () => ({ getAuthContext: async () => ctxHolder.ctx }));
-vi.mock('@/lib/auth/permissions', () => ({ homePathFor: (c: { home: string } | null) => (c ? c.home : '/') }));
+vi.mock('@/lib/auth/permissions', () => ({
+  homePathFor: (c: { home: string } | null) => (c ? c.home : '/'),
+  accessState: (c: { state?: string }) => c.state ?? 'customer',
+}));
 vi.mock('@/lib/env', () => ({ getEnv: () => ({ NEXT_PUBLIC_SITE_URL: 'https://app.example.test' }) }));
 
 import { GET } from './route';
@@ -16,7 +25,14 @@ const call = async (qs: string) => {
   return { status: res.status, location: res.headers.get('location') };
 };
 
-beforeEach(() => { verifyOtp.mockReset(); verifyOtp.mockResolvedValue({ error: null }); ctxHolder.ctx = null; });
+beforeEach(() => {
+  verifyOtp.mockReset(); verifyOtp.mockResolvedValue({ error: null });
+  exchangeCodeForSession.mockReset(); exchangeCodeForSession.mockResolvedValue({ error: null });
+  getUserIdentities.mockReset(); getUserIdentities.mockResolvedValue({ data: { identities: [] }, error: null });
+  unlinkIdentity.mockReset(); unlinkIdentity.mockResolvedValue({ error: null });
+  signOut.mockReset(); signOut.mockResolvedValue({ error: null });
+  ctxHolder.ctx = null;
+});
 
 describe('GET /auth/confirm', () => {
   it('valid link + allow-listed next -> that page', async () => {
@@ -61,5 +77,56 @@ describe('GET /auth/confirm', () => {
       const r = await call(q);
       expect(new URL(r.location!).origin, q).toBe('https://app.example.test');
     }
+  });
+});
+
+describe('GET /auth/confirm: Google sign-in (customers only)', () => {
+  it('customer + allow-listed next -> that page', async () => {
+    ctxHolder.ctx = { home: '/my-bookings', state: 'customer' };
+    const r = await call('code=abc&from=customer&next=%2Fmy-subscriptions');
+    expect(exchangeCodeForSession).toHaveBeenCalledWith('abc');
+    expect(r.location).toBe('https://app.example.test/my-subscriptions');
+  });
+  it('customer + missing or unsafe next -> customer home, never an open redirect', async () => {
+    ctxHolder.ctx = { home: '/my-bookings', state: 'customer' };
+    for (const bad of ['', '&next=https%3A%2F%2Fevil.test', '&next=%2F%2Fevil.test', '&next=%2Fdashboard%2Fusers%2F..%2F..%2Fx']) {
+      const r = await call(`code=abc&from=customer${bad}`);
+      expect(r.location, bad).toBe('https://app.example.test/my-bookings');
+    }
+  });
+  it('a code without from=customer is refused BEFORE the exchange (operator login never offers Google)', async () => {
+    for (const q of ['code=abc', 'code=abc&from=operator', 'code=abc&from=https%3A%2F%2Fevil.test']) {
+      expect((await call(q)).location, q).toBe('https://app.example.test/login?error=google_not_allowed');
+    }
+    expect(exchangeCodeForSession).not.toHaveBeenCalled();
+  });
+  it('a STAFF account is rejected: Google identity removed, session ended, no landing on an operator page', async () => {
+    ctxHolder.ctx = { home: '/dashboard', state: 'tenant' };
+    const google = { provider: 'google', identity_id: 'g1' };
+    getUserIdentities.mockResolvedValue({ data: { identities: [{ provider: 'email', identity_id: 'e1' }, google] }, error: null });
+    const r = await call('code=abc&from=customer&next=%2Fdashboard');
+    expect(r.location).toBe('https://app.example.test/login?error=google_not_allowed');
+    expect(unlinkIdentity).toHaveBeenCalledWith(google);
+    expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+  it('never unlinks the only identity an account has', async () => {
+    ctxHolder.ctx = { home: '/admin', state: 'platform' };
+    getUserIdentities.mockResolvedValue({ data: { identities: [{ provider: 'google', identity_id: 'g1' }] }, error: null });
+    await call('code=abc&from=customer');
+    expect(unlinkIdentity).not.toHaveBeenCalled();
+    expect(signOut).toHaveBeenCalled();
+  });
+  it('no resolvable context after the exchange fails closed', async () => {
+    ctxHolder.ctx = null;
+    expect((await call('code=abc&from=customer')).location).toBe('https://app.example.test/login?error=google_not_allowed');
+    expect(signOut).toHaveBeenCalled();
+  });
+  it('exchange failure -> customer login with google_failed', async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: { message: 'bad verifier' } });
+    expect((await call('code=abc&from=customer')).location).toBe('https://app.example.test/login?error=google_failed');
+  });
+  it('user cancelled on Google (error param, no code) -> customer login, no exchange', async () => {
+    expect((await call('error=access_denied&error_description=cancelled')).location).toBe('https://app.example.test/login?error=google_failed');
+    expect(exchangeCodeForSession).not.toHaveBeenCalled();
   });
 });

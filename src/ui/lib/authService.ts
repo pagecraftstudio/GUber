@@ -1,6 +1,6 @@
 import type { AuthSession, CustomerProfile, CustomerUser, SavedCompanion, SignUpData } from '../types/auth';
 import { getDataMode } from './runtime';
-import { RealAuthService } from './real/authService.real';
+import { AuthServiceError, RealAuthService } from './real/authService.real';
 import { getSupabaseBrowser } from './real/supabaseBrowser';
 import { getEnv } from '@/lib/env';
 
@@ -8,6 +8,8 @@ import { getEnv } from '@/lib/env';
 export interface AuthApi {
   onAuthStateChange(cb: (s: AuthSession | null) => void): () => void;
   signInWithPassword(c: { email: string; password: string }): Promise<{ user: CustomerUser; session: AuthSession }>;
+  /** Customers only. Starts a browser redirect to Google; resolves before the page navigates away. Real service only (the mock has no Google). */
+  signInWithGoogle?(next?: string): Promise<void>;
   signUp(d: SignUpData): Promise<{ user: CustomerUser; session: AuthSession }>;
   signOut(): Promise<void>;
   resetPasswordForEmail(email: string): Promise<boolean>;
@@ -34,7 +36,7 @@ const impl = async (): Promise<AuthApi> => {
 };
 
 /** Same name and shape the components already import. Mode is resolved per call (fail closed in production). */
-export const authService: AuthApi = {
+export const authService: AuthApi & { signInWithGoogle(next?: string): Promise<void> } = {
   onAuthStateChange: (cb) => {
     let off: () => void = () => undefined;
     let cancelled = false;
@@ -42,6 +44,11 @@ export const authService: AuthApi = {
     return () => { cancelled = true; off(); };
   },
   signInWithPassword: async (c) => (await impl()).signInWithPassword(c),
+  signInWithGoogle: async (next) => {
+    const i = await impl();
+    if (!i.signInWithGoogle) throw new AuthServiceError('unknown');
+    return i.signInWithGoogle(next);
+  },
   signUp: async (d) => (await impl()).signUp(d),
   signOut: async () => (await impl()).signOut(),
   resetPasswordForEmail: async (e) => (await impl()).resetPasswordForEmail(e),

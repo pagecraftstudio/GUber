@@ -20,6 +20,8 @@ export interface AuthModalMasarProps {
   reset: { email: string; setEmail: (v: string) => void; onSubmit: (e: FormEvent) => void };
   /** Only passed in mock mode outside production. */
   quickFill?: (who: 'karim' | 'nourhan') => void;
+  /** Customer Google sign-in. Omitted (no button) when the data mode has no Google, e.g. mock. */
+  onGoogle?: () => void;
   onGuestContinue?: () => void;
 }
 
@@ -31,6 +33,18 @@ export function AuthModalMasarView(p: AuthModalMasarProps) {
   const ar = p.locale === 'ar';
   const t = p.tr;
   const back = () => { p.clearError(); p.setMode('login'); };
+  const google = p.onGoogle ? (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 text-xs text-ink-secondary" role="separator">
+        <span className="h-px flex-1 bg-line-default" aria-hidden="true" />
+        <span>{ar ? 'أو' : 'or'}</span>
+        <span className="h-px flex-1 bg-line-default" aria-hidden="true" />
+      </div>
+      <Button type="button" variant="secondary" size="lg" fullWidth disabled={p.loading} onClick={p.onGoogle}>
+        {ar ? 'المتابعة باستخدام Google' : 'Continue with Google'}
+      </Button>
+    </div>
+  ) : null;
   return (
     <Modal open={p.isOpen} onClose={p.onClose} title={p.title} subtitle={p.subtitle} size="md">
       <div className="space-y-5">
@@ -55,6 +69,7 @@ export function AuthModalMasarView(p: AuthModalMasarProps) {
               <button type="button" className={linkBtn} onClick={() => { p.clearError(); p.setMode('forgot_password'); }}>{t('forgotPassword')}</button>
             </div>
             <Button type="submit" size="lg" fullWidth loading={p.loading}>{t('signIn')}</Button>
+            {google}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-default pt-3 text-sm text-ink-secondary">
               <span>{ar ? 'ليس لديك حساب؟' : "Don't have an account?"}</span>
               <button type="button" className={linkBtn} onClick={() => { p.clearError(); p.setMode('register'); }}>{t('signUp')}</button>
@@ -75,6 +90,7 @@ export function AuthModalMasarView(p: AuthModalMasarProps) {
               <Field label={t('optionalStudentId')} hint={t('studentIdHint')}><DigitInput kind="identifier" size="lg" dir="ltr" value={p.register.studentId} onChange={(e) => p.register.setStudentId(e.target.value)} /></Field>
             ) : null}
             <Button type="submit" size="lg" fullWidth loading={p.loading}>{t('signUp')}</Button>
+            {google}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-default pt-3 text-sm text-ink-secondary">
               <span>{ar ? 'لديك حساب بالفعل؟' : 'Already have an account?'}</span>
               <button type="button" className={linkBtn} onClick={back}>{t('signIn')}</button>

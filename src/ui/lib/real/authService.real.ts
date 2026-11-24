@@ -1,5 +1,7 @@
 import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
 import type { AuthSession, CustomerProfile, CustomerUser, SavedCompanion, SignUpData } from '../../types/auth';
+import { CUSTOMER_LOGIN_PATH } from '@/lib/auth/paths';
+import { safeNextPath } from '@/lib/auth/redirect';
 import { NotIntegratedError } from '../runtime';
 import { createCustomerBackend } from './customerBackend';
 
@@ -68,6 +70,29 @@ export class RealAuthService {
     if (error || !data.session) throw new AuthServiceError(error ? classify(error, 'invalid_credentials') : 'unknown');
     const session = toAuthSession(data.session);
     return { user: session.user, session };
+  }
+
+  /**
+   * Customer sign-in with Google (P6b). Redirects the browser to Google and returns before the page navigates away.
+   *   * The PKCE verifier cookie is written on the host where this runs, and /auth/confirm (platform host) needs it to finish.
+   *     So the flow must START on the platform host: from any other host (a tenant domain) we send the visitor to the platform's
+   *     customer login instead of starting a flow that could never complete.
+   *   * `next` is re-validated with the same allow-list as every other ?next=; /auth/confirm validates it again.
+   *   * `from=customer` is what lets /auth/confirm accept a Google code at all. Staff sign-in never sets it.
+   */
+  async signInWithGoogle(next?: string): Promise<void> {
+    const safe = safeNextPath(next, '');
+    const nextQs = safe ? `?next=${encodeURIComponent(safe)}` : '';
+    if (typeof window !== 'undefined' && new URL(this.siteUrl).origin !== window.location.origin) {
+      window.location.assign(`${this.siteUrl}${CUSTOMER_LOGIN_PATH}${nextQs}`);
+      return;
+    }
+    const redirectTo = `${this.siteUrl}/auth/confirm?from=customer${safe ? `&next=${encodeURIComponent(safe)}` : ''}`;
+    const { error } = await this.client.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, queryParams: { prompt: 'select_account' } },
+    });
+    if (error) throw new AuthServiceError(classify(error, 'unknown'));
   }
 
   async signUp(d: SignUpData): Promise<{ user: CustomerUser; session: AuthSession }> {
