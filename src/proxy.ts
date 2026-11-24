@@ -85,5 +85,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
+  // Three root-level files of the driver app (P7b D) are static and anonymous: no session refresh, no Set-Cookie on a service worker or manifest.
+  // They sit OUTSIDE /driver on purpose, because everything under /driver requires a session.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|driver-sw\\.js$|driver\\.webmanifest$|driver-offline\\.html$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 };

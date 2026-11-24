@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Lang } from '../format';
 import { DsLangProvider } from '../lang';
+import { ClearOfflineOnSignOut } from '@/features/driver/ClearOfflineOnSignOut';
 import { DriverLangToggle } from '@/features/driver/DriverLangToggle';
 import { Logo } from '../brand/Logo';
 import { SubmitButton } from '../primitives/Button';
@@ -27,7 +28,7 @@ export function DriverShellMasar({ companyName, driverName, logoutAction, lang =
           <div className="flex shrink-0 items-center gap-2">
             <DriverLangToggle lang={lang} />
             <NotificationBell lang={lang} />
-            <form action={logoutAction}><SubmitButton variant="secondary" size="lg">{st.signOut}</SubmitButton></form>
+            <form action={logoutAction}><ClearOfflineOnSignOut /><SubmitButton variant="secondary" size="lg">{st.signOut}</SubmitButton></form>
           </div>
         </div>
       </header>

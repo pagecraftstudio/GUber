@@ -5,7 +5,7 @@ let user: { id: string } | null = null;
 vi.mock('@/lib/supabase/proxy', () => ({
   updateSession: async () => ({ response: NextResponse.next(), user }),
 }));
-const { proxy } = await import('./proxy');
+const { proxy, config } = await import('./proxy');
 
 async function hit(path: string, signedIn = false) {
   user = signedIn ? { id: 'u1' } : null;
@@ -54,5 +54,19 @@ describe('proxy: anonymous public data endpoints', () => {
     await fresh(new NextRequest('http://localhost:3000/login'));
     expect(calls).toEqual(['updateSession']);
     vi.doUnmock('@/lib/supabase/proxy');
+  });
+});
+
+describe('proxy matcher: the driver PWA files', () => {
+  // Next's matcher is a path regex; the same string is a valid JavaScript regex once anchored.
+  const runs = (p: string) => new RegExp(`^${config.matcher[0]}$`).test(p);
+  it('skips exactly the three static PWA files (no session refresh, no Set-Cookie on a worker or manifest)', () => {
+    for (const p of ['/driver-sw.js', '/driver.webmanifest', '/driver-offline.html']) expect(runs(p), p).toBe(false);
+  });
+  it('still runs for the driver pages, look-alike names and every other page', () => {
+    for (const p of ['/driver', '/driver/trips/abc', '/driver/boarding', '/driver-sw.js.map', '/driver-sw.json', '/x/driver-sw.js', '/driver.webmanifest/x', '/dashboard', '/', '/login']) expect(runs(p), p).toBe(true);
+  });
+  it('keeps the old exclusions (images, build files)', () => {
+    for (const p of ['/_next/static/x.js', '/brand/icons/icon-192.png', '/favicon.ico', '/a.svg']) expect(runs(p), p).toBe(false);
   });
 });

@@ -28,6 +28,7 @@ export interface DriverScreensText {
     doneTitle: string;
     doneBody: (endedIso: string | null, boarded: number | undefined, expected: number | undefined, lang: Lang) => string;
     doneAlready: string;
+    offlineCopyTitle: string; offlineCopyBody: (savedIso: string, lang: Lang) => string; offlineEnd: string;
   };
   profile: {
     title: string; company: string; phone: string; licenseNumber: string; licenseExpiry: string; tripsCompleted: string; notOnFile: string;
@@ -75,6 +76,9 @@ export const DRIVER_SCREENS_TEXT: Record<Lang, DriverScreensText> = {
       doneTitle: 'Trip ended',
       doneBody: (at, b, e, lang) => `${at ? `Ended ${stamp(at, lang)}. ` : ''}${typeof b === 'number' && typeof e === 'number' ? `${formatNumber(b, lang)} of ${formatNumber(e, lang)} passengers boarded.` : ''}`.trim(),
       doneAlready: 'This trip was already ended.',
+      offlineCopyTitle: 'Offline copy',
+      offlineCopyBody: (at, lang) => `No signal. This is the list saved at ${formatTime(at, lang)}. Boarding and ending the trip need a connection.`,
+      offlineEnd: 'Ending the trip needs a connection.',
     },
     profile: {
       title: 'My profile', company: 'Company', phone: 'Phone', licenseNumber: 'Licence number', licenseExpiry: 'Licence expiry', tripsCompleted: 'Trips completed', notOnFile: 'Not on file',
@@ -123,6 +127,9 @@ export const DRIVER_SCREENS_TEXT: Record<Lang, DriverScreensText> = {
       doneTitle: 'تم إنهاء الرحلة',
       doneBody: (at, b, e, lang) => `${at ? `أُنهيت في ${stamp(at, lang)}. ` : ''}${typeof b === 'number' && typeof e === 'number' ? `صعد ${formatNumber(b, lang)} من ${formatNumber(e, lang)} راكبًا.` : ''}`.trim(),
       doneAlready: 'تم إنهاء هذه الرحلة من قبل.',
+      offlineCopyTitle: 'نسخة غير متصلة',
+      offlineCopyBody: (at, lang) => `لا توجد إشارة. هذه القائمة المحفوظة الساعة ${formatTime(at, lang)}. الصعود وإنهاء الرحلة يحتاجان إلى اتصال.`,
+      offlineEnd: 'إنهاء الرحلة يحتاج إلى اتصال.',
     },
     profile: {
       title: 'ملفي', company: 'الشركة', phone: 'الهاتف', licenseNumber: 'رقم الرخصة', licenseExpiry: 'انتهاء الرخصة', tripsCompleted: 'الرحلات المكتملة', notOnFile: 'غير مسجّل',

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatusBadge } from '@/ds/data/StatusBadge';
@@ -16,6 +16,7 @@ import { arBoardMessages, DRIVER_TEXT } from './driver-text';
 import { DRIVER_SCREENS_TEXT } from './driver-screens-text';
 import { BOARD_MESSAGES, BoardError, createDriverApi, type DriverTrip } from './driverApi';
 import { createDriverScreensApi, ScreenError, type EndTripResult, type ManifestPassenger, type ScreenErrorCode } from './driverScreensApi';
+import { browserStore, clearManifest, loadManifest, saveManifest } from './manifest-cache';
 import { isOpenTrip } from './trip-groups';
 
 const boardingOf = (p: ManifestPassenger): 'not_boarded' | 'partial' | 'boarded' => (p.seats_boarded <= 0 ? 'not_boarded' : p.seats_boarded >= p.seats ? 'boarded' : 'partial');
@@ -63,6 +64,13 @@ export function DriverTripManifest({ tripId, lang = 'ar' }: { tripId: string; la
   const [confirming, setConfirming] = useState(false);
   const [endError, setEndError] = useState<string | null>(null);
   const [done, setDone] = useState<EndTripResult | null>(null);
+  /** set only when the list on screen is the saved copy (the network was unreachable): read-only, nothing can be ended from it */
+  const [offlineCopy, setOfflineCopy] = useState<string | null>(null);
+
+  // the signed-in user id from the local session (no network). Without one nothing is cached or read from the cache.
+  const userId = useCallback(async (): Promise<string | null> => {
+    try { return (await client.auth.getSession()).data.session?.user.id ?? null; } catch { return null; }
+  }, [client]);
 
   const load = useCallback(() => {
     setLoadError(null);
@@ -72,13 +80,28 @@ export function DriverTripManifest({ tripId, lang = 'ar' }: { tripId: string; la
       return null;
     });
     Promise.all([header, screens.manifest(tripId)])
-      .then(([t, list]) => { setTrip(t); setRows(list); })
-      .catch((e) => {
+      .then(async ([t, list]) => {
+        setTrip(t); setRows(list); setOfflineCopy(null);
+        const uid = await userId();
+        // a finished trip is wiped, an open one is kept for the next time the signal drops; an unknown header (not in my open list) is not cached
+        if (t && uid && isOpenTrip(t.status)) saveManifest(browserStore(), { tripId, userId: uid, rows: list, trip: { origin_name: t.origin_name, destination_name: t.destination_name, departure_at: t.departure_at, arrival_at: t.arrival_at, status: t.status } });
+        else if (t) clearManifest(browserStore());
+      })
+      .catch(async (e) => {
+        if (e instanceof ScreenError && e.code === 'network') {
+          const uid = await userId();
+          const copy = uid ? loadManifest(browserStore(), tripId, uid) : null;
+          if (copy) {
+            setTrip(copy.trip ? { trip_id: tripId, company_name: '', ...copy.trip, expected: 0, boarded: 0, remaining: 0 } : null);
+            setRows(copy.rows); setOfflineCopy(copy.savedAt);
+            return;
+          }
+        }
         if (e instanceof ScreenError) setLoadError(x.errors[e.code]);
         else if (e instanceof BoardError) setLoadError((lang === 'ar' ? arBoardMessages : BOARD_MESSAGES)[e.code]);
         else setLoadError(x.errors.unknown);
       });
-  }, [trips, screens, tripId, x.errors, lang]);
+  }, [trips, screens, tripId, x.errors, lang, userId]);
   useEffect(() => { load(); }, [load]);
 
   const endTrip = async () => {
@@ -86,6 +109,7 @@ export function DriverTripManifest({ tripId, lang = 'ar' }: { tripId: string; la
     try {
       const r = await screens.endTrip(tripId);
       setDone(r);
+      clearManifest(browserStore());   // the trip is over: its passenger list does not stay on the phone
       setTrip((cur) => (cur ? { ...cur, status: 'completed' } : cur));
     } catch (e) {
       const code: ScreenErrorCode = e instanceof ScreenError ? e.code : 'unknown';
@@ -104,7 +128,7 @@ export function DriverTripManifest({ tripId, lang = 'ar' }: { tripId: string; la
 
   const open = trip ? isOpenTrip(trip.status) : false;
   const started = trip ? Date.now() >= new Date(trip.departure_at).getTime() : false;
-  const canEnd = open && started && !done;
+  const canEnd = open && started && !done && !offlineCopy;
   const expected = rows.reduce((n, r) => n + r.seats, 0);
   const boarded = rows.reduce((n, r) => n + r.seats_boarded, 0);
   const remaining = Math.max(0, expected - boarded);
@@ -127,6 +151,7 @@ export function DriverTripManifest({ tripId, lang = 'ar' }: { tripId: string; la
         <p className="text-sm text-ink-secondary tabular-nums" data-testid="manifest-summary">{m.summary(boarded, expected, lang)}</p>
       </header>
 
+      {offlineCopy ? <InlineAlert tone="warning" title={m.offlineCopyTitle} action={<WifiOff size={18} strokeWidth={1.5} aria-hidden="true" />}>{m.offlineCopyBody(offlineCopy, lang)}</InlineAlert> : null}
       {done ? (
         <InlineAlert tone="info" title={m.doneTitle}>{done.changed ? m.doneBody(done.ended_at, done.boarded, done.expected, lang) : m.doneAlready}</InlineAlert>
       ) : null}
@@ -137,7 +162,7 @@ export function DriverTripManifest({ tripId, lang = 'ar' }: { tripId: string; la
           <Link href={`/driver/boarding?trip=${encodeURIComponent(tripId)}`}
             className={cx('flex min-h-14 w-full items-center justify-center rounded-ds-md bg-action px-4 text-base font-medium text-on-action', FOCUS)}>{m.scan}</Link>
           <Button variant="secondary" size="lg" fullWidth disabled={!canEnd} onClick={() => setConfirming(true)} data-testid="end-trip">{m.endTrip}</Button>
-          {!started ? <p className="text-[13px] text-ink-secondary">{m.endBeforeDeparture}</p> : null}
+          {offlineCopy ? <p className="text-[13px] text-ink-secondary">{m.offlineEnd}</p> : !started ? <p className="text-[13px] text-ink-secondary">{m.endBeforeDeparture}</p> : null}
         </div>
       ) : null}
 
