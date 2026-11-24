@@ -7,12 +7,12 @@ import { getEnv } from '@/lib/env';
 /** Contract the UI depends on. Implemented by RealAuthService (Supabase Auth) and, in development only, by the mock. */
 export interface AuthApi {
   onAuthStateChange(cb: (s: AuthSession | null) => void): () => void;
-  signInWithPassword(c: { email: string; password: string }): Promise<{ user: CustomerUser; session: AuthSession }>;
+  signInWithPassword(c: { email: string; password: string; captchaToken?: string | null }): Promise<{ user: CustomerUser; session: AuthSession }>;
   /** Customers only. Starts a browser redirect to Google; resolves before the page navigates away. Real service only (the mock has no Google). */
   signInWithGoogle?(next?: string): Promise<void>;
   signUp(d: SignUpData): Promise<{ user: CustomerUser; session: AuthSession }>;
   signOut(): Promise<void>;
-  resetPasswordForEmail(email: string): Promise<boolean>;
+  resetPasswordForEmail(email: string, captchaToken?: string | null): Promise<boolean>;
   getCustomerProfile(userId: string): Promise<CustomerProfile | null>;
   updateCustomerProfile(userId: string, updates: Partial<CustomerProfile>): Promise<CustomerProfile>;
   addSavedCompanion(userId: string, c: Omit<SavedCompanion, 'id'>): Promise<SavedCompanion>;
@@ -51,7 +51,7 @@ export const authService: AuthApi & { signInWithGoogle(next?: string): Promise<v
   },
   signUp: async (d) => (await impl()).signUp(d),
   signOut: async () => (await impl()).signOut(),
-  resetPasswordForEmail: async (e) => (await impl()).resetPasswordForEmail(e),
+  resetPasswordForEmail: async (e, captchaToken) => (await impl()).resetPasswordForEmail(e, captchaToken),
   getCustomerProfile: async (id) => (await impl()).getCustomerProfile(id),
   updateCustomerProfile: async (id, u) => (await impl()).updateCustomerProfile(id, u),
   addSavedCompanion: async (id, c) => (await impl()).addSavedCompanion(id, c),

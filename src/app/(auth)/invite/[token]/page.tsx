@@ -3,6 +3,7 @@ import { AuthCard } from '@/components/ui/AuthCard';
 import { Alert } from '@/components/ui/Alert';
 import { Field } from '@/components/ui/Field';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { AuthCaptchaField } from '@/components/captcha/AuthCaptchaField';
 import { acceptInviteAction, logoutAction, signUpWithInviteAction } from '@/features/auth/actions';
 import { readFlash, type RawSearchParams } from '@/features/auth/search-params';
 import { getAuthContext } from '@/lib/auth/context';
@@ -77,6 +78,7 @@ export default async function InvitePage({
         <Field label="Email" name="email" type="email" defaultValue={invite.email} readOnly hint="Set by the invitation." />
         <Field label="Full name" name="fullName" autoComplete="name" maxLength={100} />
         <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={10} maxLength={72} hint="10–72 characters." />
+        <AuthCaptchaField action="signup" />
         <SubmitButton>Create account</SubmitButton>
       </form>
       <p className="text-center text-sm text-ink-muted">

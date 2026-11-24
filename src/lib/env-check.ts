@@ -89,6 +89,10 @@ export function checkEnv(env: EnvInput): { ok: boolean; issues: EnvIssue[] } {
   if (tsSecret !== undefined && tsSecret !== '' && tsSecret.trim().length < 20) add('TURNSTILE_SECRET_KEY', 'is too short to be a Turnstile secret key');
   if (hosted && Boolean(pass) !== Boolean(tsSecret)) add(pass ? 'TURNSTILE_SECRET_KEY' : 'CAPTCHA_PASS_SECRET', 'is missing while its captcha partner is set (both are needed to turn enforcement on)');
 
+  const authCap = env.NEXT_PUBLIC_AUTH_CAPTCHA;
+  if (authCap !== undefined && authCap !== '' && authCap !== 'on' && authCap !== 'off') add('NEXT_PUBLIC_AUTH_CAPTCHA', "must be 'on' or 'off'");
+  if (authCap === 'on' && !(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '').trim()) add('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'is required when NEXT_PUBLIC_AUTH_CAPTCHA=on (the sign-in forms would have no widget)');
+
   // --- tenant routing (TENANT_MODE / PLATFORM_DOMAIN / PLATFORM_EXTRA_HOSTS): optional, default path mode
   for (const i of checkTenantEnv(env)) add(i.name, i.problem);
 

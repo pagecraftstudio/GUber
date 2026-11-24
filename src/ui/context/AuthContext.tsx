@@ -11,10 +11,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isGuest: boolean;
   loading: boolean;
-  signIn: (credentials: { email: string; password: string }) => Promise<void>;
+  signIn: (credentials: { email: string; password: string; captchaToken?: string | null }) => Promise<void>;
   signUp: (data: SignUpData) => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<boolean>;
+  resetPassword: (email: string, captchaToken?: string | null) => Promise<boolean>;
   updateProfile: (updates: Partial<CustomerProfile>) => Promise<CustomerProfile>;
   reloadProfile: () => Promise<void>;
   // Auth modal management
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (credentials: { email: string; password: string }) => {
+  const signIn = async (credentials: { email: string; password: string; captchaToken?: string | null }) => {
     const res = await authService.signInWithPassword(credentials);
     setSession(res.session);
     const p = await authService.getCustomerProfile(res.user.id);
@@ -85,8 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resetPassword = async (email: string) => {
-    return await authService.resetPasswordForEmail(email);
+  const resetPassword = async (email: string, captchaToken?: string | null) => {
+    return await authService.resetPasswordForEmail(email, captchaToken);
   };
 
   const updateProfile = async (updates: Partial<CustomerProfile>) => {

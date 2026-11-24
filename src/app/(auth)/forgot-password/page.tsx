@@ -3,6 +3,7 @@ import { AuthCard } from '@/components/ui/AuthCard';
 import { Alert } from '@/components/ui/Alert';
 import { Field } from '@/components/ui/Field';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { AuthCaptchaField } from '@/components/captcha/AuthCaptchaField';
 import { forgotPasswordAction } from '@/features/auth/actions';
 import { readFlash, type RawSearchParams } from '@/features/auth/search-params';
 import { audienceFrom, loginPathForAudience } from '@/lib/auth/redirect';
@@ -19,6 +20,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
       <form action={forgotPasswordAction} className="space-y-4">
         <input type="hidden" name="from" value={audience} />
         <Field label="Email" name="email" type="email" autoComplete="email" maxLength={254} />
+        <AuthCaptchaField action="reset" />
         <SubmitButton>Send reset link</SubmitButton>
       </form>
       <p className="text-center text-sm text-ink-muted">

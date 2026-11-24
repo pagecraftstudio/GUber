@@ -2,12 +2,13 @@ import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
 import type { AuthSession, CustomerProfile, CustomerUser, SavedCompanion, SignUpData } from '../../types/auth';
 import { CUSTOMER_LOGIN_PATH } from '@/lib/auth/paths';
 import { safeNextPath } from '@/lib/auth/redirect';
+import { captchaOptions } from '@/lib/captcha/auth-captcha';
 import { NotIntegratedError } from '../runtime';
 import { createCustomerBackend } from './customerBackend';
 
 /** Stable, UI-translatable failure reasons. Raw Supabase messages are never shown (they can leak account existence). */
 export type AuthFailure =
-  | 'invalid_credentials' | 'email_not_confirmed' | 'confirm_email' | 'weak_password' | 'rate_limited' | 'signup_failed' | 'unknown';
+  | 'invalid_credentials' | 'email_not_confirmed' | 'confirm_email' | 'weak_password' | 'rate_limited' | 'signup_failed' | 'captcha_failed' | 'unknown';
 
 export class AuthServiceError extends Error {
   constructor(readonly reason: AuthFailure) {
@@ -22,6 +23,7 @@ const AUTH_MESSAGES: Record<AuthFailure, { en: string; ar: string }> = {
   weak_password: { en: 'That password is too weak. Use at least 8 characters with letters and numbers.', ar: 'كلمة المرور ضعيفة. استخدم 8 أحرف على الأقل من حروف وأرقام.' },
   rate_limited: { en: 'Too many attempts. Please wait a moment and try again.', ar: 'محاولات كثيرة. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى.' },
   signup_failed: { en: 'We could not create the account. Try again or sign in.', ar: 'تعذّر إنشاء الحساب. حاول مرة أخرى أو سجّل الدخول.' },
+  captcha_failed: { en: 'Please complete the security check and try again.', ar: 'كمّل التحقق الأمني وحاول تاني.' },
   unknown: { en: 'Something went wrong. Please try again.', ar: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.' },
 };
 export const describeAuthError = (err: unknown, locale: 'ar' | 'en'): string =>
@@ -30,6 +32,7 @@ export const describeAuthError = (err: unknown, locale: 'ar' | 'en'): string =>
 interface AuthErrorLike { status?: number; code?: string; message?: string }
 function classify(e: AuthErrorLike, fallback: AuthFailure): AuthFailure {
   if (e.status === 429 || e.code === 'over_request_rate_limit' || e.code === 'over_email_send_rate_limit') return 'rate_limited';
+  if (e.code === 'captcha_failed') return 'captcha_failed';
   if (e.code === 'weak_password') return 'weak_password';
   if (e.code === 'email_not_confirmed') return 'email_not_confirmed';
   if (e.code === 'invalid_credentials') return 'invalid_credentials';
@@ -65,8 +68,8 @@ export class RealAuthService {
     return () => data.subscription.unsubscribe();
   }
 
-  async signInWithPassword(c: { email: string; password: string }): Promise<{ user: CustomerUser; session: AuthSession }> {
-    const { data, error } = await this.client.auth.signInWithPassword({ email: c.email.trim(), password: c.password });
+  async signInWithPassword(c: { email: string; password: string; captchaToken?: string | null }): Promise<{ user: CustomerUser; session: AuthSession }> {
+    const { data, error } = await this.client.auth.signInWithPassword({ email: c.email.trim(), password: c.password, options: captchaOptions(c.captchaToken) });
     if (error || !data.session) throw new AuthServiceError(error ? classify(error, 'invalid_credentials') : 'unknown');
     const session = toAuthSession(data.session);
     return { user: session.user, session };
@@ -102,6 +105,7 @@ export class RealAuthService {
         // user_metadata is client-controlled: display convenience only, NEVER used for authorization.
         data: { full_name: d.fullName.trim(), phone: d.phone.trim(), student_id: d.studentId ?? '', university: d.university ?? '' },
         emailRedirectTo: `${this.siteUrl}/auth/confirm?next=${encodeURIComponent('/my-bookings')}`,
+        ...captchaOptions(d.captchaToken),
       },
     });
     if (error) throw new AuthServiceError(classify(error, 'signup_failed'));
@@ -123,9 +127,9 @@ export class RealAuthService {
     if (error) throw new AuthServiceError('unknown');
   }
 
-  async resetPasswordForEmail(email: string): Promise<boolean> {
+  async resetPasswordForEmail(email: string, captchaToken?: string | null): Promise<boolean> {
     const redirectTo = `${this.siteUrl}/auth/confirm?next=${encodeURIComponent('/reset-password')}&from=customer`;
-    const { error } = await this.client.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    const { error } = await this.client.auth.resetPasswordForEmail(email.trim(), { redirectTo, ...captchaOptions(captchaToken) });
     if (error && classify(error, 'unknown') === 'rate_limited') throw new AuthServiceError('rate_limited');
     return true; // identical answer whether or not the account exists
   }

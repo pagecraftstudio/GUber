@@ -20,6 +20,11 @@ create table if not exists auth.users (
   phone text unique,   -- real GoTrue: users_phone_key UNIQUE(phone). The stub must be as strict.
   phone_confirmed_at timestamptz
 );
+create table if not exists auth.identities (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  provider text not null
+);
 create or replace function auth.uid() returns uuid language sql stable as $$
   select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
                   (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'))::uuid

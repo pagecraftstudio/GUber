@@ -8,6 +8,7 @@ import { homePathFor } from '@/lib/auth/permissions';
 import { audienceFrom, safeNextPath } from '@/lib/auth/redirect';
 import { COMPANY_LOGIN_PATH } from '@/lib/auth/paths';
 import { getEnv } from '@/lib/env';
+import { captchaOptions } from '@/lib/captcha/auth-captcha';
 import { requireUser } from '@/lib/auth/guards';
 import {
   forgotPasswordSchema,
@@ -40,6 +41,7 @@ type AuthErrorLike = { status?: number; code?: string } | null;
 function authErrorCode(error: AuthErrorLike): string {
   if (error?.status === 429 || error?.code === 'over_request_rate_limit') return 'rate_limited';
   if (error?.code === 'email_not_confirmed') return 'email_not_confirmed';
+  if (error?.code === 'captcha_failed') return 'captcha_failed';
   return 'invalid_credentials';
 }
 
@@ -51,7 +53,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   if (!parsed.success) redirect(url(COMPANY_LOGIN_PATH, { error: 'invalid_credentials', next }));
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({ ...parsed.data, options: captchaOptions(field(formData, 'captchaToken')) });
   if (error) redirect(url(COMPANY_LOGIN_PATH, { error: authErrorCode(error), next }));
 
   const ctx = await loadContext(supabase);
@@ -77,7 +79,8 @@ export async function forgotPasswordAction(formData: FormData): Promise<void> {
 
   const supabase = await createClient();
   const redirectTo = `${getEnv().NEXT_PUBLIC_SITE_URL}/auth/confirm?next=${encodeURIComponent('/reset-password')}&from=${from}`;
-  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo });
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo, ...captchaOptions(field(formData, 'captchaToken')) });
+  if (error?.code === 'captcha_failed') redirect(url('/forgot-password', { error: 'captcha_failed', from }));
   if (error && (error.status === 429 || error.code === 'over_email_send_rate_limit')) {
     redirect(url('/forgot-password', { error: 'rate_limited', from }));
   }
@@ -138,10 +141,10 @@ export async function signUpWithInviteAction(formData: FormData): Promise<void> 
   const { data, error } = await supabase.auth.signUp({
     email: invite.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.fullName }, emailRedirectTo },
+    options: { data: { full_name: parsed.data.fullName }, emailRedirectTo, ...captchaOptions(field(formData, 'captchaToken')) },
   });
   if (error) {
-    const code = error.code === 'weak_password' ? 'weak_password' : error.status === 429 ? 'rate_limited' : 'signup_failed';
+    const code = error.code === 'weak_password' ? 'weak_password' : error.code === 'captcha_failed' ? 'captcha_failed' : error.status === 429 ? 'rate_limited' : 'signup_failed';
     redirect(url(invitePath, { error: code }));
   }
 

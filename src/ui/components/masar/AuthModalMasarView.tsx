@@ -1,5 +1,5 @@
 'use client';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/ds/primitives/Button';
 import { Field } from '@/ds/primitives/Field';
@@ -22,6 +22,8 @@ export interface AuthModalMasarProps {
   quickFill?: (who: 'karim' | 'nourhan') => void;
   /** Customer Google sign-in. Omitted (no button) when the data mode has no Google, e.g. mock. */
   onGoogle?: () => void;
+  /** P6c: Turnstile widget (or a configuration message) for the form on screen, and whether the submit buttons may fire. */
+  captchaSlot?: ReactNode; captchaReady?: boolean;
   onGuestContinue?: () => void;
 }
 
@@ -68,7 +70,8 @@ export function AuthModalMasarView(p: AuthModalMasarProps) {
               <Field label={t('passwordLabel')} required><Input type="password" size="lg" autoComplete="current-password" dir="ltr" value={p.login.password} onChange={(e) => p.login.setPassword(e.target.value)} /></Field>
               <button type="button" className={linkBtn} onClick={() => { p.clearError(); p.setMode('forgot_password'); }}>{t('forgotPassword')}</button>
             </div>
-            <Button type="submit" size="lg" fullWidth loading={p.loading}>{t('signIn')}</Button>
+            {p.captchaSlot}
+            <Button type="submit" size="lg" fullWidth loading={p.loading} disabled={p.captchaReady === false}>{t('signIn')}</Button>
             {google}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-default pt-3 text-sm text-ink-secondary">
               <span>{ar ? 'ليس لديك حساب؟' : "Don't have an account?"}</span>
@@ -89,7 +92,8 @@ export function AuthModalMasarView(p: AuthModalMasarProps) {
             {p.register.showStudentId ? (
               <Field label={t('optionalStudentId')} hint={t('studentIdHint')}><DigitInput kind="identifier" size="lg" dir="ltr" value={p.register.studentId} onChange={(e) => p.register.setStudentId(e.target.value)} /></Field>
             ) : null}
-            <Button type="submit" size="lg" fullWidth loading={p.loading}>{t('signUp')}</Button>
+            {p.captchaSlot}
+            <Button type="submit" size="lg" fullWidth loading={p.loading} disabled={p.captchaReady === false}>{t('signUp')}</Button>
             {google}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-default pt-3 text-sm text-ink-secondary">
               <span>{ar ? 'لديك حساب بالفعل؟' : 'Already have an account?'}</span>
@@ -102,7 +106,8 @@ export function AuthModalMasarView(p: AuthModalMasarProps) {
           <form onSubmit={p.reset.onSubmit} className="space-y-4" noValidate>
             <p className="text-sm text-ink-secondary">{ar ? 'أدخل بريدك الإلكتروني المسجل، وسنقوم بإرسال رابط آمن لإعادة تعيين كلمة المرور فوراً.' : 'Enter your registered email address, and we will send a secure password reset link.'}</p>
             <Field label={t('emailLabel')} required><Input type="email" size="lg" autoComplete="email" dir="ltr" value={p.reset.email} onChange={(e) => p.reset.setEmail(e.target.value)} /></Field>
-            <Button type="submit" size="lg" fullWidth loading={p.loading}>{t('resetPasswordTitle')}</Button>
+            {p.captchaSlot}
+            <Button type="submit" size="lg" fullWidth loading={p.loading} disabled={p.captchaReady === false}>{t('resetPasswordTitle')}</Button>
             <button type="button" className={cx(linkBtn, 'mx-auto gap-1.5')} onClick={back}><ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" className="rtl:rotate-180" />{ar ? 'العودة لتسجيل الدخول' : 'Back to Sign In'}</button>
           </form>
         ) : null}

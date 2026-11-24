@@ -22,6 +22,13 @@ Staff login (`/company/login`, `loginAction`) is untouched and has no Google but
 3. Supabase dashboard: Authentication > URL Configuration. Add to Redirect URLs the platform origin's confirm route, with a wildcard so the query string matches, e.g. `https://guber-six.vercel.app/auth/confirm**` (verify with a real login; if the redirect falls back to Site URL, the pattern did not match).
 4. Do not set anything for staff. Do not add Google to `/company/login`.
 
+## P6c follow-up (done on branch `p6-complete`)
+
+- Invite path closed: migration `0059` makes `accept_invite` refuse an account that has any non-email identity (suite 55, with a negative control that fails against the old function).
+- `/login?error=google_failed|google_not_allowed|confirm_failed` now renders an allow-listed message in English and Egyptian Arabic (`src/ui/lib/auth-url-error.ts`).
+- Captcha on login, sign-up and reset for operators, platform admins and passengers: see `DEPLOYMENT.md` 2.2. **Supabase's dashboard setting is the real enforcement.**
+- Limits 2 and 3 below are therefore resolved; 1, 4, 5 (5 is now partly resolved) and 6 remain as written.
+
 ## Known limits (read before enabling)
 
 1. **Auto-linking.** Supabase links a Google identity to an existing user with the same verified email before our route runs. For staff accounts the route undoes it (unlink + sign out), but there is a window where the link exists. "Ask for the password once before linking" is not implemented: Supabase does not offer it as a setting as far as I know. Verify in the dashboard docs.

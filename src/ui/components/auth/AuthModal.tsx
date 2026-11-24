@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
 import { authService } from '../../lib/authService';
 import { AuthServiceError, describeAuthError } from '../../lib/real/authService.real';
 import { isMockMode } from '../../lib/runtime';
+import { authUrlError } from '../../lib/auth-url-error';
+import { useAuthCaptcha } from '@/components/captcha/useAuthCaptcha';
 
 import { AuthModalMasarView } from '../masar/AuthModalMasarView';
 
@@ -29,6 +31,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Non-error outcome (e.g. "check your email to confirm"): informational styling, role=status, never the red error banner.
   const [notice, setNotice] = useState<string | null>(null);
 
+  // P6c: one widget for whichever form is showing; the token is one-time, so every attempt spends it.
+  const captcha = useAuthCaptcha(mode === 'register' ? 'signup' : mode === 'forgot_password' ? 'reset' : 'login', locale === 'ar' ? 'ar' : 'en');
+
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -43,6 +48,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Forgot password state
   const [resetEmail, setResetEmail] = useState('');
+
+  // The server sends the customer back to /login?error=<code> when Google sign-in or an email link fails. Allow-listed codes only.
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+    const msg = authUrlError(window.location.search, locale === 'ar' ? 'ar' : 'en');
+    if (msg) setError(msg);
+  }, [isOpen, locale]);
 
   const handleQuickFill = (type: 'karim' | 'nourhan') => {
     // Development-mock credentials. `process.env.NODE_ENV` is a build-time constant: stripped from production bundles.
@@ -67,7 +79,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
     setLoading(true);
     try {
-      await signIn({ email: loginEmail, password: loginPassword });
+      const captchaToken = captcha.token;
+      captcha.spent();
+      await signIn({ email: loginEmail, password: loginPassword, ...(captchaToken ? { captchaToken } : {}) });
       setLoading(false);
       onClose();
     } catch (err: any) {
@@ -116,7 +130,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
+      const captchaToken = captcha.token;
+      captcha.spent();
       await signUp({
+        ...(captchaToken ? { captchaToken } : {}),
         fullName: regFullName,
         email: regEmail,
         phone: regPhone,
@@ -150,7 +167,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
     setLoading(true);
     try {
-      await resetPassword(resetEmail);
+      const captchaToken = captcha.token;
+      captcha.spent();
+      await (captchaToken ? resetPassword(resetEmail, captchaToken) : resetPassword(resetEmail));
       setLoading(false);
       setMode('reset_sent');
     } catch (err: any) {
@@ -183,6 +202,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       reset={{ email: resetEmail, setEmail: setResetEmail, onSubmit: handleResetSubmit }}
       quickFill={isMockMode() && process.env.NODE_ENV !== 'production' ? handleQuickFill : undefined}
       onGoogle={isMockMode() ? undefined : handleGoogle}
+      captchaSlot={captcha.misconfigured ? (locale === 'ar' ? 'التحقق الأمني مش متظبّط. كلّم إدارة المنصة.' : 'Security check is not configured. Contact the platform administrator.') : captcha.widget}
+      captchaReady={captcha.ready}
       onGuestContinue={onGuestContinue}
     />
   );

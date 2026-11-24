@@ -4,6 +4,7 @@ import { AuthCard } from '@/components/ui/AuthCard';
 import { Alert } from '@/components/ui/Alert';
 import { Field } from '@/components/ui/Field';
 import { SubmitButton } from '@/components/ui/SubmitButton';
+import { AuthCaptchaField } from '@/components/captcha/AuthCaptchaField';
 import { loginAction } from '@/features/auth/actions';
 import { readFlash, type RawSearchParams } from '@/features/auth/search-params';
 import { getAuthContext } from '@/lib/auth/context';
@@ -26,6 +27,7 @@ export default async function LoginPage({ searchParams }: { searchParams: RawSea
         <input type="hidden" name="next" value={safeNextPath(next, '')} />
         <Field label="Email" name="email" type="email" autoComplete="email" maxLength={254} />
         <Field label="Password" name="password" type="password" autoComplete="current-password" maxLength={72} />
+        <AuthCaptchaField action="login" />
         <SubmitButton>Sign in</SubmitButton>
       </form>
       <p className="text-center text-sm text-ink-muted">

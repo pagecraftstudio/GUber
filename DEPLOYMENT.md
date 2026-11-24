@@ -62,6 +62,24 @@ Exactly three, names verified against `src/lib/env.ts` and `src/lib/env-check.ts
 - Turnstile dashboard: widget mode Managed, hostnames = every platform host that serves booking/subscription pages. Actions used: `booking`, `subscription` (the server rejects a token minted for another action).
 - Needs `0058` too: `create_my_round_trip_booking` was not gated by `0057`.
 
+### 2.2 Auth captcha (P6c): login, sign-up, password reset (operators, platform admins and passengers)
+Supabase Auth is reachable with the public anon key, so the app cannot enforce this alone: **only Supabase's own CAPTCHA setting cannot be skipped.** The app sends the token; Supabase refuses a sign-in without a valid one.
+
+| Name | Where | Value |
+|---|---|---|
+| `NEXT_PUBLIC_AUTH_CAPTCHA` | public, inlined at build | `on` / `off` (default off). Anything else is rejected by the env check; `on` without a site key is rejected too |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public | same site key as 2.1 |
+
+**Rollout order (the two switches must flip together, or sign-in breaks):**
+1. Cloudflare Turnstile widget: add the platform host(s). Actions used by the forms: `login`, `signup`, `reset`.
+2. Vercel: set `NEXT_PUBLIC_AUTH_CAPTCHA=on` and the site key, redeploy a **preview** first.
+3. Supabase Dashboard > Authentication > Attack Protection: enable CAPTCHA, provider Turnstile, paste the **secret** (it lives in Supabase, not in Vercel). *(Verify that Turnstile is offered in the current dashboard before relying on this.)*
+4. **Prove the control works** (it is the only thing protecting platform login, because D5 has no 2FA):
+   `curl -s -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $ANON" -H 'content-type: application/json' -d '{"email":"x@y.test","password":"wrong-password-123"}'`
+   must answer with a **captcha** error (`captcha_failed` / "captcha verification process failed"), NOT `invalid_credentials`. If you get `invalid_credentials`, step 3 is not active.
+5. Rollback = set the Supabase switch off first, then `NEXT_PUBLIC_AUTH_CAPTCHA=off` and redeploy.
+- Not covered by this captcha: Google sign-in (Google is the challenge) and `/auth/confirm` email links.
+
 ## 3. Pre-deploy gate (run locally or in CI)
 ```
 npx tsc --noEmit
