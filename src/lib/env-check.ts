@@ -79,6 +79,16 @@ export function checkEnv(env: EnvInput): { ok: boolean; issues: EnvIssue[] } {
     if (name !== 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY' && (/^sb_secret_/i.test(value) || jwtRole(value) === 'service_role')) add(name, 'contains a secret/service-role credential and would be published to every browser');
   }
 
+  // --- captcha (P6a). All three are OPTIONAL at boot because enforcement is off until a super admin switches it on; the runtime FAILS CLOSED
+  // (ensureCaptchaPass) when enforcement is on and a secret is missing. Wrong SHAPES are caught here either way.
+  const pass = env.CAPTCHA_PASS_SECRET;
+  if (pass !== undefined && pass !== '' && pass.trim().length < 32) add('CAPTCHA_PASS_SECRET', 'is too short (use at least 32 random characters; it must equal the secret given to set_captcha_enforcement)');
+  const tsKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  if (tsKey !== undefined && tsKey !== '' && /^[0-9A-Za-z_-]{10,64}$/.test(tsKey.trim()) === false) add('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'does not look like a Turnstile site key (10 to 64 letters, digits, - or _)');
+  const tsSecret = env.TURNSTILE_SECRET_KEY;
+  if (tsSecret !== undefined && tsSecret !== '' && tsSecret.trim().length < 20) add('TURNSTILE_SECRET_KEY', 'is too short to be a Turnstile secret key');
+  if (hosted && Boolean(pass) !== Boolean(tsSecret)) add(pass ? 'TURNSTILE_SECRET_KEY' : 'CAPTCHA_PASS_SECRET', 'is missing while its captcha partner is set (both are needed to turn enforcement on)');
+
   // --- tenant routing (TENANT_MODE / PLATFORM_DOMAIN / PLATFORM_EXTRA_HOSTS): optional, default path mode
   for (const i of checkTenantEnv(env)) add(i.name, i.problem);
 

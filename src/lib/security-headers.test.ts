@@ -13,7 +13,10 @@ describe('security headers', () => {
   });
   it('REPORT-ONLY policy allows exactly the Supabase origin (https + wss) and reports to our endpoint', () => {
     const csp = buildReportOnlyCsp(cfg);
-    expect(csp).toContain("connect-src 'self' https://abc.supabase.co wss://abc.supabase.co");
+    expect(csp).toContain("connect-src 'self' https://challenges.cloudflare.com https://abc.supabase.co wss://abc.supabase.co");
+    // P6a: Turnstile needs its script, its challenge iframe and its verification calls, and nothing else from Cloudflare
+    expect(csp).toContain('https://challenges.cloudflare.com');
+    expect(csp).toContain('frame-src https://challenges.cloudflare.com');
     expect(csp).toContain("img-src 'self' data: blob: https://abc.supabase.co");
     expect(csp).toContain('report-uri /api/csp-report');
     expect(csp).toContain("default-src 'self'");

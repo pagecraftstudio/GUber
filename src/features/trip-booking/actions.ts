@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCustomer } from '@/lib/auth/guards';
 import { toClientError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/server';
+import { ensureCaptchaPass } from '@/lib/captcha/pass';
 import { tripBookingService } from './service';
 import type { BookedTrip, PaymentInfo, Quote } from './types';
 
@@ -10,11 +11,13 @@ export type BookResult = { ok: true; booking: BookedTrip } | { ok: false; code: 
 const isNextSignal = (e: unknown) => typeof e === 'object' && e !== null && 'digest' in e && String((e as { digest: unknown }).digest).startsWith('NEXT_');
 
 /** The student comes from the session; the company from the trip. Nothing about either is read from the form. */
-export async function bookTripAction(input: unknown): Promise<BookResult> {
+export async function bookTripAction(input: unknown, captchaToken?: string | null): Promise<BookResult> {
   let booking: BookedTrip;
   try {
     const auth = await requireCustomer();
-    booking = await tripBookingService.book({ db: await createClient(), userId: auth.userId }, input);
+    const db = await createClient();
+    await ensureCaptchaPass(db, auth.userId, 'booking', captchaToken);   // no-op while enforcement is off; the booking RPC consumes the pass
+    booking = await tripBookingService.book({ db, userId: auth.userId }, input);
   } catch (e) {
     if (isNextSignal(e)) throw e;
     const c = toClientError(e);

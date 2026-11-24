@@ -5,6 +5,7 @@ import { formatDateTime, formatNumber } from '@/ds/format';
 import { Button } from '@/ds/primitives/Button';
 import { buttonClass } from '@/ds/primitives/button-class';
 import { controlClass } from '@/ds/primitives/Input';
+import { useCaptchaGate } from '@/components/captcha/useCaptchaGate';
 import { bookSubscriberAction, loadDayAction, loadReturnOptionsAction } from '../actions';
 import type { DayState, MySubscription, TripOption } from '../types';
 import { MT } from './text';
@@ -37,6 +38,7 @@ export function BookView({ lang, sub, today }: { lang: 'en' | 'ar'; sub: MySubsc
   const load = useMemberAction(lang);
   const retLoad = useMemberAction(lang);
   const book = useMemberAction(lang);
+  const gate = useCaptchaGate('booking', lang);
 
   const reset = () => { setGo(''); setReturning(null); setRets(null); setRet(''); setDone(false); };
   const findTrips = () => { reset(); setTrips(null); load.run(() => loadDayAction(sub.id, day), (r) => { setTrips(r.data.trips); setState(r.data.state); }); };
@@ -46,8 +48,8 @@ export function BookView({ lang, sub, today }: { lang: 'en' | 'ar'; sub: MySubsc
     if (yes && go) retLoad.run(() => loadReturnOptionsAction(sub.id, go), (r) => setRets(r.data));
   };
   const needReturn = returning === true;
-  const canConfirm = go !== '' && returning !== null && (!needReturn || ret !== '') && !book.pending;
-  const confirm = () => book.run(() => bookSubscriberAction(sub.id, go, needReturn ? ret : null), () => { setDone(true); });
+  const canConfirm = go !== '' && returning !== null && (!needReturn || ret !== '') && !book.pending && gate.ready;
+  const confirm = () => { const token = gate.token; gate.spent(); book.run(() => bookSubscriberAction(sub.id, go, needReturn ? ret : null, token), () => { setDone(true); }); };
 
   if (done) {
     return (
@@ -85,6 +87,7 @@ export function BookView({ lang, sub, today }: { lang: 'en' | 'ar'; sub: MySubsc
                 </fieldset>
               ) : null}
               {needReturn && rets !== null ? (rets.length === 0 ? <p className="text-sm text-ink-secondary">{t.noReturn}</p> : <TripSelect lang={lang} timeZone={sub.timeZone} label={t.returnTrip} trips={rets} value={ret} onChange={setRet} />) : null}
+              {gate.widget}
               <Err text={book.error} />
               <Button onClick={confirm} disabled={!canConfirm}>{t.confirm}</Button>
             </>)}

@@ -28,9 +28,10 @@ export function buildEnforcedCsp(production: boolean): string {
 export function buildReportOnlyCsp(cfg: HeaderConfig): string {
   const supa = origin(cfg.supabaseUrl);
   const ws = supa ? supa.replace(/^http/, 'ws') : null;
-  const connect = ["'self'", ...(supa ? [supa] : []), ...(ws ? [ws] : [])];
+  const connect = ["'self'", 'https://challenges.cloudflare.com', ...(supa ? [supa] : []), ...(ws ? [ws] : [])];
   const img = ["'self'", 'data:', 'blob:', ...(supa ? [supa] : [])];
-  const script = ["'self'", "'unsafe-inline'", ...(cfg.production ? [] : ["'unsafe-eval'"])];   // dev server needs eval for React refresh
+  const TURNSTILE = 'https://challenges.cloudflare.com';   // P6a captcha: script, challenge iframe and its verification calls
+  const script = ["'self'", "'unsafe-inline'", TURNSTILE, ...(cfg.production ? [] : ["'unsafe-eval'"])];   // dev server needs eval for React refresh
   return [
     "default-src 'self'",
     `script-src ${script.join(' ')}`,
@@ -38,6 +39,7 @@ export function buildReportOnlyCsp(cfg: HeaderConfig): string {
     `img-src ${img.join(' ')}`,
     "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src ${connect.join(' ')}`,
+    "frame-src https://challenges.cloudflare.com",
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "manifest-src 'self'",

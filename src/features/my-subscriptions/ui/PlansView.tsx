@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatDay, formatMoney, formatNumber } from '@/ds/format';
 import { Button } from '@/ds/primitives/Button';
 import { buttonClass } from '@/ds/primitives/button-class';
+import { useCaptchaGate } from '@/components/captcha/useCaptchaGate';
 import { requestPlanAction } from '../actions';
 import type { PublicPlan } from '../types';
 import { MT } from './text';
@@ -13,6 +14,7 @@ function PlanCard({ lang, p, hasPhone, highlight }: { lang: 'en' | 'ar'; p: Publ
   const t = MT[lang];
   const { pending, error, run } = useMemberAction(lang);
   const [sent, setSent] = useState(false);
+  const gate = useCaptchaGate('subscription', lang);
   const validity = p.validityType === 'duration' && p.durationMonths !== null
     ? t.months(formatNumber(p.durationMonths, lang), p.durationMonths === 1 ? t.monthsOne : t.monthsMany)
     : p.startsOn && p.endsOn ? t.range(formatDay(p.startsOn, lang, 'numeric'), formatDay(p.endsOn, lang, 'numeric')) : '';
@@ -22,7 +24,8 @@ function PlanCard({ lang, p, hasPhone, highlight }: { lang: 'en' | 'ar'; p: Publ
       <p className="text-sm text-ink-secondary">{p.companyName} · {p.originName} → {p.destinationName}</p>
       <p className="mt-2 text-xl font-semibold tabular-nums">{formatMoney(p.price, p.currency, lang)}</p>
       <p className="text-sm text-ink-secondary">{validity}</p>
-      <Button className="mt-3" disabled={pending || sent || !hasPhone} onClick={() => run(() => requestPlanAction(p.planId), () => setSent(true))}>{sent ? t.requested : t.request}</Button>
+      {gate.widget ? <div className="mt-3">{gate.widget}</div> : null}
+      <Button className="mt-3" disabled={pending || sent || !hasPhone || !gate.ready} onClick={() => { const token = gate.token; gate.spent(); run(() => requestPlanAction(p.planId, token), () => setSent(true)); }}>{sent ? t.requested : t.request}</Button>
       {!hasPhone ? <p className="mt-1 text-sm text-ink-secondary"><Link className="underline" href="/my-subscriptions">{t.phoneTitle}</Link></p> : null}
       {error ? <p role="alert" className="mt-1 text-sm font-medium text-status-error-fg">{error}</p> : null}
     </article>
