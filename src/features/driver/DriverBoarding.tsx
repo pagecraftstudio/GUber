@@ -10,7 +10,7 @@ import { DriverBoardingMasarView, type Outcome } from './masar/DriverBoardingMas
 const RETRYABLE = new Set(['network', 'rate_limited', 'unknown']);
 const msg = (code: BoardErrorCode, lang: Lang) => (lang === 'ar' ? arBoardMessages : BOARD_MESSAGES)[code];
 
-export function DriverBoarding({ lang = 'en' }: { lang?: Lang }) {
+export function DriverBoarding({ lang = 'en', initialTripId }: { lang?: Lang; /** from the trip manifest link; used only if it is one of the assigned trips */ initialTripId?: string | undefined }) {
   const x = DRIVER_TEXT[lang];
   const api = useMemo(() => createDriverApi(getSupabaseBrowser()), []);
   const [trips, setTrips] = useState<DriverTrip[] | null>(null);
@@ -27,8 +27,8 @@ export function DriverBoarding({ lang = 'en' }: { lang?: Lang }) {
 
   const loadTrips = useCallback(() => {
     setLoadErrorCode(null);
-    api.myTrips().then((t) => { setTrips(t); setTripId((cur) => cur || t[0]?.trip_id || ''); }).catch((e) => setLoadErrorCode(e instanceof BoardError ? e.code : 'unknown'));
-  }, [api]);
+    api.myTrips().then((t) => { setTrips(t); setTripId((cur) => cur || (initialTripId && t.some((x) => x.trip_id === initialTripId) ? initialTripId : t[0]?.trip_id) || ''); }).catch((e) => setLoadErrorCode(e instanceof BoardError ? e.code : 'unknown'));
+  }, [api, initialTripId]);
   useEffect(() => { loadTrips(); }, [loadTrips]);
   // a result sentence is text in the language it was written in: switching language clears it instead of leaving a stale one
   useEffect(() => { setOutcome(null); }, [lang]);
