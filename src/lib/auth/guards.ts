@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getAuthContext } from './context';
 import { COMPANY_LOGIN_PATH, CUSTOMER_LOGIN_PATH, CUSTOMER_HOME_PATH } from './paths';
 import { safeNextPath } from './redirect';
-import { accessState, activeMembership, can, hasPlatformRole, homePathFor } from './permissions';
+import { accessState, activeMembership, can, hasPlatformRole, homePathFor, isActing } from './permissions';
 import type { AuthContext, Membership, PlatformRole } from './types';
 
 export type TenantContext = AuthContext & { membership: Membership };
@@ -35,8 +35,7 @@ export async function requireCustomer(next: string = CUSTOMER_HOME_PATH): Promis
 /** Signed-in tenant staff with a usable (non-suspended) company. Optionally also requires a permission. */
 export async function requireTenant(permission?: string): Promise<TenantContext> {
   const ctx = await requireUser();
-  const state = accessState(ctx);
-  if (state !== 'tenant') redirect(homePathFor(ctx));
+  if (!isActing(ctx) && accessState(ctx) !== 'tenant') redirect(homePathFor(ctx));
   const membership = activeMembership(ctx);
   if (!membership) redirect(homePathFor(ctx));
   if (permission && !can(ctx, permission)) redirect('/dashboard?error=forbidden');

@@ -8,10 +8,16 @@ import { CUSTOMER_HOME_PATH, MARKETPLACE_PATH } from './paths';
  * This is a UX/routing layer only. The real enforcement is RLS + RPC checks in Postgres.
  */
 
+/** Platform staff inside a live acting session. The database built `membership` from the session; nothing here widens it. */
+export function isActing(ctx: AuthContext | null): boolean {
+  return !!ctx && ctx.isActive && !!ctx.platformRole && !!ctx.acting && !!ctx.membership;
+}
+
 /** Tenant membership that is currently usable (company and member both active). */
 export function activeMembership(ctx: AuthContext | null): Membership | null {
   const m = ctx?.membership;
   if (!ctx || !ctx.isActive || !m) return null;
+  if (isActing(ctx)) return m; // acting: suspended and cancelled companies are readable too; what may be WRITTEN is already in m.permissions
   if (m.memberStatus !== 'active') return null;
   if (m.companyStatus !== 'trial' && m.companyStatus !== 'active') return null;
   return m;

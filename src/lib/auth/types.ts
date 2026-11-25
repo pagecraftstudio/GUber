@@ -17,6 +17,9 @@ export type Membership = {
   permissions: string[];
 };
 
+/** A live super-admin / support session acting as the company in `membership` (0065/0066). The DB decides the permissions; the app only shows it. */
+export type Acting = { mode: 'read' | 'write'; startedAt: string; expiresAt: string };
+
 export type AuthContext = {
   userId: string;
   email: string;
@@ -25,6 +28,8 @@ export type AuthContext = {
   isActive: boolean;
   platformRole: PlatformRole | null;
   membership: Membership | null;
+  /** Present only while platform staff is acting as a company. */
+  acting?: Acting | null;
 };
 
 /** Shape returned by the `my_context()` RPC (migration 0007). Parsed at the trust boundary. */
@@ -46,6 +51,7 @@ export const rawContextSchema = z.object({
       permissions: z.array(z.string()),
     })
     .nullable(),
+  acting: z.object({ mode: z.enum(['read', 'write']), started_at: z.string(), expires_at: z.string() }).nullable().optional(),
 });
 
 export type RawContext = z.infer<typeof rawContextSchema>;
@@ -67,5 +73,6 @@ export function toAuthContext(raw: RawContext): AuthContext {
       roleKey: raw.membership.role_key,
       permissions: raw.membership.permissions,
     },
+    acting: raw.acting ? { mode: raw.acting.mode, startedAt: raw.acting.started_at, expiresAt: raw.acting.expires_at } : null,
   };
 }

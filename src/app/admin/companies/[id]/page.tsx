@@ -65,7 +65,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
   const usage = await companyService.adminSubscriptionUsage(ctx, id).catch(() => null);
   return (
     <>
-      <CompanyDetailMasarView data={result.data} isSuper={isSuper} canSub={canSub} canNote={canNote} planOptions={planOptions} activity={activity} />
+      <CompanyDetailMasarView data={result.data} isSuper={isSuper} canSub={canSub} canNote={canNote} canAct={ctx.auth.platformRole === 'super_admin' || ctx.auth.platformRole === 'support'} planOptions={planOptions} activity={activity} />
       {usage ? (
         <section aria-label="Member subscriptions" className="mt-6 text-sm">
           <h2 className="mb-2 text-base font-medium">Member subscriptions</h2>

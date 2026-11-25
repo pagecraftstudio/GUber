@@ -55,6 +55,10 @@ const RULES: Rule[] = [
   // audit read RPCs (0019)
   { match: /invalid filter|invalid range|invalid cursor|invalid limit/, code: 'validation', detail: 'invalid_filter' },
   { match: /audit entry not found/, code: 'not_found', detail: 'audit_not_found' },
+  // acting as a company (0065)
+  { match: /deleting is not allowed while acting/, code: 'business_rule', detail: 'acting_no_delete' },
+  { match: /company is not active: it can be read/, code: 'business_rule', detail: 'acting_company_inactive' },
+  { match: /no active acting session/, code: 'not_found', detail: 'acting_no_session' },
   // ratings (0061)
   { match: /not boarded/, code: 'business_rule', detail: 'rating_not_boarded' },
   { match: /rating not open yet/, code: 'business_rule', detail: 'rating_not_open' },
