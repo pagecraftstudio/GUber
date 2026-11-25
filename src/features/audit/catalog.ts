@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity', 'payment_settings', 'captcha', 'rating'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity', 'payment_settings', 'captcha', 'rating', 'plan', 'entitlement'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -24,6 +24,8 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   payment_settings: 'Payment settings',
   captcha: 'Captcha',
   rating: 'Rating',
+  plan: 'Platform plan',
+  entitlement: 'Plan limit key',
 };
 
 export const ACTOR_TYPES = ['platform_user', 'company_user', 'customer', 'system'] as const;
@@ -64,6 +66,12 @@ const ACTION_LABEL: Record<string, string> = {
   'rating.submitted': 'Rating submitted',
   'rating.hidden': 'Rating hidden by the platform',
   'rating.unhidden': 'Rating restored by the platform',
+  'plan.created': 'Platform plan created',
+  'plan.updated': 'Platform plan edited',
+  'plan.archived': 'Platform plan archived',
+  'plan.restored': 'Platform plan restored',
+  'plan.entitlement_set': 'Platform plan limit changed',
+  'entitlement.defined': 'Plan limit key added',
   'route.stops_saved': 'Route stops saved',
   'route.pair_created': 'Route and return route created',
   'route_plan.created': 'Subscription plan created',
