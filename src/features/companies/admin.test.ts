@@ -256,15 +256,22 @@ describe('company admin service: authorize -> validate -> repository', () => {
 describe('admin server actions (structural guard)', () => {
   const src = readFileSync(join(__dirname, '../admin/actions.ts'), 'utf8');
   const actions = [...src.matchAll(/export async function (\w+Action)\(/g)].map((m) => m[1]!);
-  it('finds all ten actions', () => {
+  it('finds all fifteen actions (ten company/subscription ones plus the five platform-plan ones of P8)', () => {
     expect(actions).toEqual(['createCompanyAction', 'updateCompanyAction', 'setCompanyStatusAction', 'addCompanyNoteAction', 'inviteOwnerAction', 'revokeInviteAction',
-      'assignSubscriptionAction', 'setSubscriptionStatusAction', 'setSubscriptionPeriodAction', 'expireStaleSubscriptionsAction']);
+      'assignSubscriptionAction', 'setSubscriptionStatusAction', 'setSubscriptionPeriodAction', 'expireStaleSubscriptionsAction',
+      'createPlanAction', 'updatePlanAction', 'setPlanActiveAction', 'setPlanEntitlementAction', 'createEntitlementDefinitionAction']);
   });
   it.each(actions)('%s runs the platform guard before its try block', (name) => {
     const body = src.slice(src.indexOf(`function ${name}(`)).split(/\nexport async function /)[0]!;
     const guard = body.indexOf('getPlatformServiceContext(');
     expect(guard).toBeGreaterThan(-1);
     expect(guard).toBeLessThan(body.indexOf('try {'));
+  });
+  it('every platform-plan action is super_admin only (guard AND service AND Postgres)', () => {
+    for (const name of ['createPlanAction', 'updatePlanAction', 'setPlanActiveAction', 'setPlanEntitlementAction', 'createEntitlementDefinitionAction']) {
+      const body = src.slice(src.indexOf(`function ${name}(`)).split(/\nexport async function /)[0]!;
+      expect(body, name).toContain('getPlatformServiceContext(SUPER_ADMIN)');
+    }
   });
   it('never logs, never imports a privileged client, never reads a role or actor from the form', () => {
     expect(src).not.toMatch(/console\./);

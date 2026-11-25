@@ -3,6 +3,7 @@
 import { ROLE_SETS } from '@/features/platform/permissions';
 import { revalidatePath } from 'next/cache';
 import { companyService } from '@/features/companies/service';
+import { planService } from '@/features/plans/service';
 import { subscriptionService } from '@/features/subscriptions/service';
 import { buildInviteUrl } from '@/features/users/invite-link';
 import { toClientError } from '@/lib/errors';
@@ -189,4 +190,57 @@ export async function expireStaleSubscriptionsAction(_prev: AdminActionState, _f
   } catch (e) {
     return failure(e);
   }
+}
+
+// ---------------------------------------------------------------- P8: platform plans (super_admin only; the RPCs refuse everyone else)
+
+const refreshPlans = () => { revalidatePath('/admin/plans'); revalidatePath('/admin/subscriptions'); };
+const planFields = (fd: FormData) => ({
+  name: field(fd, 'name'), description: field(fd, 'description'), priceMonthly: field(fd, 'priceMonthly'), priceYearly: field(fd, 'priceYearly'),
+  currency: field(fd, 'currency'), trialDays: field(fd, 'trialDays'), isPublic: field(fd, 'isPublic'), sortOrder: field(fd, 'sortOrder'),
+});
+
+export async function createPlanAction(_prev: AdminActionState, fd: FormData): Promise<AdminActionState> {
+  const ctx = await getPlatformServiceContext(SUPER_ADMIN);
+  try {
+    await planService.create(ctx, { code: field(fd, 'code'), ...planFields(fd) });
+    refreshPlans();
+    return { status: 'ok', message: 'Plan created. Every limit starts at 0 / off: set them before assigning the plan.' };
+  } catch (e) { return failure(e); }
+}
+
+export async function updatePlanAction(_prev: AdminActionState, fd: FormData): Promise<AdminActionState> {
+  const ctx = await getPlatformServiceContext(SUPER_ADMIN);
+  try {
+    await planService.update(ctx, field(fd, 'planId'), planFields(fd));
+    refreshPlans();
+    return { status: 'ok', message: 'Plan saved. Price changes apply to new subscriptions only.' };
+  } catch (e) { return failure(e); }
+}
+
+export async function setPlanActiveAction(_prev: AdminActionState, fd: FormData): Promise<AdminActionState> {
+  const ctx = await getPlatformServiceContext(SUPER_ADMIN);
+  try {
+    await planService.setActive(ctx, field(fd, 'planId'), { active: field(fd, 'active'), reason: field(fd, 'reason') });
+    refreshPlans();
+    return { status: 'ok' };
+  } catch (e) { return failure(e); }
+}
+
+export async function setPlanEntitlementAction(_prev: AdminActionState, fd: FormData): Promise<AdminActionState> {
+  const ctx = await getPlatformServiceContext(SUPER_ADMIN);
+  try {
+    const r = await planService.setEntitlement(ctx, field(fd, 'planId'), { key: field(fd, 'key'), value: field(fd, 'value') });
+    refreshPlans();
+    return { status: 'ok', message: r.liveSubscribers > 0 ? `Saved. ${r.liveSubscribers} live subscriber(s) are on this plan: a raised limit applies to their next new item; lower limits never remove existing items.` : 'Saved.' };
+  } catch (e) { return failure(e); }
+}
+
+export async function createEntitlementDefinitionAction(_prev: AdminActionState, fd: FormData): Promise<AdminActionState> {
+  const ctx = await getPlatformServiceContext(SUPER_ADMIN);
+  try {
+    await planService.createDefinition(ctx, { key: field(fd, 'key'), valueType: field(fd, 'valueType'), description: field(fd, 'description') });
+    refreshPlans();
+    return { status: 'ok', message: 'Key added to every plan (0 / off). It only limits something once a migration enforces it.' };
+  } catch (e) { return failure(e); }
 }
