@@ -19,6 +19,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
   { href: '/admin/subscriptions', label: 'Subscriptions', available: true, roles: ALL },
   { href: '/admin/plans', label: 'Plans', available: true, roles: ALL },
   { href: '/admin/audit-logs', label: 'Audit logs', available: true, roles: ALL },
+  // Rating moderation is super_admin only (hiding and listing are both refused by the database for any other role): hidden from everyone else.
+  { href: '/admin/ratings', label: 'Ratings', available: true, roles: ROLE_SETS.superAdminOnly },
 ];
 
 export const navFor = (role: PlatformRole | null): AdminNavItem[] =>
