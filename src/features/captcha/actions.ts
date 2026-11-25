@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ensureCaptchaPass, isCaptchaEnforced } from '@/lib/captcha/pass';
 
 const isNextSignal = (e: unknown) => typeof e === 'object' && e !== null && 'digest' in e && String((e as { digest: unknown }).digest).startsWith('NEXT_');
-const purposeSchema = z.enum(['booking', 'subscription']);
+const purposeSchema = z.enum(['booking', 'subscription', 'rating']);
 export type CaptchaResult = { ok: true } | { ok: false; code: string; detail?: string };
 
 /** Whether the challenge must be shown. Public information (the database answers anon too); never redirects. */

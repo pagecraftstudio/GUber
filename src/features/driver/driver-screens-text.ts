@@ -32,6 +32,7 @@ export interface DriverScreensText {
   };
   profile: {
     title: string; company: string; phone: string; licenseNumber: string; licenseExpiry: string; tripsCompleted: string; notOnFile: string;
+    rating: string; ratingNone: string; ratingCount: (n: number, lang: Lang) => string; ratingBar: (stars: number, n: number, lang: Lang) => string;
     loadErrorTitle: string; retry: string; loading: string;
     expiredTitle: string; soonTitle: string; unknownTitle: string; unknownBody: string;
     expiredBody: (expiryDay: string, daysAgo: number, lang: Lang) => string;
@@ -82,6 +83,7 @@ export const DRIVER_SCREENS_TEXT: Record<Lang, DriverScreensText> = {
     },
     profile: {
       title: 'My profile', company: 'Company', phone: 'Phone', licenseNumber: 'Licence number', licenseExpiry: 'Licence expiry', tripsCompleted: 'Trips completed', notOnFile: 'Not on file',
+      rating: 'Rider rating', ratingNone: 'No ratings yet', ratingCount: (n, lang) => `${formatNumber(n, lang)} ${n === 1 ? 'rating' : 'ratings'}`, ratingBar: (stars, n, lang) => `${formatNumber(stars, lang)} ${stars === 1 ? 'star' : 'stars'}: ${formatNumber(n, lang)}`,
       loadErrorTitle: 'Could not load your profile', retry: 'Try again', loading: 'Loading your profile',
       expiredTitle: 'Your licence has expired', soonTitle: 'Your licence expires soon', unknownTitle: 'No licence expiry on file', unknownBody: 'Ask your company to add your licence details.',
       expiredBody: (day, ago, lang) => `It expired on ${formatDay(day, lang)} (${enDays(ago, lang)} ago). Contact your company before your next trip.`,
@@ -133,6 +135,7 @@ export const DRIVER_SCREENS_TEXT: Record<Lang, DriverScreensText> = {
     },
     profile: {
       title: 'ملفي', company: 'الشركة', phone: 'الهاتف', licenseNumber: 'رقم الرخصة', licenseExpiry: 'انتهاء الرخصة', tripsCompleted: 'الرحلات المكتملة', notOnFile: 'غير مسجّل',
+      rating: 'تقييم الركاب', ratingNone: 'لا توجد تقييمات بعد', ratingCount: (n, lang) => `${formatNumber(n, lang)} تقييم`, ratingBar: (stars, n, lang) => `${formatNumber(stars, lang)} من 5 نجوم: ${formatNumber(n, lang)}`,
       loadErrorTitle: 'تعذّر تحميل ملفك', retry: 'حاول مرة أخرى', loading: 'جارٍ تحميل ملفك',
       expiredTitle: 'رخصتك منتهية', soonTitle: 'رخصتك على وشك الانتهاء', unknownTitle: 'لا يوجد تاريخ انتهاء للرخصة', unknownBody: 'اطلب من شركتك إضافة بيانات رخصتك.',
       expiredBody: (day, ago, lang) => `انتهت في ${formatDay(day, lang)} (منذ ${arDays(ago, lang, true)}). تواصل مع شركتك قبل رحلتك القادمة.`,

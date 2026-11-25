@@ -9,6 +9,7 @@ import { EmptyState, SkeletonCard } from '@/ds/feedback/States';
 import { Modal } from '@/ds/feedback/Dialog';
 import { TripCard } from '@/ds/domain/Trip';
 import { formatClock, formatNumber, formatMoney } from '@/ds/format';
+import { RATING_TEXT } from '@/features/ratings/text';
 import { tenantAccent } from '@/ds/contrast';
 import { useLocale } from '../../context/LocaleContext';
 import { quickDates } from '../../lib/demoDefaults';
@@ -30,6 +31,8 @@ export interface MarketplaceMasarViewProps {
   onBook: (t: MarketplaceTripItem) => void;
   /** Real mode, signed in: trips that are free for this student (their subscription), by trip id. */
   freeFor?: Record<string, { planName: string; available: boolean }>;
+  /** Public company ratings by company id; `average` is null until the company has enough ratings (shown as "New"). */
+  companyRatings?: Record<string, { ratings: number; average: number | null }>;
   onOperator: (companyId: string) => void;
 }
 
@@ -52,6 +55,13 @@ export function MarketplaceMasarView(p: MarketplaceMasarViewProps) {
 
   const active = [p.params.companyId, p.params.timeOfDay && p.params.timeOfDay !== 'all', p.params.maxPrice && p.params.maxPrice < 300, p.params.minAvailableSeats && p.params.minAvailableSeats > 1].filter(Boolean).length;
   const name = (en: string, a: string) => (ar ? a : en);
+  const ratingProps = (companyId: string): { ratingLabel?: string; ratingAria?: string } => {
+    const r = p.companyRatings?.[companyId];
+    if (!r) return {};
+    const rt = RATING_TEXT[locale === 'ar' ? 'ar' : 'en'].company;
+    if (r.average === null) return { ratingLabel: rt.newLabel };
+    return { ratingLabel: `★ ${formatNumber(r.average, locale === 'ar' ? 'ar' : 'en', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} (${rt.count(r.ratings, locale === 'ar' ? 'ar' : 'en')})`, ratingAria: rt.aria(r.average, locale === 'ar' ? 'ar' : 'en') };
+  };
   const listed = p.companies.filter((c) => c.status === 'active' && c.marketplaceListed);
   const pageTrips = p.trips.slice((p.page - 1) * p.pageSize, p.page * p.pageSize);
   const pages = Math.max(1, Math.ceil(p.total / p.pageSize));
@@ -140,7 +150,7 @@ export function MarketplaceMasarView(p: MarketplaceMasarViewProps) {
                     <li key={trip.id}>
                       <TripCard
                         lang={locale}
-                        operator={{ name: name(trip.companyNameEn, trip.companyNameAr), onClick: () => p.onOperator(trip.companyId), tile: { text: trip.companyLogoText.slice(0, 2).toUpperCase(), accent: tint?.accent ?? 'var(--ds-action-primary)', onAccent: tint?.onAccent ?? 'var(--ds-action-on-primary)' } }}
+                        operator={{ name: name(trip.companyNameEn, trip.companyNameAr), onClick: () => p.onOperator(trip.companyId), ...ratingProps(trip.companyId), tile: { text: trip.companyLogoText.slice(0, 2).toUpperCase(), accent: tint?.accent ?? 'var(--ds-action-primary)', onAccent: tint?.onAccent ?? 'var(--ds-action-on-primary)' } }}
                         departureText={formatClock(trip.departureTime, locale)}
                         arrivalText={formatClock(trip.arrivalTime, locale)}
                         durationMinutes={trip.durationMinutes}

@@ -5,7 +5,7 @@ import { createHmac, randomBytes } from 'node:crypto';
  * 'v1|<purpose>|<user id>|<expiry epoch seconds>|<nonce>' with CAPTCHA_PASS_SECRET. redeem_captcha_proof recomputes the same HMAC-SHA256 (hex)
  * with the secret stored by set_captcha_enforcement and stores a ONE-TIME pass. The secret never reaches the browser or a log.
  */
-export type CaptchaPurpose = 'booking' | 'subscription';
+export type CaptchaPurpose = 'booking' | 'subscription' | 'rating';
 export type CaptchaProof = { purpose: CaptchaPurpose; exp: number; nonce: string; sig: string };
 
 /** The database refuses an expiry more than 600 s ahead; 120 s is plenty for one RPC round trip. */
