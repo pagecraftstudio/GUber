@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { readTenantConfig } from '@/lib/tenant/config';
 import { tenantHref, tenantUrl } from '@/lib/tenant/url';
-import { resolveTenantBySlug } from '@/lib/tenant/resolve';
+import { resolveTenantBySlug, type ResolvedTenant } from '@/lib/tenant/resolve';
 import { getEnv } from '@/lib/env';
 import { getPublicSite } from './data';
 import { needsTrips } from './Sections';
@@ -11,6 +11,8 @@ import { DEFAULT_SITE_LOCALE, parseLocale, pick, type SiteLocale } from './text'
 import { getSiteTrips, type SiteTrip } from './trips-data';
 import { getSitePlans } from './plans-data';
 import { needsPlans, type SitePlan } from './plans';
+import { getSiteRating } from './rating-data';
+import type { SiteRating } from './SiteRatingBadge';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const localeFrom = (sp: SearchParams): SiteLocale => parseLocale(Array.isArray(sp.lang) ? sp.lang[0] : sp.lang) ?? DEFAULT_SITE_LOCALE;
@@ -46,23 +48,32 @@ export async function renderSitePage(slug: string, pageSlug: string | null, sp: 
   const locale = localeFrom(sp);
   const cfg = readTenantConfig(process.env);
   const env = getEnv();
+  // The tenant is resolved at most once per render, however many parts need its id (trips, plans, rating).
+  let tenantOnce: Promise<ResolvedTenant | null> | undefined;
+  const tenantOf = () => (tenantOnce ??= resolveTenantBySlug(slug));
   let trips: SiteTrip[] = [];
   if (needsTrips(data.site)) {
-    const tenant = await resolveTenantBySlug(slug);
+    const tenant = await tenantOf();
     if (!tenant) notFound();
     trips = await getSiteTrips(tenant.companyId);
   }
   let plans: SitePlan[] = [];
   if (needsPlans(data.site.pages.map((p) => p.sections))) {
-    const tenant = await resolveTenantBySlug(slug);
+    const tenant = await tenantOf();
     if (!tenant) notFound();
     plans = await getSitePlans(tenant.companyId);
   }
+  // The rating never blocks the page: any failure (including resolving the tenant) just means no badge.
+  let rating: SiteRating | null = null;
+  try {
+    const tenant = await tenantOf();
+    rating = tenant ? await getSiteRating(tenant.companyId) : null;
+  } catch { rating = null; }
   const cs = data.company.slug;
   const links: SiteLinks = {
     home: () => tenantHref(cfg, cs, '/'),
     page: (p) => tenantHref(cfg, cs, `/${p}`),
     lang: (p, l) => `${tenantHref(cfg, cs, pagePath(p))}?lang=${l}`,
   };
-  return <SiteView data={data} page={page} pageSlug={pageSlug} locale={locale} supabaseUrl={env.NEXT_PUBLIC_SUPABASE_URL} trips={trips} plans={plans} links={links} />;
+  return <SiteView data={data} page={page} pageSlug={pageSlug} locale={locale} supabaseUrl={env.NEXT_PUBLIC_SUPABASE_URL} trips={trips} plans={plans} links={links} rating={rating} />;
 }
