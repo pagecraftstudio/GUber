@@ -43,6 +43,10 @@ revoke all on function app_private.subscription_price_snapshot() from public, an
 create trigger subscriptions_price_snapshot before insert on public.subscriptions
   for each row execute function app_private.subscription_price_snapshot();
 
+-- Backfill existing subscriptions BEFORE the freeze trigger exists (the trigger would refuse null -> value).
+update public.subscriptions s set price_monthly = p.price_monthly, price_yearly = p.price_yearly, currency = p.currency
+  from public.plans p where p.id = s.plan_id and s.price_monthly is null;
+
 create or replace function app_private.subscription_price_frozen() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
@@ -55,8 +59,6 @@ revoke all on function app_private.subscription_price_frozen() from public, anon
 create trigger subscriptions_price_frozen before update on public.subscriptions
   for each row execute function app_private.subscription_price_frozen();
 
-update public.subscriptions s set price_monthly = p.price_monthly, price_yearly = p.price_yearly, currency = p.currency
-  from public.plans p where p.id = s.plan_id and s.price_monthly is null;
 alter table public.subscriptions alter column price_monthly set not null, alter column currency set not null;
 
 -- ======================= 2. READ =======================
