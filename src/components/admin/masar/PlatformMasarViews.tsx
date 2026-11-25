@@ -16,7 +16,6 @@ import { auditHref, entityHref } from '@/features/audit/links';
 import type { AuditEntry, AuditItem, AuditPage, AuditSummary } from '@/features/audit/schema';
 import type { MetadataView } from '@/features/audit/diff';
 import type { PlatformOverview } from '@/features/platform/schema';
-import type { Plan } from '@/features/subscriptions/types';
 import type { AdminSubscriptionItem } from '@/features/subscriptions/admin-output';
 import { SUBSCRIPTION_STATES } from '@/features/subscriptions/schema';
 import type { Page } from '@/lib/db/pagination';
@@ -107,41 +106,6 @@ export const KEY_LABEL: Record<string, string> = {
   max_users: 'Users', max_buses: 'Buses', max_drivers: 'Drivers', max_routes: 'Routes', max_trips_per_month: 'Trips / month', max_route_plans: 'Subscription plans', max_bookings_per_month: 'Bookings / month',
   feature_analytics: 'Analytics', feature_custom_domain: 'Custom domain', feature_notifications_sms: 'SMS notifications',
 };
-const entitlementText = (e: Plan['entitlements'][string]): string => (e.kind === 'flag' ? (e.enabled ? 'Included' : 'Not included') : e.limit === null ? 'Unlimited' : n(e.limit));
-
-export function PlansMasar({ result }: { result: Loaded<Plan[]> }) {
-  return (
-    <div>
-      <PageHeaderMasar title="Plans" description="Read-only. Limits are enforced by the database on every new user, bus, driver, route, trip and booking." />
-      {'error' in result ? <ErrorState title="Could not load plans" description={result.error} /> : result.data.length === 0 ? <EmptyState title="No plans" description="Plans are created by migrations." /> : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {result.data.map((p) => (
-            <article key={p.id} className={cx(card, 'space-y-3 p-5')}>
-              <header className="space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-base font-medium text-ink-primary">{p.name}</h2>
-                  <Identifier value={p.code} />
-                </div>
-                <p className="text-[13px] text-ink-secondary tabular-nums">
-                  {n(p.priceMonthly)} {p.currency} / month{p.priceYearly !== null ? ` · ${n(p.priceYearly)} / year` : ''} · {p.trialDays}-day trial
-                </p>
-                <p className="text-[13px] text-ink-secondary">{p.isActive ? 'Active' : 'Inactive (cannot be assigned)'} · {p.isPublic ? 'Public' : 'Not public'}</p>
-              </header>
-              <dl className="divide-y divide-line-default text-sm">
-                {Object.entries(p.entitlements).map(([key, e]) => (
-                  <div key={key} className="flex justify-between gap-3 py-2">
-                    <dt className="text-ink-secondary">{KEY_LABEL[key] ?? key}</dt>
-                    <dd className="text-ink-primary tabular-nums">{entitlementText(e)}</dd>
-                  </div>
-                ))}
-              </dl>
-            </article>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------- Subscriptions
 const STATE_LABEL: Record<string, string> = { live: 'Live', stale: 'Stale (period ended)', expiring: 'Expiring in 14 days', trialing: 'Trialing', active: 'Active', past_due: 'Past due', cancelled: 'Cancelled', expired: 'Expired' };

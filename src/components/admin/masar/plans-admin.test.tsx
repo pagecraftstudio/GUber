@@ -37,6 +37,14 @@ describe('PlansAdminView', () => {
     expect(screen.getByText(/3 live \/ 4 total subscriptions/)).toBeTruthy();
     expect(screen.getByText(/Archived \(cannot be assigned\)/)).toBeTruthy();
   });
+  it('each card has a plain-language preview, with a warning for a plan that allows nothing', () => {
+    const fresh = { ...data.plans[0]!, id: 'p3', code: 'fresh', name: 'Fresh', entitlements: data.definitions.map((d) => (d.valueType === 'integer' ? { key: d.key, kind: 'limit' as const, limit: 0 } : { key: d.key, kind: 'flag' as const, enabled: false })) };
+    wrap(<PlansAdminView result={{ data: { ...data, plans: [data.plans[0]!, fresh] } }} isSuper />);
+    expect(screen.getAllByText('What a company on this plan can do')).toHaveLength(2);
+    expect(screen.getByText('Up to 5 buses')).toBeTruthy();
+    expect(screen.getByText('Unlimited company users')).toBeTruthy();
+    expect(screen.getAllByRole('note').some((n) => /allows nothing yet/.test(n.textContent ?? ''))).toBe(true);
+  });
   it('super_admin gets the create / edit / archive / restore controls', () => {
     wrap(<PlansAdminView result={{ data }} isSuper />);
     for (const name of ['New plan', 'New limit key', 'Edit plan', 'Archive', 'Restore']) expect(screen.getAllByRole('button', { name: new RegExp(`^${name}$`) }).length, name).toBeGreaterThan(0);
