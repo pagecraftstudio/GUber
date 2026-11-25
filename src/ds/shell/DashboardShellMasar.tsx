@@ -16,14 +16,16 @@ import { ShellFrame, type ShellNavItem } from './ShellFrame';
 import { SHELL_TEXT } from './text';
 
 type Lang = 'en' | 'ar';
-export interface DashboardShellMasarProps { initialLang?: Lang; companyName: string; fullName: string; role: string; permissions: string[]; children: React.ReactNode; logoutAction: () => void }
+export interface DashboardShellMasarProps { initialLang?: Lang; companyName: string; fullName: string; role: string; permissions: string[]; children: React.ReactNode; logoutAction: () => void;
+  /** Acting-as banner (platform staff only). Rendered above every page so it can never be scrolled out of sight. */
+  banner?: React.ReactNode }
 
 /**
  * Company dashboard shell in the MASAR look. Same contract as the old DashboardShell (plan Phase 4): cookie + localStorage language
  * (`malaky-dashboard-language`), theme (`malaky-dashboard-theme`), direction on <html>, permission-driven nav, the same <main id>.
  * Search is not shown because the product has no search yet.
  */
-export function DashboardShellMasar({ initialLang = 'en', companyName, fullName, role, permissions, children, logoutAction }: DashboardShellMasarProps) {
+export function DashboardShellMasar({ initialLang = 'en', companyName, fullName, role, permissions, children, logoutAction, banner }: DashboardShellMasarProps) {
   const pathname = usePathname();
   const [lang, setLang] = useState<Lang>(initialLang);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -70,7 +72,7 @@ export function DashboardShellMasar({ initialLang = 'en', companyName, fullName,
           </>
         </>}
       >
-        <DashboardLangProvider value={lang}><Suspense fallback={null}><FlashNotice /></Suspense>{children}</DashboardLangProvider>
+        <DashboardLangProvider value={lang}>{banner}<Suspense fallback={null}><FlashNotice /></Suspense>{children}</DashboardLangProvider>
       </ShellFrame>
     </DsLangProvider>
   );

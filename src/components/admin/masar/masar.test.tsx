@@ -12,6 +12,7 @@ const act = vi.hoisted(() => {
   const mk = () => vi.fn(async (_p: unknown, _fd: FormData) => ({ status: 'ok' }) as AdminActionState);
   return { create: mk(), update: mk(), setStatus: mk(), note: mk(), invite: mk(), revoke: mk(), assign: mk(), subStatus: mk(), subPeriod: mk() };
 });
+vi.mock('@/features/acting/actions', () => ({ enterActingAction: async () => ({ status: 'idle' }) }));
 vi.mock('@/features/admin/actions', () => ({
   createCompanyAction: act.create, updateCompanyAction: act.update, setCompanyStatusAction: act.setStatus, addCompanyNoteAction: act.note, inviteOwnerAction: act.invite,
   revokeInviteAction: act.revoke, assignSubscriptionAction: act.assign, setSubscriptionStatusAction: act.subStatus, setSubscriptionPeriodAction: act.subPeriod,
@@ -152,6 +153,13 @@ const view = (p: Partial<CompanyDetailMasarViewProps> & { data?: AdminCompanyDet
 const names = () => screen.getAllByRole('button').map((b) => b.textContent);
 
 describe('company detail', () => {
+  it('Open dashboard (acting as) shows only when the viewer may act, and asks for a reason', () => {
+    view();
+    expect(names()).not.toContain('Open dashboard');
+    cleanup();
+    view({ canAct: true });
+    expect(names()).toContain('Open dashboard');
+  });
   it('facts: profile, usage with grouped English digits, owners, notes, UTC dates', () => {
     view();
     expect(screen.getByRole('heading', { level: 1, name: 'Delta Express' })).toBeTruthy();

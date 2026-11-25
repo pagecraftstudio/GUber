@@ -13,6 +13,8 @@ export const ROLE_SETS = {
   anyStaff: PLATFORM_ROLES,
   /** Company lifecycle: create, edit, suspend, reactivate, cancel, domains. */
   superAdminOnly: ['super_admin'],
+  /** Open a company's dashboard (acting-as, 0065). support is read-only; Postgres decides. */
+  actingStaff: ['super_admin', 'support'],
   /** Internal notes on a company. */
   noteWriters: ['super_admin', 'support'],
   /** Subscription / plan mutations. */

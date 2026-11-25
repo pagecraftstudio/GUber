@@ -11,6 +11,7 @@ import type { AdminCompanyDetail } from '@/features/companies/admin-output';
 import { auditHref } from '@/features/audit/links';
 import type { AuditItem } from '@/features/audit/schema';
 import { AuditTable } from '../AuditTable';
+import { enterActingAction } from '@/features/acting/actions';
 import { AdminActionDialog } from './AdminActionDialog';
 import { AddNoteForm, InviteOwnerForm } from './CompanyFormsMasar';
 
@@ -32,12 +33,14 @@ export interface CompanyDetailMasarViewProps {
   data: AdminCompanyDetail;
   /** UI visibility only. The services and Postgres authorise every action again. */
   isSuper: boolean; canSub: boolean; canNote: boolean;
+  /** super_admin and support may open the company's dashboard (read-only first). Postgres decides again. */
+  canAct?: boolean;
   planOptions: { value: string; label: string }[];
   activity: AuditItem[] | null;
 }
 
 /** Company detail: facts first, then the things a platform admin can do, each with its consequence spelled out in a dialog. Data, permissions and server actions are the old page's. */
-export function CompanyDetailMasarView({ data, isSuper, canSub, canNote, planOptions, activity }: CompanyDetailMasarViewProps) {
+export function CompanyDetailMasarView({ data, isSuper, canSub, canNote, canAct = false, planOptions, activity }: CompanyDetailMasarViewProps) {
   const { company: c, subscription: s, counts, owners, pendingInvites, notes, settings, resumeStatus } = data;
   const editable = c.status !== 'cancelled';
   return (
@@ -49,6 +52,11 @@ export function CompanyDetailMasarView({ data, isSuper, canSub, canNote, planOpt
             <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-medium text-ink-primary">{c.name}</h1><StatusBadge domain="company" value={c.status} lang="en" /></div>
             <p className="text-[13px] text-ink-muted"><Identifier value={c.slug} /> · created {utc(c.createdAt)}</p>
           </div>
+          {canAct ? (
+            <AdminActionDialog triggerLabel="Open dashboard" title={`Open ${c.name}'s dashboard?`} confirmLabel="Open dashboard" action={enterActingAction} hidden={{ companyId: c.id }}
+              description="You will see the dashboard as its staff do. It starts read-only and ends after 30 minutes. Everything you do is recorded under your name, with the reason below."
+              reason={{ label: 'Why are you opening it?', hint: 'For example: support ticket 4411.' }} />
+          ) : null}
           {isSuper && editable ? (
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Company actions">
               <Link href={`/admin/companies/${c.id}/edit`} className={buttonClass('secondary', 'md')}>Edit details</Link>
