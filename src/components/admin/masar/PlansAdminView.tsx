@@ -5,6 +5,7 @@ import { cx } from '@/ds/primitives/cx';
 import { PageHeaderMasar } from '@/features/dashboard/masar/PageHeaderMasar';
 import { createEntitlementDefinitionAction, createPlanAction, setPlanActiveAction, setPlanEntitlementAction, updatePlanAction } from '@/features/admin/actions';
 import type { AdminPlan, EntitlementDefinition, PlanEntitlementValue, PlanOverview } from '@/features/plans/output';
+import { describePlan } from '@/features/plans/preview';
 import { AdminActionDialog, type DialogField } from './AdminActionDialog';
 import { KEY_LABEL } from './PlatformMasarViews';
 
@@ -30,6 +31,7 @@ const planFields = (p?: AdminPlan): DialogField[] => [
 function PlanCard({ plan, definitions, isSuper }: { plan: AdminPlan; definitions: EntitlementDefinition[]; isSuper: boolean }) {
   const byKey = new Map(plan.entitlements.map((e) => [e.key, e]));
   const live = plan.liveSubscribers;
+  const preview = describePlan(plan, definitions);
   return (
     <article className={cx(card, 'space-y-4 p-5', !plan.isActive && 'opacity-80')}>
       <header className="space-y-1">
@@ -68,6 +70,15 @@ function PlanCard({ plan, definitions, isSuper }: { plan: AdminPlan; definitions
           );
         })}
       </dl>
+      <details className="rounded-ds-sm border border-line-default px-3 py-2 text-sm">
+        <summary className="cursor-pointer font-medium text-ink-primary">What a company on this plan can do</summary>
+        <div className="mt-2 space-y-2">
+          {preview.warnings.map((w) => <p key={w} role="note" className="text-[13px] font-medium text-status-error-fg">{w}</p>)}
+          {preview.allows.length > 0 ? <ul className="list-disc space-y-0.5 ps-5 text-ink-primary">{preview.allows.map((t) => <li key={t}>{t}</li>)}</ul> : null}
+          {preview.blocked.length > 0 ? <ul className="list-disc space-y-0.5 ps-5 text-ink-secondary">{preview.blocked.map((t) => <li key={t}>{t}</li>)}</ul> : null}
+          <p className="text-[13px] text-ink-secondary">New companies are charged {money(plan.priceMonthly, plan.currency)} / month{plan.priceYearly !== null ? ` or ${money(plan.priceYearly, plan.currency)} / year` : ''}, after a {plan.trialDays}-day trial. Limits stop NEW items only; nothing a company already has is removed.</p>
+        </div>
+      </details>
       {isSuper ? (
         <div className="flex flex-wrap gap-2" role="group" aria-label={`${plan.name} actions`}>
           <AdminActionDialog

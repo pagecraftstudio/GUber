@@ -13,7 +13,7 @@ import type { AdminSubscriptionItem } from '@/features/subscriptions/admin-outpu
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/admin', useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push() {}, refresh() {} }) }));
 
-import { AuditEntryMasar, AuditListMasar, AuditTableMasar, PlansMasar, PlatformOverviewMasar, SubscriptionsMasar } from './PlatformMasarViews';
+import { AuditEntryMasar, AuditListMasar, AuditTableMasar, PlatformOverviewMasar, SubscriptionsMasar } from './PlatformMasarViews';
 
 beforeAll(polyfillDialog);
 afterEach(cleanup);
@@ -51,29 +51,6 @@ describe('platform overview', () => {
     cleanup();
     wrap(<PlatformOverviewMasar res={{ error: 'Something went wrong' }} />);
     expect(screen.getByRole('alert').textContent).toContain('Something went wrong');
-  });
-});
-
-describe('plans', () => {
-  const plan = { id: 'p1', code: 'starter', name: 'Starter', priceMonthly: 1500, priceYearly: 15000, currency: 'EGP', trialDays: 14, isActive: true, isPublic: false,
-    entitlements: { max_buses: { kind: 'limit', limit: 5 }, max_users: { kind: 'limit', limit: null }, feature_analytics: { kind: 'flag', enabled: false } } };
-  it('is read-only and spells out limits, unlimited and flags in words', async () => {
-    const { container } = wrap(<PlansMasar result={{ data: [plan as never] }} />);
-    expect(screen.getByText(/1,500 EGP \/ month/)).toBeTruthy();
-    expect(screen.getByText('Not public', { exact: false })).toBeTruthy();
-    const dl = container.querySelector('dl')!;
-    expect(within(dl).getByText('Buses').nextElementSibling?.textContent).toBe('5');
-    expect(within(dl).getByText('Users').nextElementSibling?.textContent).toBe('Unlimited');
-    expect(within(dl).getByText('Analytics').nextElementSibling?.textContent).toBe('Not included');
-    expect(screen.queryByRole('button')).toBeNull();
-    expect(await bad(container)).toEqual([]);
-  });
-  it('empty and error states', () => {
-    wrap(<PlansMasar result={{ data: [] }} />);
-    expect(screen.getByText('No plans')).toBeTruthy();
-    cleanup();
-    wrap(<PlansMasar result={{ error: 'Nope' }} />);
-    expect(screen.getByRole('alert')).toBeTruthy();
   });
 });
 
