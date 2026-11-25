@@ -1,23 +1,20 @@
-
-import { PlansMasar } from '@/components/admin/masar/PlatformMasarViews';
-import { subscriptionService } from '@/features/subscriptions/service';
-import type { Plan } from '@/features/subscriptions/types';
+import { PlansAdminView } from '@/components/admin/masar/PlansAdminView';
+import { planService } from '@/features/plans/service';
+import type { PlanOverview } from '@/features/plans/output';
 import { toClientError } from '@/lib/errors';
 import { getPlatformServiceContext } from '@/lib/service/server';
 
 export const metadata = { title: 'Plans · Admin' };
 export const dynamic = 'force-dynamic';
 
-
-
-/** Read-only by design: editing plans and prices is a later decision (no write RPC exists for plans). */
+/** Every platform role may read the plans; only super_admin sees the edit controls (and Postgres refuses everyone else regardless). */
 export default async function PlansPage() {
   const ctx = await getPlatformServiceContext();
-  let result: { data: Plan[] } | { error: string };
+  let result: { data: PlanOverview } | { error: string };
   try {
-    result = { data: await subscriptionService.listPlans(ctx) };
+    result = { data: await planService.overview(ctx) };
   } catch (e) {
     result = { error: toClientError(e).message };
   }
-  return <PlansMasar result={result} />;
+  return <PlansAdminView result={result} isSuper={ctx.auth.platformRole === 'super_admin'} />;
 }

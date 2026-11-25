@@ -17,6 +17,8 @@ const MESSAGES: Record<string, string> = {
   pending: 'An invite for this email is already pending.',
   invalid_period: 'Enter a whole number of days from 1 to 1830.',
   no_changes: 'Nothing to change.',
+  invalid_entitlement_value: 'Enter a whole number, "unlimited", or "on" / "off".',
+  code_taken: 'This code is already used by another plan.',
 };
 
 export const fieldMessage = (code: string | undefined): string | undefined => (code ? (MESSAGES[code] ?? 'This value is not valid.') : undefined);
