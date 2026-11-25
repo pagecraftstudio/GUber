@@ -8,7 +8,7 @@ import { Input, Select, Textarea } from '@/ds/primitives/Input';
 import { IDLE, type AdminActionState } from '@/features/admin/action-state';
 import { fieldMessage } from '../messages';
 
-export type DialogField = { name: string; label: string; kind: 'select' | 'number' | 'text'; options?: { value: string; label: string }[]; defaultValue?: string; min?: number; max?: number; hint?: string };
+export type DialogField = { name: string; label: string; kind: 'select' | 'number' | 'text'; options?: { value: string; label: string }[]; defaultValue?: string; min?: number; max?: number; step?: string; optional?: boolean; hint?: string };
 
 export interface AdminActionDialogProps {
   triggerLabel: string; title: string; description: string; confirmLabel: string; tone?: 'danger' | 'primary';
@@ -44,10 +44,10 @@ export function AdminActionDialog({ triggerLabel, title, description, confirmLab
           <p className="text-sm text-ink-secondary">{description}</p>
           {Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
           {fields?.map((f) => (
-            <Field key={f.name} label={f.label} required hint={f.hint} error={fieldMessage(state.fields?.[f.name])}>
+            <Field key={f.name} label={f.label} required={!f.optional} hint={f.hint} error={fieldMessage(state.fields?.[f.name])}>
               {f.kind === 'select'
                 ? <Select name={f.name} defaultValue={f.defaultValue}>{f.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</Select>
-                : <Input name={f.name} type={f.kind === 'number' ? 'number' : 'text'} min={f.min} max={f.max} defaultValue={f.defaultValue} />}
+                : <Input name={f.name} type={f.kind === 'number' ? 'number' : 'text'} min={f.min} max={f.max} step={f.step} defaultValue={f.defaultValue} />}
             </Field>
           ))}
           {reason ? <Field label={reason.label} required hint={reason.hint} error={fieldMessage(state.fields?.reason)}><Textarea name="reason" required minLength={3} maxLength={500} rows={3} /></Field> : null}

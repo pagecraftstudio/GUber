@@ -103,7 +103,7 @@ export function PlatformOverviewMasar({ res }: { res: Loaded<PlatformOverview> }
 }
 
 // ---------------------------------------------------------------- Plans
-const KEY_LABEL: Record<string, string> = {
+export const KEY_LABEL: Record<string, string> = {
   max_users: 'Users', max_buses: 'Buses', max_drivers: 'Drivers', max_routes: 'Routes', max_trips_per_month: 'Trips / month', max_route_plans: 'Subscription plans', max_bookings_per_month: 'Bookings / month',
   feature_analytics: 'Analytics', feature_custom_domain: 'Custom domain', feature_notifications_sms: 'SMS notifications',
 };
