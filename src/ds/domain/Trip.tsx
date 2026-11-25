@@ -6,7 +6,7 @@ import { RouteLine, type RouteStop } from './RouteLine';
 
 export interface TripCardProps {
   /** `tile` is the company mark (D5 allows tenant colour here, already validated by `tenantAccent`). `onClick` opens the operator profile. */
-  operator: { name: string; logoUrl?: string | null; tile?: { text: string; accent: string; onAccent: string }; onClick?: () => void };
+  operator: { name: string; logoUrl?: string | null; tile?: { text: string; accent: string; onAccent: string }; onClick?: () => void; /** e.g. "4.6 (120 ratings)" or "New"; already formatted by the caller. */ ratingLabel?: string; ratingAria?: string };
   departureAt?: string;
   /** Preformatted wall-clock times for sources that store local "HH:MM" strings instead of instants. Win over `departureAt`/`arrivalAt`. */
   departureText?: string;
@@ -41,9 +41,12 @@ export function TripCard(p: TripCardProps) {
       <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {p.operator.tile ? <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-ds-sm text-[13px] font-medium" style={{ background: p.operator.tile.accent, color: p.operator.tile.onAccent }}>{p.operator.tile.text}</span> : null}
-          {p.operator.onClick
-            ? <button type="button" onClick={p.operator.onClick} className="truncate rounded-ds-sm text-start text-sm font-medium text-ink-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">{p.operator.name}</button>
-            : <p className="truncate text-sm font-medium text-ink-primary">{p.operator.name}</p>}
+          <div className="min-w-0">
+            {p.operator.onClick
+              ? <button type="button" onClick={p.operator.onClick} className="truncate rounded-ds-sm text-start text-sm font-medium text-ink-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">{p.operator.name}</button>
+              : <p className="truncate text-sm font-medium text-ink-primary">{p.operator.name}</p>}
+            {p.operator.ratingLabel ? <p className="truncate text-[13px] text-ink-secondary" aria-label={p.operator.ratingAria}>{p.operator.ratingLabel}</p> : null}
+          </div>
         </div>
         {p.price ? <div className="shrink-0 text-end"><p className="text-lg font-medium text-ink-primary tabular-nums">{p.priceLabel ?? formatMoney(p.price.amount, p.price.currency, lang)}</p>{p.priceNote ? <p className="text-[13px] text-ink-muted">{p.priceNote}</p> : null}</div> : null}
       </header>

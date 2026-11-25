@@ -172,3 +172,19 @@ select t.eq('job: the T5 rider (boarded now, window open) is asked once', app_pr
 select t.eq('job: a second run adds nothing (dedupe)', app_private.notify_rating_requests(), 0);
 select t.eq('job: the notice lands in the rider''s inbox in both languages', t.cnt57($$select count(*) from notifications where event_key = 'rating.request' and recipient_user_id = t.u(5701)$$), 1::bigint);
 select t.eq('job: scheduled', t.cnt57($$select count(*) from app_private.jobs where name = 'notify-rating-requests'$$), 1::bigint);
+
+-- 10. captcha pass (0062) ---------------------------------------------------------------------------------------------------------------------------
+select t.as_user(t.u(1));
+select t.passes('captcha: enforcement on', $$select public.set_captcha_enforcement(true, 'unit-test-captcha-secret-0123456789abcdef')$$);
+select t.as_admin();
+select t.eq('captcha: a rating without a pass is refused', t.rate57(t.u(5701), t.bk57(t.u(5755), t.u(5701)), 4, 4), '42501|captcha required');
+select t.as_user(t.u(5701));
+select t.eq('captcha: a rating pass can be redeemed', t.redeem53(t.u(5701), 'rating', 'rrrrrrrrrrrrrrrr'), 'ok');
+select t.as_admin();
+select t.eq('captcha: a refused rating (window closed) does not burn the pass', t.rate57(t.u(5701), t.bk57(t.u(5753), t.u(5701)), 4, 4) || '/' || t.open53(t.u(5701), 'rating'), '23514|rating window closed/1');
+select t.eq('captcha: with the pass the rating is accepted', t.rate57(t.u(5701), t.bk57(t.u(5755), t.u(5701)), 4, 4), 'ok');
+select t.eq('captcha: ...and the pass is spent', t.open53(t.u(5701), 'rating'), 0::bigint);
+select t.as_user(t.u(1));
+select t.passes('captcha: enforcement off again', $$select public.set_captcha_enforcement(false)$$);
+select t.as_admin();
+select t.eq('aggregates still equal a recount', t.recount57(), true);

@@ -55,6 +55,13 @@ const RULES: Rule[] = [
   // audit read RPCs (0019)
   { match: /invalid filter|invalid range|invalid cursor|invalid limit/, code: 'validation', detail: 'invalid_filter' },
   { match: /audit entry not found/, code: 'not_found', detail: 'audit_not_found' },
+  // ratings (0061)
+  { match: /not boarded/, code: 'business_rule', detail: 'rating_not_boarded' },
+  { match: /rating not open yet/, code: 'business_rule', detail: 'rating_not_open' },
+  { match: /rating window closed/, code: 'business_rule', detail: 'rating_closed' },
+  { match: /trip not rateable/, code: 'business_rule', detail: 'rating_not_rateable' },
+  { match: /already rated/, code: 'conflict', detail: 'already_rated' },
+  { match: /invalid stars/, code: 'validation', detail: 'invalid_stars' },
   // driver <-> team link (0026)
   { match: /driver already has a login/, code: 'business_rule', detail: 'driver_has_login' },
   { match: /member already linked to a driver/, code: 'business_rule', detail: 'member_has_driver' },

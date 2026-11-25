@@ -4,6 +4,7 @@ import { useLocale } from '../../context/LocaleContext';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { loadTripCoverageAction } from '@/features/trip-booking/actions';
+import { loadCompanyRatingsAction } from '@/features/ratings/actions';
 import { transportService } from '../../lib/transportService';
 import { MarketplaceHeader } from './MarketplaceHeader';
 
@@ -95,6 +96,15 @@ export const MasterMarketplace: React.FC = () => {
     setLoading(false);
   };
 
+  // Company ratings (public): only the database decides when a company has enough ratings to show an average; failure just means no badge.
+  const [companyRatings, setCompanyRatings] = useState<Record<string, { ratings: number; average: number | null }>>({});
+  useEffect(() => {
+    if (isMockMode() || trips.length === 0) { setCompanyRatings({}); return; }
+    let live = true;
+    loadCompanyRatingsAction([...new Set(trips.map((x) => x.companyId))]).then((r) => { if (live) setCompanyRatings(r.ok ? r.ratings : {}); }, () => { if (live) setCompanyRatings({}); });
+    return () => { live = false; };
+  }, [trips]);
+
   // Subscribers see their own free trips labelled. The database decides (company, route, dates, daily limit); no labels for signed-out visitors or demo data.
   useEffect(() => {
     if (isMockMode() || !isAuthenticated || trips.length === 0) { setFreeFor({}); return; }
@@ -176,7 +186,7 @@ export const MasterMarketplace: React.FC = () => {
           locations={locations} companies={companies} params={searchParams} trips={trips} total={totalResults} loading={loading}
           page={currentPage} pageSize={pageSize} onPage={setCurrentPage}
           onSearch={handleSearch} onFilter={handleFilterChange} onReset={handleResetFilters}
-          freeFor={freeFor} onBook={handleStartBooking} onOperator={(cid) => setSelectedCompanyId(cid)}
+          freeFor={freeFor} companyRatings={companyRatings} onBook={handleStartBooking} onOperator={(cid) => setSelectedCompanyId(cid)}
         />
       </div>
       <QuietFooter credit={SHELL_TEXT[locale].poweredBy}>© {formatYear(new Date(), locale)} {SHELL_TEXT[locale].productName}{isMockMode() ? ' · ' : ''}{isMockMode() ? t('demoDataNotice') : ''}</QuietFooter>

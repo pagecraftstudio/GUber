@@ -35,6 +35,10 @@ export interface DriverProfile {
   license_days_left: number | null;
   photo_media_id: string | null;
   trips_completed: number;
+  /** P7c: ratings from riders who boarded (0061). Absent on a database that predates 0061. */
+  rating_count?: number;
+  rating_average?: number | string | null;
+  rating_distribution?: number[];
 }
 
 export type ScreenErrorCode = 'not_signed_in' | 'trip_not_found' | 'driver_not_found' | 'not_started' | 'cannot_end' | 'rate_limited' | 'network' | 'unknown';
