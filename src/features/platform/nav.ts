@@ -22,6 +22,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
   // Rating moderation is super_admin only (hiding and listing are both refused by the database for any other role): hidden from everyone else.
   // Security review (P9c): who opened which company, who signed in from a new device. Super admin only, like the actions inside it.
   { href: '/admin/security-review', label: 'Security review', available: true, roles: ROLE_SETS.superAdminOnly },
+  // Platform analytics (P10c): aggregates only. Super admin only.
+  { href: '/admin/analytics', label: 'Analytics', available: true, roles: ROLE_SETS.superAdminOnly },
   { href: '/admin/ratings', label: 'Ratings', available: true, roles: ROLE_SETS.superAdminOnly },
 ];
 

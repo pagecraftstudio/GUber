@@ -34,7 +34,7 @@ export function ConsentSettings({ locale, state }: { locale: AnalyticsLocale; st
         {state !== 'granted' ? <button type="button" className={BTN} disabled={busy} onClick={() => change(true)}>{t.changeToGranted}</button> : null}
         {state !== 'denied' ? <button type="button" className={BTN} disabled={busy} onClick={() => change(false)}>{t.changeToDenied}</button> : null}
       </div>
-      {msg ? <InlineAlert>{msg === 'saved' ? t.saved : t.failed}</InlineAlert> : null}
+      {msg ? <InlineAlert tone={msg === 'saved' ? 'info' : 'error'}>{msg === 'saved' ? t.saved : t.failed}</InlineAlert> : null}
     </div>
   );
 }
