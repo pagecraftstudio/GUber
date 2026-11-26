@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 // VERIFY these two imports against the repo's actual helpers (names assumed).
 import { createAdminClient } from '@/lib/supabase/admin'; // server-only service-role client
-import { createServerClient } from '@/lib/supabase/server'; // cookie-session client, used only to read the user id
+import { createClient as createServerClient } from '@/lib/supabase/server'; // cookie-session client, used only to read the user id
 import { AID_COOKIE, ANALYTICS_NOTICE_VERSION, CONSENT_COOKIE, clientIp, dailyIpHash, deviceClass, edgeCountry, referrerHost } from '@/lib/analytics/ctx';
 
 export const runtime = 'nodejs';
@@ -12,12 +12,12 @@ export const runtime = 'nodejs';
 const scalar = z.union([z.string().max(200), z.number(), z.boolean()]);
 const common = { path: z.string().max(300).startsWith('/'), locale: z.enum(['ar', 'en']).optional(), referrer: z.string().max(500).optional() };
 const body = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('events'), ...common, events: z.array(z.object({ event: z.string().max(64), properties: z.record(scalar).optional() })).min(1).max(20) }),
+  z.object({ kind: z.literal('events'), ...common, events: z.array(z.object({ event: z.string().max(64), properties: z.record(z.string(), scalar).optional() })).min(1).max(20) }),
   z.object({
     kind: z.literal('search'), ...common,
     origin: z.string().max(80).optional(), destination: z.string().max(80).optional(),
     travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    filters: z.record(scalar).optional(), resultsCount: z.number().int().min(0).max(10000),
+    filters: z.record(z.string(), scalar).optional(), resultsCount: z.number().int().min(0).max(10000),
   }),
   z.object({ kind: z.literal('consent'), granted: z.boolean() }),
 ]);
