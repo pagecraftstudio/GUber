@@ -11,6 +11,6 @@ export async function readConsentState(): Promise<ConsentState> {
   return 'unset';
 }
 
-export async function AnalyticsRoot({ locale }: { locale: AnalyticsLocale }) {
+export async function AnalyticsRoot({ locale }: { locale?: AnalyticsLocale } = {}) {
   return <AnalyticsClient locale={locale} initial={await readConsentState()} />;
 }

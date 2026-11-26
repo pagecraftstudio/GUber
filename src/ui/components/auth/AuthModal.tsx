@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLocale } from '../../context/LocaleContext';
+import { track } from '@/lib/analytics/events';
 import { authService } from '../../lib/authService';
 import { AuthServiceError, describeAuthError } from '../../lib/real/authService.real';
 import { isMockMode } from '../../lib/runtime';
@@ -24,6 +25,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { signIn, signUp, resetPassword } = useAuth();
   const { locale, t } = useLocale();
+  // analytics (P10): outcome only, method only, no email or name. Real mode only; the server drops it unless the visitor agreed to be recorded. Google is sent from /auth/confirm.
+  const recordAuth = (event: 'sign_in' | 'sign_up') => { if (!isMockMode()) track(locale === 'ar' ? 'ar' : 'en', event, { method: 'password' }); };
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot_password' | 'reset_sent'>(defaultMode);
   const [loading, setLoading] = useState(false);
@@ -82,6 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const captchaToken = captcha.token;
       captcha.spent();
       await signIn({ email: loginEmail, password: loginPassword, ...(captchaToken ? { captchaToken } : {}) });
+      recordAuth('sign_in');
       setLoading(false);
       onClose();
     } catch (err: any) {
@@ -141,12 +145,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         studentId: regStudentId.trim() || undefined,
         university: regUniversity,
       });
+      recordAuth('sign_up');
       setLoading(false);
       onClose();
     } catch (err: any) {
       setLoading(false);
       if (err instanceof AuthServiceError && err.reason === 'confirm_email') {
         // Account exists but has no session until the email is confirmed: success, not failure.
+        recordAuth('sign_up');
         setLoginEmail(regEmail);
         setLoginPassword('');
         setMode('login');

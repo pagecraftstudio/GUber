@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createClient as createServerClient } from '@/lib/supabase/server'; // cookie-session client: reads the user id and calls the token-gated ingest RPCs (no service role)
 import { signIngest } from '@/lib/analytics/token';
+import { readTenantConfig } from '@/lib/tenant/config';
+import { normalizeHost } from '@/lib/tenant/host';
+import { tenantRefFor } from '@/lib/analytics/tenant';
+import { resolveTrackCompany } from '@/lib/analytics/tenant-live';
 import { AID_COOKIE, ANALYTICS_NOTICE_VERSION, CONSENT_COOKIE, clientIp, dailyIpHash, deviceClass, edgeCountry, referrerHost } from '@/lib/analytics/ctx';
 
 export const runtime = 'nodejs';
@@ -71,14 +75,24 @@ export async function POST(req: NextRequest) {
   };
   if (!process.env.ANALYTICS_HASH_SECRET) console.error('analytics.hash_secret_missing');
 
-  // company_id is null in 10a-1; the tenant resolver is wired in 10b (never taken from the request body).
-  const tok = signIngest(secret, b.kind === 'events' ? 'events' : 'search', { session: aid, userId, companyId: null });
+  // The company is resolved HERE, from the request, never from the body: the host (same-origin checked above) and the page path pick the tenant,
+  // and the database's anonymous resolvers answer. The path comes from the browser-set Referer when it is this origin, else from the body
+  // (a forged path can only mislabel the sender's own events; the per-session and per-IP rate limits bound it). A tenant that is named but
+  // unknown, suspended or unresolvable drops the event instead of recording it as platform-level.
+  const ref = req.headers.get('referer');
+  let tenantPath = b.path;
+  try { if (ref && new URL(ref).host === req.nextUrl.host) tenantPath = new URL(ref).pathname; } catch { /* keep the body path */ }
+  const tenant = await resolveTrackCompany(tenantRefFor(normalizeHost(h.get('host')), tenantPath, readTenantConfig(process.env)));
+  if (!tenant.ok) return quiet();
+  const companyId = tenant.companyId;
+
+  const tok = signIngest(secret, b.kind === 'events' ? 'events' : 'search', { session: aid, userId, companyId });
   const gate = { p_exp: tok.exp, p_sig: tok.sig };
   const { error } =
     b.kind === 'events'
-      ? await supabase.rpc('ingest_events', { p_session: aid, p_user: userId, p_company: null, p_events: b.events, p_ctx: ctx, ...gate })
+      ? await supabase.rpc('ingest_events', { p_session: aid, p_user: userId, p_company: companyId, p_events: b.events, p_ctx: ctx, ...gate })
       : await supabase.rpc('ingest_search', {
-          p_session: aid, p_user: userId, p_company: null, p_ctx: ctx, ...gate,
+          p_session: aid, p_user: userId, p_company: companyId, p_ctx: ctx, ...gate,
           p_search: { origin: b.origin ?? null, destination: b.destination ?? null, travel_date: b.travelDate ?? null, filters: b.filters ?? {}, results_count: b.resultsCount },
         });
   if (error) return new NextResponse(null, { status: /rate/i.test(error.message) ? 429 : 400 });

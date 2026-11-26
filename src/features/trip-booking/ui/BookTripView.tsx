@@ -8,6 +8,7 @@ import { controlClass } from '@/ds/primitives/Input';
 import { errorText } from '@/features/my-subscriptions/ui/text';
 import { useCaptchaGate } from '@/components/captcha/useCaptchaGate';
 import { bookingPaymentAction, bookTripAction, quoteBookingAction } from '../actions';
+import { useBookingFunnel } from '../funnel';
 import { proofWhatsappUrl, type BookedTrip, type PaymentInfo, type Quote, type QuoteSubscription, type TripDetail, type TripStop } from '../types';
 
 type Lang = 'en' | 'ar';
@@ -94,6 +95,7 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
   const [booked, setBooked] = useState<BookedTrip | null>(null);
   const [payment, setPayment] = useState<PaymentInfo | null>(null);
   const key = useRef(newKey());
+  const funnel = useBookingFunnel({ lang, tripId: trip.tripId, step, booked: booked !== null, paymentShown: step === 'pay' && payment?.hasInstructions === true });
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
   const pickups = stops.filter((s) => s.kind !== 'dropoff'), dropoffs = stops.filter((s) => s.kind !== 'pickup');
   const order: Step[] = quote ? (quote.requiresPayment ? ['trip', 'passenger', 'review', 'pay'] : ['trip', 'passenger', 'review', 'done']) : ['trip', 'passenger', 'review', 'pay'];
@@ -110,6 +112,7 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
   const confirm = () => {
     if (pending) return;
     setError(null);
+    funnel.submit();
     start(async () => {
       const r = await bookTripAction({
         tripId: trip.tripId, seats: form.seats, fullName: form.fullName, phone: form.phone, email: form.email, university: form.university, studentId: form.studentId,
@@ -118,6 +121,7 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
       gate.spent();   // the pass is one-time: a retry needs a fresh challenge
       if (!r.ok) { setError(errorText(lang, r.code, 'detail' in r ? r.detail : undefined)); return; }
       setBooked(r.booking);
+      funnel.success(r.booking.total === 0);
       if (r.booking.status === 'pending') {
         const p = await bookingPaymentAction(r.booking.id).catch(() => null);
         if (p?.ok) setPayment(p.payment);
@@ -167,7 +171,7 @@ export function BookTripView({ lang, trip, stops, subscription, defaults }: { la
             {payment.vodafoneNumber ? <CopyRow lang={lang} label={`${t.vf}${payment.vodafoneHolder ? ` · ${payment.vodafoneHolder}` : ''}`} value={payment.vodafoneNumber} /> : null}
             {payment.instapayAddress ? <CopyRow lang={lang} label={`${t.ip}${payment.instapayHolder ? ` · ${payment.instapayHolder}` : ''}`} value={payment.instapayAddress} /> : null}
             {note ? <p className="text-sm text-ink-secondary">{note}</p> : null}
-            {payment.whatsapp ? <a href={proofWhatsappUrl(payment.whatsapp, proofText)} target="_blank" rel="noopener noreferrer" className={buttonClass('primary', 'md')}>{t.proof}</a> : null}
+            {payment.whatsapp ? <a href={proofWhatsappUrl(payment.whatsapp, proofText)} target="_blank" rel="noopener noreferrer" onClick={funnel.proofClick} className={buttonClass('primary', 'md')}>{t.proof}</a> : null}
           </div>
         ) : <p className="text-sm text-ink-secondary">{t.noInstr}</p>}
         <p className="text-sm text-ink-secondary">{t.confirmedNote}</p>

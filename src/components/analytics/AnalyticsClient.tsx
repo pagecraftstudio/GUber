@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { cx, FOCUS } from '@/ds/primitives/cx';
 import { sendConsent, trackEvents } from '@/lib/analytics/client';
 import { ANALYTICS_COPY, type AnalyticsLocale } from '@/lib/analytics/copy';
+import { useAnalyticsLocale } from '@/lib/analytics/use-locale';
 
 export type ConsentState = 'unset' | 'granted' | 'denied';
 
@@ -13,7 +14,9 @@ export type ConsentState = 'unset' | 'granted' | 'denied';
 const BTN = cx('min-h-11 rounded-ds-md border border-line-default bg-surface-card px-4 text-base font-medium text-ink-primary', FOCUS);
 
 /** Consent banner + page-view tracking. Mount once in the marketplace root layout via <AnalyticsRoot>. */
-export function AnalyticsClient({ locale, initial }: { locale: AnalyticsLocale; initial: ConsentState }) {
+export function AnalyticsClient({ locale: localeProp, initial }: { locale?: AnalyticsLocale; initial: ConsentState }) {
+  const detected = useAnalyticsLocale();
+  const locale = localeProp ?? detected;
   const t = ANALYTICS_COPY[locale];
   const [state, setState] = useState<ConsentState>(initial);
   const [busy, setBusy] = useState(false);
