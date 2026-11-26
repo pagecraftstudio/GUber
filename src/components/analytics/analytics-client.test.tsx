@@ -5,11 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const sendConsent = vi.fn<(granted: boolean) => Promise<boolean>>(async () => true);
 const trackEvents = vi.fn<(...args: unknown[]) => Promise<boolean>>(async () => true);
 vi.mock('@/lib/analytics/client', () => ({ sendConsent: (g: boolean) => sendConsent(g), trackEvents: (...a: unknown[]) => trackEvents(...a) }));
-vi.mock('next/navigation', () => ({ usePathname: () => '/search', useRouter: () => ({ refresh: vi.fn() }) }));
+const pathname = vi.hoisted(() => ({ value: '/search' }));
+vi.mock('next/navigation', () => ({ usePathname: () => pathname.value, useRouter: () => ({ refresh: vi.fn() }) }));
 
 import { AnalyticsClient } from './AnalyticsClient';
 
-beforeEach(() => { sendConsent.mockClear(); trackEvents.mockClear(); document.documentElement.lang = 'en'; });
+beforeEach(() => { sendConsent.mockClear(); trackEvents.mockClear(); document.documentElement.lang = 'en'; pathname.value = '/search'; });
 afterEach(cleanup);
 
 describe('AnalyticsClient on a company site', () => {
@@ -64,5 +65,23 @@ describe('AnalyticsClient', () => {
     await waitFor(() => expect(sendConsent).toHaveBeenCalled());
     expect(screen.getByRole('region')).toBeTruthy();
     expect(trackEvents).not.toHaveBeenCalled();
+  });
+});
+
+describe('AnalyticsClient staff areas', () => {
+  it('dashboard: records the screen opened, without ids, instead of a page view', async () => {
+    pathname.value = '/dashboard/trips/00000000-0000-4000-8000-0000000000a1/edit';
+    render(<AnalyticsClient initial="granted" area="dashboard" locale="en" />);
+    await waitFor(() => expect(trackEvents).toHaveBeenCalledTimes(1));
+    expect(trackEvents).toHaveBeenCalledWith('en', [{ event: 'feature_use', properties: { screen: 'trips.edit', action: 'open' } }]);
+  });
+  it('driver: shows the banner but records no page or screen events', async () => {
+    pathname.value = '/driver/trips';
+    const { unmount } = render(<AnalyticsClient initial="granted" area="driver" locale="ar" />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(trackEvents).not.toHaveBeenCalled();
+    unmount();
+    render(<AnalyticsClient initial="unset" area="driver" locale="ar" />);
+    expect(screen.getByRole('region')).toBeTruthy();
   });
 });
