@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { loadContext } from '@/lib/auth/context';
+import { recordPlatformLogin } from '@/lib/auth/record-platform-login';
 import { homePathFor } from '@/lib/auth/permissions';
 import { audienceFrom, safeNextPath } from '@/lib/auth/redirect';
 import { COMPANY_LOGIN_PATH } from '@/lib/auth/paths';
@@ -61,6 +62,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     await supabase.auth.signOut({ scope: 'local' });
     redirect(url(COMPANY_LOGIN_PATH, { error: 'login_failed' }));
   }
+  if (ctx.platformRole) await recordPlatformLogin(supabase);   // new-device alert (0067); never blocks the sign-in
   redirect(safeNextPath(next, homePathFor(ctx)));
 }
 

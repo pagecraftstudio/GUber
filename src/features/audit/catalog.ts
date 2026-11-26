@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity', 'payment_settings', 'captcha', 'rating', 'acting', 'plan', 'entitlement'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity', 'payment_settings', 'captcha', 'rating', 'acting', 'plan', 'entitlement', 'platform', 'analytics'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -27,6 +27,8 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   acting: 'Acting as a company',
   plan: 'Platform plan',
   entitlement: 'Plan limit key',
+  platform: 'Platform staff security',
+  analytics: 'Analytics',
 };
 
 export const ACTOR_TYPES = ['platform_user', 'company_user', 'customer', 'system'] as const;
@@ -70,6 +72,10 @@ const ACTION_LABEL: Record<string, string> = {
   'acting.started': 'Staff opened the company dashboard',
   'acting.write_enabled': 'Staff turned on editing',
   'acting.ended': 'Staff left the company dashboard',
+  'platform.login_first_device': 'Platform staff first device recorded',
+  'platform.login_new_device': 'Platform staff signed in from a new device',
+  'platform.entry_reviewed': 'Security entry reviewed by another admin',
+  'analytics.ingest_secret_changed': 'Analytics ingest secret changed',
   'plan.created': 'Platform plan created',
   'plan.updated': 'Platform plan edited',
   'plan.archived': 'Platform plan archived',

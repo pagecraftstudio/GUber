@@ -53,6 +53,9 @@ Exactly three, names verified against `src/lib/env.ts` and `src/lib/env-check.ts
 |---|---|---|
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | public, inlined at build (redeploy to change) | Turnstile site key |
 | `TURNSTILE_SECRET_KEY` | **server only** (never `NEXT_PUBLIC_`) | Turnstile secret key |
+| `PLATFORM_DEVICE_SECRET` | **server only** | 32+ random characters. Keys the new-device hash for platform staff (0067). Changing it makes every platform user's next sign-in look like a new device, so it alerts once |
+| `ANALYTICS_HASH_SECRET` | **server only** | 32+ random characters. Keys the daily hash of the visitor's network stored with analytics events (0068). Without it events are still recorded, without the hash. Rotating it only breaks day-to-day linking of the hash, which already changes daily |
+| `ANALYTICS_INGEST_SECRET` | **server only** | 32+ random characters; **must be identical** to the value given to `set_analytics_ingest_secret` (0071). Signs the 60 s token that gates the analytics ingest RPCs, so no service-role key is needed. Without it nothing is recorded |
 | `CAPTCHA_PASS_SECRET` | **server only** | 32+ random characters; **must be identical** to the secret given to `set_captcha_enforcement` |
 
 - Enforcement lives in the database (`app_private.captcha_config.enforced`, default **off**). With it off the app shows no widget and ignores tokens.

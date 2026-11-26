@@ -1,0 +1,55 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { cx, FOCUS } from '@/ds/primitives/cx';
+import { sendConsent, trackEvents } from '@/lib/analytics/client';
+import { ANALYTICS_COPY, type AnalyticsLocale } from '@/lib/analytics/copy';
+
+export type ConsentState = 'unset' | 'granted' | 'denied';
+
+// Accept and reject share one style on purpose: equal prominence, no dark pattern.
+const BTN = cx('min-h-11 rounded-ds-md border border-line-default bg-surface-card px-4 text-base font-medium text-ink-primary', FOCUS);
+
+/** Consent banner + page-view tracking. Mount once in the marketplace root layout via <AnalyticsRoot>. */
+export function AnalyticsClient({ locale, initial }: { locale: AnalyticsLocale; initial: ConsentState }) {
+  const t = ANALYTICS_COPY[locale];
+  const [state, setState] = useState<ConsentState>(initial);
+  const [busy, setBusy] = useState(false);
+  const path = usePathname();
+  const last = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (state !== 'granted' || last.current === path) return;
+    last.current = path;
+    void trackEvents(locale, [{ event: 'page_view' }]);
+  }, [state, path, locale]);
+
+  async function choose(granted: boolean) {
+    setBusy(true);
+    const ok = await sendConsent(granted);
+    setBusy(false);
+    if (ok) setState(granted ? 'granted' : 'denied');
+  }
+
+  if (state !== 'unset') return null;
+  return (
+    <section
+      role="region"
+      aria-labelledby="consent-title"
+      dir={locale === 'ar' ? 'rtl' : 'ltr'}
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-line-default bg-surface-card p-4 shadow-lg"
+    >
+      <div className="mx-auto flex max-w-3xl flex-col gap-3">
+        <h2 id="consent-title" className="text-base font-semibold text-ink-primary">{t.bannerTitle}</h2>
+        <p className="text-sm text-ink-secondary">{t.bannerBody}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" className={BTN} disabled={busy} onClick={() => choose(true)}>{t.accept}</button>
+          <button type="button" className={BTN} disabled={busy} onClick={() => choose(false)}>{t.reject}</button>
+          <Link href={t.privacyHref} className={cx('text-sm text-ink-secondary underline', FOCUS)}>{t.learnMore}</Link>
+        </div>
+      </div>
+    </section>
+  );
+}

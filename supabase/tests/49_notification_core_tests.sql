@@ -23,8 +23,8 @@ insert into public.notification_templates (company_id, key, channel, locale, sub
   (null, 'test.must', 'in_app', 'en', 'Must', 'Must body');
 
 -- 1. the catalogue and its rules ---------------------------------------------------------------------------------------------------------
-select t.eq('catalogue: the plan''s events are seeded', t.cnt49($$select count(*) from public.notification_events where key not like 'test.%'$$), 22::bigint);
-select t.eq('catalogue: only platform.job_failed is live out of the box', t.cnt49($$select count(*) from public.notification_events where is_live and key not like 'test.%' and key not like 'booking.%' and key not like 'trip.%' and key not like 'subscription.%' and key not like 'company.%' and key not like 'rating.%'$$), 1::bigint);
+select t.eq('catalogue: the plan''s events are seeded', t.cnt49($$select count(*) from public.notification_events where key not like 'test.%'$$), 23::bigint);   -- 22 from the plan + platform.unusual_login (0067)
+select t.eq('catalogue: only the two platform events are live out of the box (job_failed, unusual_login)', t.cnt49($$select count(*) from public.notification_events where is_live and key not like 'test.%' and key not like 'booking.%' and key not like 'trip.%' and key not like 'subscription.%' and key not like 'company.%' and key not like 'rating.%'$$), 2::bigint);
 select t.as_user(t.u(3001));
 select t.eq('catalogue: a signed-in user can read it', t.rows($$select 1 from public.notification_events$$) >= 21, true);
 select t.eq('catalogue: nobody can write it', t.err49($$insert into public.notification_events (key, audience, default_channels, description) values ('x.y','student',array['in_app'],'x')$$), '42501');
