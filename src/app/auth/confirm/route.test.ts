@@ -16,6 +16,8 @@ vi.mock('@/lib/auth/permissions', () => ({
   homePathFor: (c: { home: string } | null) => (c ? c.home : '/'),
   accessState: (c: { state?: string }) => c.state ?? 'customer',
 }));
+const recordServerEvent = vi.fn(async () => undefined);
+vi.mock('@/lib/analytics/server-event', async (orig) => ({ ...(await orig<typeof import('@/lib/analytics/server-event')>()), recordServerEvent: (...a: unknown[]) => (recordServerEvent as (...x: unknown[]) => Promise<void>)(...a) }));
 vi.mock('@/lib/env', () => ({ getEnv: () => ({ NEXT_PUBLIC_SITE_URL: 'https://app.example.test' }) }));
 
 import { GET } from './route';
@@ -31,6 +33,7 @@ beforeEach(() => {
   getUserIdentities.mockReset(); getUserIdentities.mockResolvedValue({ data: { identities: [] }, error: null });
   unlinkIdentity.mockReset(); unlinkIdentity.mockResolvedValue({ error: null });
   signOut.mockReset(); signOut.mockResolvedValue({ error: null });
+  recordServerEvent.mockClear();
   ctxHolder.ctx = null;
 });
 
@@ -86,6 +89,23 @@ describe('GET /auth/confirm: Google sign-in (customers only)', () => {
     const r = await call('code=abc&from=customer&next=%2Fmy-subscriptions');
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc');
     expect(r.location).toBe('https://app.example.test/my-subscriptions');
+  });
+  it('records a Google sign_in (returning account) or sign_up (new account), method only', async () => {
+    ctxHolder.ctx = { home: '/my-bookings', state: 'customer' };
+    exchangeCodeForSession.mockResolvedValue({ data: { user: { id: 'u1', created_at: '2026-01-01T00:00:00Z', last_sign_in_at: '2026-11-26T10:00:00Z' } }, error: null });
+    await call('code=abc&from=customer');
+    expect(recordServerEvent).toHaveBeenLastCalledWith(expect.anything(), 'u1', 'sign_in', { method: 'google' }, '/auth/confirm');
+    exchangeCodeForSession.mockResolvedValue({ data: { user: { id: 'u2', created_at: '2026-11-26T10:00:00Z', last_sign_in_at: '2026-11-26T10:00:01Z' } }, error: null });
+    await call('code=abc&from=customer');
+    expect(recordServerEvent).toHaveBeenLastCalledWith(expect.anything(), 'u2', 'sign_up', { method: 'google' }, '/auth/confirm');
+  });
+  it('records nothing for a refused (non-customer) Google sign-in or a failed exchange', async () => {
+    ctxHolder.ctx = { home: '/dashboard', state: 'operator' };
+    exchangeCodeForSession.mockResolvedValue({ data: { user: { id: 'u3' } }, error: null });
+    await call('code=abc&from=customer');
+    exchangeCodeForSession.mockResolvedValue({ error: { message: 'bad' } });
+    await call('code=abc&from=customer');
+    expect(recordServerEvent).not.toHaveBeenCalled();
   });
   it('customer + missing or unsafe next -> customer home, never an open redirect', async () => {
     ctxHolder.ctx = { home: '/my-bookings', state: 'customer' };

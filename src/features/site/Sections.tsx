@@ -8,6 +8,7 @@ import { Block, InsertSlot, Placeholder, type EditorBlock } from './editor-marku
 import { Fragment } from 'react';
 import type { SiteTrip } from './trips-data';
 import { planRequestPath, tripBookPath, type SitePlan } from './plans';
+import { trackAttrs } from './track';
 
 export interface SectionsCtx {
   site: PublicSite['site'];
@@ -17,6 +18,8 @@ export interface SectionsCtx {
   trips: SiteTrip[];
   /** Loaded lazily by the page only when a subscriptions section exists. */
   plans?: SitePlan[];
+  /** Public site only: adds the analytics markup hooks (see track.ts). Never set for the dashboard preview or canvas. */
+  track?: boolean;
 }
 
 const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="text-2xl font-semibold mb-4">{children}</h2>;
@@ -71,7 +74,7 @@ function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
             <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-[var(--hero-py,5rem)] md:py-[var(--hero-py,7rem)]">
               <h1 className="max-w-3xl text-3xl font-bold md:text-5xl">{title}</h1>
               <p className="max-w-2xl text-lg">{subtitle}</p>
-              {href && cta ? <a href={href} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--ds-on-media)] px-5 py-2.5 font-medium text-[var(--ds-media-base)]">{cta}</a> : null}
+              {href && cta ? <a href={href} {...trackAttrs(ctx.track, 'cta_click', { section: 'hero', cta: 'primary' })} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--ds-on-media)] px-5 py-2.5 font-medium text-[var(--ds-media-base)]">{cta}</a> : null}
             </div>
           </section>
         );
@@ -82,7 +85,7 @@ function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
             <div className="space-y-4">
               <h1 className="text-3xl font-bold md:text-4xl">{title}</h1>
               <p className="text-lg opacity-90">{subtitle}</p>
-              {href && cta ? <a href={href} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-on-accent,var(--ds-action-on-primary))] px-5 py-2.5 font-medium text-[var(--site-accent,var(--ds-action-primary))]">{cta}</a> : null}
+              {href && cta ? <a href={href} {...trackAttrs(ctx.track, 'cta_click', { section: 'hero', cta: 'primary' })} className="inline-block rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-on-accent,var(--ds-action-on-primary))] px-5 py-2.5 font-medium text-[var(--site-accent,var(--ds-action-primary))]">{cta}</a> : null}
             </div>
             {img ? <img src={img} alt={(s.content.image_media_id && site.media[s.content.image_media_id]?.alt) || ''} className="max-h-80 w-full rounded-lg object-cover" loading="eager" /> : null}
           </div>
@@ -138,7 +141,7 @@ function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
                 <span className="font-medium">{t.origin_name} → {t.destination_name}</span>
                 <span className="flex flex-wrap items-center gap-3">
                   <span className="text-ink-secondary">{formatDeparture(t, locale)} · {formatPrice(t, locale)} · {t.seats_available} {locale === 'ar' ? 'مقعد' : 'seats'}</span>
-                  <a href={tripBookPath(t.trip_id)} className="rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-accent,var(--ds-action-primary))] px-3 py-1.5 text-sm font-medium text-[var(--site-on-accent,var(--ds-action-on-primary))]">{locale === 'ar' ? 'احجز' : 'Book'}</a>
+                  <a href={tripBookPath(t.trip_id)} {...trackAttrs(ctx.track, 'book_click', { trip_id: t.trip_id })} className="rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-accent,var(--ds-action-primary))] px-3 py-1.5 text-sm font-medium text-[var(--site-on-accent,var(--ds-action-on-primary))]">{locale === 'ar' ? 'احجز' : 'Book'}</a>
                 </span>
               </li>))}</ul>}
         </Wrap>
@@ -157,7 +160,7 @@ function SectionBody({ s, ctx }: { s: ParsedSection; ctx: SectionsCtx }) {
                 <p className="text-sm text-ink-secondary">{p.origin_name} <span aria-hidden>→</span><span className="sr-only">{ar ? 'إلى' : 'to'}</span> {p.destination_name}</p>
                 <p className="mt-2 text-xl font-semibold">{formatMoney(p.price, p.currency, locale)}</p>
                 <p className="text-sm text-ink-secondary">{planValidity(p, locale)}</p>
-                <a href={planRequestPath(p.plan_id)} className="mt-3 inline-block self-start rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-accent,var(--ds-action-primary))] px-4 py-2 text-sm font-medium text-[var(--site-on-accent,var(--ds-action-on-primary))]">{ar ? 'اطلب الاشتراك' : 'Request subscription'}</a>
+                <a href={planRequestPath(p.plan_id)} {...trackAttrs(ctx.track, 'subscription_request_click', { plan_id: p.plan_id })} className="mt-3 inline-block self-start rounded-[var(--site-btn-radius,0.375rem)] bg-[var(--site-accent,var(--ds-action-primary))] px-4 py-2 text-sm font-medium text-[var(--site-on-accent,var(--ds-action-on-primary))]">{ar ? 'اطلب الاشتراك' : 'Request subscription'}</a>
               </li>))}</ul>}
         </Wrap>
       );
@@ -178,8 +181,8 @@ export function ContactBlock({ title, ctx }: { title: string; ctx: SectionsCtx }
     <Wrap id="contact">
       {title ? <H2>{title}</H2> : null}
       <ul className="space-y-1">
-        {email ? <li><a className="underline underline-offset-2" href={`mailto:${email}`}>{email}</a></li> : null}
-        {phone ? <li><a className="underline underline-offset-2" dir="ltr" href={`tel:${phone.replace(/\s/g, '')}`}>{phone}</a></li> : null}
+        {email ? <li><a className="underline underline-offset-2" {...trackAttrs(ctx.track, 'contact_click', { channel: 'email' })} href={`mailto:${email}`}>{email}</a></li> : null}
+        {phone ? <li><a className="underline underline-offset-2" {...trackAttrs(ctx.track, 'contact_click', { channel: 'phone' })} dir="ltr" href={`tel:${phone.replace(/\s/g, '')}`}>{phone}</a></li> : null}
         {address ? <li>{address}</li> : null}
       </ul>
     </Wrap>
@@ -194,7 +197,7 @@ export function SiteFooter({ ctx, name }: { ctx: SectionsCtx; name: string }) {
     <footer className="mt-10 border-t border-line-default">
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-ink-secondary">
         <span>{text || name}</span>
-        {links.length > 0 ? <ul className="flex gap-4">{links.map((l) => <li key={l.k}><a href={l.h} rel="noopener noreferrer nofollow" className="underline underline-offset-2">{l.k}</a></li>)}</ul> : null}
+        {links.length > 0 ? <ul className="flex gap-4">{links.map((l) => <li key={l.k}><a href={l.h} {...trackAttrs(ctx.track, 'contact_click', { channel: l.k })} rel="noopener noreferrer nofollow" className="underline underline-offset-2">{l.k}</a></li>)}</ul> : null}
       </div>
     </footer>
   );
@@ -208,7 +211,9 @@ export function Sections({ sections, ctx, editor }: { sections: { type: string; 
   if (!editor) {
     return sections.map((raw, i) => {
       const s = parseSection(raw);
-      return s ? <Section key={i} s={s} ctx={ctx} /> : null;     // unknown type / invalid content: skipped, the rest of the page still renders
+      if (!s) return null;                                       // unknown type / invalid content: skipped, the rest of the page still renders
+      // Tracking on (public site only): a plain block wrapper carries the section type so a view can be counted. Off: exactly the markup it always was.
+      return ctx.track ? <div key={i} data-track-section={s.type}><Section s={s} ctx={ctx} /></div> : <Section key={i} s={s} ctx={ctx} />;
     });
   }
   return (

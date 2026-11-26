@@ -6,6 +6,7 @@ import { CUSTOMER_LOGIN_PATH, MARKETPLACE_PATH } from '@/lib/auth/paths';
 import { getAuthContext } from '@/lib/auth/context';
 import { accessState, homePathFor } from '@/lib/auth/permissions';
 import { getEnv } from '@/lib/env';
+import { isFreshAccount, recordServerEvent } from '@/lib/analytics/server-event';
 
 /**
  * Email links (signup confirmation, password recovery) land here with ?token_hash=...&type=...&next=...&from=...
@@ -47,7 +48,7 @@ async function finishGoogleSignIn(code: string, rawNext: string | null, origin: 
   const fail = (reason: 'google_failed' | 'google_not_allowed') => NextResponse.redirect(new URL(`${CUSTOMER_LOGIN_PATH}?error=${reason}`, origin));
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchanged, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) return fail('google_failed');
 
   const ctx = await getAuthContext();
@@ -55,6 +56,9 @@ async function finishGoogleSignIn(code: string, rawNext: string | null, origin: 
     await rejectNonCustomer(supabase);
     return fail('google_not_allowed');
   }
+  // Analytics (P10): sent from here because the browser has left the site. Only a customer who passed the gate above is counted.
+  const u = exchanged?.user;
+  if (u) await recordServerEvent(supabase, u.id, isFreshAccount(u.created_at, u.last_sign_in_at) ? 'sign_up' : 'sign_in', { method: 'google' }, '/auth/confirm');
   return NextResponse.redirect(new URL(confirmLandingPath(rawNext, null, homePathFor(ctx)), origin));
 }
 

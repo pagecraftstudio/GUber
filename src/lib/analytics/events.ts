@@ -19,6 +19,7 @@ export const EVENT_KEYS = {
   whatsapp_proof_click: ['trip_id'],
   sign_in: ['method'],
   sign_up: ['method'],
+  site_page_view: [],
   section_view: ['section'],
   cta_click: ['section', 'cta'],
   book_click: ['trip_id'],

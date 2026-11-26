@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { AnalyticsRoot } from '@/components/analytics/AnalyticsRoot';
 
 // Public customer marketplace. This is the only indexable surface; dashboard/admin/driver/operator-login stay noindex (root layout).
 export const metadata: Metadata = {
@@ -9,6 +10,10 @@ export const metadata: Metadata = {
 
 export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>{children}</>
+    <>
+      {children}
+      {/* Consent banner + page views (P10). Records nothing until the visitor agrees. */}
+      <AnalyticsRoot />
+    </>
   );
 }

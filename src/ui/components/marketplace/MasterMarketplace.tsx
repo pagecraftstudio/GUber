@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CanonicalLocation, MarketplaceTripItem, MarketplaceSearchParams, Trip, Booking, Route, Bus, Stop } from '../../types';
 import { useLocale } from '../../context/LocaleContext';
 import { useTenant } from '../../context/TenantContext';
@@ -12,6 +12,9 @@ import { CompanyProfileModal } from './CompanyProfileModal';
 import { BookingFlowModal } from '../public/BookingFlowModal';
 import { openBookingWizard } from '../../lib/book-redirect';
 import { isMockMode } from '../../lib/runtime';
+import { locationNameFromId } from '../../lib/real/adapters';
+import { trackSearch } from '@/lib/analytics/client';
+import { buildSearchEvent } from '@/lib/analytics/search';
 import { QuietFooter } from '@/ds/shell/MarketplaceHeaderMasar';
 import { SHELL_TEXT } from '@/ds/shell/text';
 import { formatYear } from '@/ds/format';
@@ -38,6 +41,9 @@ export const MasterMarketplace: React.FC = () => {
 
   // Search & Filter State
   const [searchParams, setSearchParams] = useState<MarketplaceSearchParams>(initialSearchParams);
+
+  // Set only by an explicit Search press (or quick date); consumed once when that search's results arrive. The first automatic load and filter tweaks are not searches.
+  const pendingSearch = useRef<{ originId?: string; destId?: string; date?: string } | null>(null);
 
   // Mobile Filter Drawer
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -89,6 +95,10 @@ export const MasterMarketplace: React.FC = () => {
     setLoading(true);
     const results = await transportService.searchMarketplaceTrips(searchParams);
     setTrips(results);
+    const sent = pendingSearch.current;
+    pendingSearch.current = null;
+    // analytics (P10): one event per explicit search, only in real mode; the server drops it unless the visitor agreed to be recorded
+    if (sent && !isMockMode()) void trackSearch(locale === 'ar' ? 'ar' : 'en', buildSearchEvent(sent, searchParams, results.length, locationNameFromId));
     // real mode derives routes/stops from rows the database returned: refresh them after every search
     const [r, s] = await Promise.all([transportService.getRoutes(), transportService.getStops()]);
     setRoutes(r);
@@ -119,6 +129,7 @@ export const MasterMarketplace: React.FC = () => {
   }, [searchParams]);
 
   const handleSearch = (originId: string, destId: string, date: string) => {
+    pendingSearch.current = { originId: originId || undefined, destId: destId || undefined, date: date || undefined };
     setSearchParams((prev) => ({
       ...prev,
       originLocationId: originId || undefined,
