@@ -4,6 +4,8 @@ import { readTenantConfig } from '@/lib/tenant/config';
 import { tenantHref, tenantUrl } from '@/lib/tenant/url';
 import { resolveTenantBySlug, type ResolvedTenant } from '@/lib/tenant/resolve';
 import { getEnv } from '@/lib/env';
+import { AnalyticsRoot } from '@/components/analytics/AnalyticsRoot';
+import { platformUrl } from '@/lib/tenant/url';
 import { getPublicSite } from './data';
 import { needsTrips } from './Sections';
 import { findPage, SiteView, type SiteLinks } from './SiteView';
@@ -75,5 +77,11 @@ export async function renderSitePage(slug: string, pageSlug: string | null, sp: 
     page: (p) => tenantHref(cfg, cs, `/${p}`),
     lang: (p, l) => `${tenantHref(cfg, cs, pagePath(p))}?lang=${l}`,
   };
-  return <SiteView data={data} page={page} pageSlug={pageSlug} locale={locale} supabaseUrl={env.NEXT_PUBLIC_SUPABASE_URL} trips={trips} plans={plans} links={links} rating={rating} />;
+  return (
+    <>
+      <SiteView data={data} page={page} pageSlug={pageSlug} locale={locale} supabaseUrl={env.NEXT_PUBLIC_SUPABASE_URL} trips={trips} plans={plans} links={links} rating={rating} track />
+      {/* Consent banner + page views for THIS site (P10). Consent is per host, so a visitor is asked here too. The privacy notice lives on the platform host in both tenant modes. */}
+      <AnalyticsRoot site locale={locale} privacyHref={platformUrl(cfg, '/privacy')} />
+    </>
+  );
 }

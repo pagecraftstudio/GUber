@@ -24,8 +24,12 @@ export const PLATFORM_PREFIXES = [
   '/no-access', '/suspended', '/auth', '/continue', '/forgot-password', '/reset-password', '/invite', '/app',
 ] as const;
 
-/** The only API paths reachable on a tenant host: anonymous cacheable public data, and the CSP report sink. */
-export const TENANT_HOST_API = ['/api/public', '/api/csp-report'] as const;
+/**
+ * The only API paths reachable on a tenant host: anonymous cacheable public data, the CSP report sink, and the analytics ingest (P10).
+ * /api/track is public by design, refuses any request whose Origin is not this host, resolves the company from the host itself (never the body)
+ * and records nothing without the visitor's consent. A tenant host has no session, so it can never act as a signed-in user.
+ */
+export const TENANT_HOST_API = ['/api/public', '/api/csp-report', '/api/track'] as const;
 
 const isUnder = (path: string, prefix: string): boolean => path === prefix || path.startsWith(`${prefix}/`);
 

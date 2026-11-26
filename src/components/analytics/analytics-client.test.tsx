@@ -12,6 +12,17 @@ import { AnalyticsClient } from './AnalyticsClient';
 beforeEach(() => { sendConsent.mockClear(); trackEvents.mockClear(); document.documentElement.lang = 'en'; });
 afterEach(cleanup);
 
+describe('AnalyticsClient on a company site', () => {
+  it('counts site_page_view (not page_view) and links the privacy notice at the given address', async () => {
+    render(<AnalyticsClient initial="granted" site privacyHref="https://app.test/privacy" />);
+    await waitFor(() => expect(trackEvents).toHaveBeenCalledTimes(1));
+    expect(trackEvents).toHaveBeenCalledWith('en', [{ event: 'site_page_view' }]);
+    cleanup();
+    render(<AnalyticsClient initial="unset" site privacyHref="https://app.test/privacy" />);
+    expect(screen.getByRole('link').getAttribute('href')).toBe('https://app.test/privacy');
+  });
+});
+
 describe('AnalyticsClient', () => {
   it('shows the banner in Arabic when <html lang> is ar, and follows a language switch', async () => {
     document.documentElement.lang = 'ar';

@@ -11,6 +11,7 @@ export async function readConsentState(): Promise<ConsentState> {
   return 'unset';
 }
 
-export async function AnalyticsRoot({ locale }: { locale?: AnalyticsLocale } = {}) {
-  return <AnalyticsClient locale={locale} initial={await readConsentState()} />;
+/** `site` = a company's public website: counts site_page_view, tracks clicks and section views, and links the privacy notice at `privacyHref`. */
+export async function AnalyticsRoot({ locale, site, privacyHref }: { locale?: AnalyticsLocale; site?: boolean; privacyHref?: string } = {}) {
+  return <AnalyticsClient locale={locale} initial={await readConsentState()} site={site} privacyHref={privacyHref} />;
 }

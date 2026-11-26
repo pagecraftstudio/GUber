@@ -7,6 +7,7 @@ import { cx, FOCUS } from '@/ds/primitives/cx';
 import { sendConsent, trackEvents } from '@/lib/analytics/client';
 import { ANALYTICS_COPY, type AnalyticsLocale } from '@/lib/analytics/copy';
 import { useAnalyticsLocale } from '@/lib/analytics/use-locale';
+import { useSiteEvents } from '@/lib/analytics/site-events';
 
 export type ConsentState = 'unset' | 'granted' | 'denied';
 
@@ -14,7 +15,7 @@ export type ConsentState = 'unset' | 'granted' | 'denied';
 const BTN = cx('min-h-11 rounded-ds-md border border-line-default bg-surface-card px-4 text-base font-medium text-ink-primary', FOCUS);
 
 /** Consent banner + page-view tracking. Mount once in the marketplace root layout via <AnalyticsRoot>. */
-export function AnalyticsClient({ locale: localeProp, initial }: { locale?: AnalyticsLocale; initial: ConsentState }) {
+export function AnalyticsClient({ locale: localeProp, initial, site = false, privacyHref }: { locale?: AnalyticsLocale; initial: ConsentState; site?: boolean; privacyHref?: string }) {
   const detected = useAnalyticsLocale();
   const locale = localeProp ?? detected;
   const t = ANALYTICS_COPY[locale];
@@ -26,8 +27,9 @@ export function AnalyticsClient({ locale: localeProp, initial }: { locale?: Anal
   useEffect(() => {
     if (state !== 'granted' || last.current === path) return;
     last.current = path;
-    void trackEvents(locale, [{ event: 'page_view' }]);
-  }, [state, path, locale]);
+    void trackEvents(locale, [{ event: site ? 'site_page_view' : 'page_view' }]);
+  }, [state, path, locale, site]);
+  useSiteEvents(site && state === 'granted', locale);
 
   async function choose(granted: boolean) {
     setBusy(true);
@@ -50,7 +52,7 @@ export function AnalyticsClient({ locale: localeProp, initial }: { locale?: Anal
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className={BTN} disabled={busy} onClick={() => choose(true)}>{t.accept}</button>
           <button type="button" className={BTN} disabled={busy} onClick={() => choose(false)}>{t.reject}</button>
-          <Link href={t.privacyHref} className={cx('text-sm text-ink-secondary underline', FOCUS)}>{t.learnMore}</Link>
+          <Link href={privacyHref ?? t.privacyHref} className={cx('text-sm text-ink-secondary underline', FOCUS)}>{t.learnMore}</Link>
         </div>
       </div>
     </section>

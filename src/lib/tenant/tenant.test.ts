@@ -157,7 +157,8 @@ describe('decideTenantRoute: subdomain mode, tenant host', () => {
   it('only anonymous public data and the CSP sink are reachable under /api', () => {
     expect(dec(sub, host, '/api/public/trips')).toEqual({ action: 'pass' });
     expect(dec(sub, host, '/api/csp-report')).toEqual({ action: 'pass' });
-    for (const p of ['/api/health', '/api/telemetry', '/api', '/api/publicx', '/api/admin/x']) expect(dec(sub, host, p), p).toEqual({ action: 'not-found' });
+    expect(dec(sub, host, '/api/track')).toEqual({ action: 'pass' });               // analytics ingest (P10): same-origin, consent-gated, tenant from the host
+    for (const p of ['/api/health', '/api/telemetry', '/api', '/api/publicx', '/api/trackx', '/api/admin/x']) expect(dec(sub, host, p), p).toEqual({ action: 'not-found' });
   });
   it('a prefix lookalike is NOT treated as a platform area (it is just a tenant page)', () => {
     expect(dec(sub, host, '/dashboards')).toEqual({ action: 'rewrite', slug: 'company-a', pathname: '/s/company-a/dashboards' });

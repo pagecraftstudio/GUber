@@ -20,19 +20,21 @@ export function findPage(pages: SitePage[], pageSlug: string | null): SitePage |
  * Pure presentation of one site page. No data fetching, no notFound(): the caller loads the data (published snapshot for the public
  * site, draft for the dashboard preview) and decides what a missing page means. Everything the page may show comes from `data`.
  */
-export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, plans = [], links, rating, editor }: {
+export function SiteView({ data, page, pageSlug, locale, supabaseUrl, trips, plans = [], links, rating, editor, track }: {
   data: PublicSite; page: SitePage; pageSlug: string | null; locale: SiteLocale; supabaseUrl: string; trips: SiteTrip[]; plans?: SitePlan[]; links: SiteLinks;
   /** Public site only: the company rating for the header badge. Absent in the dashboard preview and whenever the read failed (no badge). */
   rating?: SiteRating | null;
   /** Dashboard canvas only: makes each section clickable (see editor-markup.tsx). Never set for the public site. */
   editor?: EditorBlock[];
+  /** Public site only: analytics markup hooks (the page also mounts the consent banner). */
+  track?: boolean;
 }) {
   const st = data.site.settings;
   // Invalid / low-contrast company colour -> no override: the platform action colours (tokens) apply through the var() fallbacks.
   const accent = tenantAccent(st.primary_color);
   const logo = mediaUrl(supabaseUrl, st.logo_media_id ? data.site.media[st.logo_media_id] : undefined);
   const name = pick(st.site_title, locale) || data.company.name;
-  const ctx: SectionsCtx = { site: data.site, locale, supabaseUrl, trips, plans };
+  const ctx: SectionsCtx = { site: data.site, locale, supabaseUrl, trips, plans, ...(track ? { track: true } : {}) };
   const other: SiteLocale = locale === 'ar' ? 'en' : 'ar';
   const navPages = data.site.pages.filter((p) => !p.is_home);
   return (
