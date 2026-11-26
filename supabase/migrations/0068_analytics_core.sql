@@ -4,15 +4,23 @@
 --   drop function public.track_search(text,uuid,uuid,jsonb,jsonb), public.track_events(text,uuid,uuid,jsonb,jsonb), public.record_consent(text,uuid,boolean,text);
 --   drop function app_private.analytics_maintenance(), app_private.ensure_analytics_partition(date), app_private.analytics_consented(text,uuid),
 --                 app_private.analytics_clean_text(text,int), app_private.analytics_rate_check(text,int,int);
---   drop table public.search_events, public.analytics_events (drops app_private.analytics_events_y*), public.consents,
+--   drop table app_private.analytics_rate_counters, public.search_events, public.analytics_events (drops app_private.analytics_events_y*), public.consents,
 --              public.analytics_event_catalog, app_private.analytics_config;
 -- Runner note: apply BEFORE deploying code that calls track_events (rule from incident 0033).
 --
 -- VERIFY before applying (names assumed from earlier phases, each used in ONE place):
---   1. app_private.rate_limit_hit(key text, limit int, window_seconds int): assumed to RAISE when exceeded. Wrapper: analytics_rate_check.
---   2. app_private.is_platform_super_admin(): used by the three select policies below.
+--   1. (resolved) app_private.rate_limit_hit(bucket) is policy-based and needs auth.uid(); ingest uses its own counters table + analytics_rate_check below.
+--   2. app_private.is_platform_super_admin(): did NOT exist in the repo; defined below on top of app_private.platform_role() (0006), which also checks is_active.
 --   3. public.companies(id).
 --   4. Role service_role exists (Supabase default). Only the server route calls the RPCs.
+
+-- ---------------------------------------------------------------- super admin check (used by the select policies here and the admin RPCs in 0070/0071)
+create or replace function app_private.is_platform_super_admin() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce(app_private.platform_role() = 'super_admin', false)
+$$;
+revoke all on function app_private.is_platform_super_admin() from public, anon;
+grant execute on function app_private.is_platform_super_admin() to authenticated;
 
 -- ---------------------------------------------------------------- config
 create table app_private.analytics_config (
@@ -96,6 +104,11 @@ create index search_events_session_idx on public.search_events (session_id);
 create index search_events_user_idx on public.search_events (user_id) where user_id is not null;
 alter table public.search_events enable row level security;
 
+-- Tenant guard (0008) on both tables that carry company_id. Inserts come from SECURITY DEFINER RPCs (owner), which the guard does not govern; this stops a
+-- direct API write with a foreign company_id even if a grant were ever added by mistake. tenant_guard_problems() fails without it.
+create trigger "000_tenant_guard" before insert or update on public.search_events for each row execute function app_private.tenant_guard();
+create trigger "000_tenant_guard" before insert or update on public.analytics_events for each row execute function app_private.tenant_guard();
+
 -- Super admin read only. No insert/update/delete policy exists: writes go through the RPCs below.
 create policy analytics_events_admin_read on public.analytics_events for select to authenticated using (app_private.is_platform_super_admin());
 create policy search_events_admin_read    on public.search_events    for select to authenticated using (app_private.is_platform_super_admin());
@@ -106,10 +119,26 @@ revoke all on public.analytics_events, public.search_events, public.consents, pu
 grant select on public.analytics_events, public.search_events, public.consents, public.analytics_event_catalog to authenticated;
 
 -- ---------------------------------------------------------------- helpers
+-- Own fixed-window limiter. app_private.rate_limit_hit(bucket) (0020) is policy-based and keyed to auth.uid(), so it refuses anonymous callers (28000);
+-- ingest is anonymous by design, so it needs counters keyed by an arbitrary string (session id or daily ip hash).
+create table app_private.analytics_rate_counters (
+  key text not null,
+  window_seconds int not null,
+  window_start timestamptz not null,
+  hits int not null,
+  primary key (key, window_seconds, window_start)
+);
+alter table app_private.analytics_rate_counters enable row level security;
+revoke all on app_private.analytics_rate_counters from public, anon, authenticated;
+
 create function app_private.analytics_rate_check(p_key text, p_limit int, p_window_seconds int)
 returns void language plpgsql security definer set search_path = '' as $$
+declare v_start timestamptz := to_timestamp(floor(extract(epoch from clock_timestamp()) / p_window_seconds) * p_window_seconds); v_hits int;
 begin
-  perform app_private.rate_limit_hit(p_key, p_limit, p_window_seconds); -- ADJUST here only if the 0020 signature differs
+  insert into app_private.analytics_rate_counters as c (key, window_seconds, window_start, hits) values (p_key, p_window_seconds, v_start, 1)
+  on conflict (key, window_seconds, window_start) do update set hits = c.hits + 1
+  returning hits into v_hits;
+  if v_hits > p_limit then raise exception 'rate limit exceeded' using errcode = 'AN429'; end if;
 end $$;
 
 create function app_private.analytics_clean_text(p text, p_max int)
@@ -175,6 +204,7 @@ begin
     end if;
   end loop;
   delete from public.search_events where occurred_at < now() - make_interval(months => v_ret);
+  delete from app_private.analytics_rate_counters where window_start < now() - interval '1 day';
   -- consents are NOT trimmed here: they are the proof of choice. Retention for them is a counsel decision (D6).
 end $$;
 select app_private.analytics_maintenance();

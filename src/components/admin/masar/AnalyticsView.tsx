@@ -69,7 +69,7 @@ function Body({ d, days }: { d: AnalyticsPage; days: number }) {
     <>
       <Panel id="gaps" title="Searches with no results" note="What people look for and do not find. Sorted by missed searches." exportHref={`/admin/analytics/export?kind=gaps&days=${days}`}>
         {d.gaps.length === 0 ? <EmptyState title="No missed searches" description="No zero-result searches were recorded for this period." /> : (
-          <div className="overflow-x-auto"><table className="w-full">
+          <div className="relative overflow-x-auto"><table className="w-full">
             <caption className="sr-only">Searches with zero results by route</caption>
             <thead><tr><th scope="col" className={TH}>From</th><th scope="col" className={TH}>To</th><th scope="col" className={TH}>Searches</th><th scope="col" className={TH}>No results</th><th scope="col" className={TH}>Miss rate</th></tr></thead>
             <tbody>{d.gaps.map((g) => (
@@ -86,7 +86,7 @@ function Body({ d, days }: { d: AnalyticsPage; days: number }) {
 
       <Panel id="traffic" title="Page views per day">
         {d.overview.length === 0 ? <EmptyState title="No page views" description="Nothing was recorded for this period." /> : (
-          <div className="overflow-x-auto"><table className="w-full">
+          <div className="relative overflow-x-auto"><table className="w-full">
             <caption className="sr-only">Page views and visitors per day</caption>
             <thead><tr><th scope="col" className={TH}>Day</th><th scope="col" className={TH}>Page views</th><th scope="col" className={TH}>Visitors</th><th scope="col" className={cx(TH, 'w-1/3')}><span className="sr-only">Share of busiest day</span></th></tr></thead>
             <tbody>{d.overview.map((r) => (
@@ -96,7 +96,7 @@ function Body({ d, days }: { d: AnalyticsPage; days: number }) {
 
       <Panel id="usage" title="Feature usage" note="Top 30 events." exportHref={`/admin/analytics/export?kind=usage&days=${days}`}>
         {d.usage.length === 0 ? <EmptyState title="No events" description="Nothing was recorded for this period." /> : (
-          <div className="overflow-x-auto"><table className="w-full">
+          <div className="relative overflow-x-auto"><table className="w-full">
             <caption className="sr-only">Events by surface</caption>
             <thead><tr><th scope="col" className={TH}>Surface</th><th scope="col" className={TH}>Event</th><th scope="col" className={TH}>Events</th><th scope="col" className={TH}>Visitor-days</th></tr></thead>
             <tbody>{d.usage.map((u) => <tr key={`${u.surface}|${u.event}`} className="border-t border-line-default"><td className={TD}>{u.surface}</td><td className={TD}><bdi dir="ltr">{u.event}</bdi></td><td className={TD}>{num(u.events)}</td><td className={TD}>{num(u.visitorDays)}</td></tr>)}</tbody>
@@ -105,7 +105,7 @@ function Body({ d, days }: { d: AnalyticsPage; days: number }) {
 
       <Panel id="cohorts" title="Return visits by first-visit week" note="Share of each week’s new visitors who came back N weeks later. Blank means that week has not happened yet.">
         {d.cohorts.length === 0 ? <EmptyState title="No cohorts yet" description="They appear once visitors have been recorded for a full week." /> : (
-          <div className="overflow-x-auto"><table className="w-full">
+          <div className="relative overflow-x-auto"><table className="w-full">
             <caption className="sr-only">Weekly retention by cohort</caption>
             <thead><tr><th scope="col" className={TH}>Week of</th><th scope="col" className={TH}>New</th>{Array.from({ length: COHORT_OFFSETS_SHOWN }, (_, k) => <th key={k} scope="col" className={TH}>+{k}w</th>)}</tr></thead>
             <tbody>{d.cohorts.map((c) => <tr key={c.week} className="border-t border-line-default"><td className={TD}><bdi dir="ltr">{c.week}</bdi></td><td className={TD}>{num(c.size)}</td>{c.retention.map((v, k) => <td key={k} className={TD}>{pct(v)}</td>)}</tr>)}</tbody>
