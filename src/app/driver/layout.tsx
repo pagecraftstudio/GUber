@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { AnalyticsRoot } from '@/components/analytics/AnalyticsRoot';
 import { DriverShellMasar } from '@/ds/shell/DriverShellMasar';
 import { PRIMITIVES } from '@/ds/tokens';
 import { logoutAction } from '@/features/auth/actions';
@@ -19,6 +20,7 @@ export default async function DriverLayout({ children }: { children: React.React
       <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))]">{children}</div>
       <DriverNav lang={lang} />
       <DriverPwa />
+      <AnalyticsRoot area="driver" locale={lang} />
     </DriverShellMasar>
   );
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSupabaseBrowser } from '@/ui/lib/real/supabaseBrowser';
 import type { Lang } from '@/ds/format';
+import { track } from '@/lib/analytics/events';
 import { BOARD_MESSAGES, BoardError, createDriverApi, type BoardErrorCode, type BoardingStats, type DriverTrip, type ScanCard } from './driverApi';
 import { arBoardMessages, DRIVER_TEXT } from './driver-text';
 import { DriverBoardingMasarView, type Outcome } from './masar/DriverBoardingMasarView';
@@ -49,11 +50,14 @@ export function DriverBoarding({ lang = 'en', initialTripId }: { lang?: Lang; /*
     setBusy(true);
     setOutcome(null);
     try {
-      setCard(await api.scanIdentity(tripId, code));
+      const scanned = await api.scanIdentity(tripId, code);
+      setCard(scanned);
+      track(lang, 'scan_outcome', { verdict: scanned.verdict }); // analytics (P10): the verdict only, never the code, name or MASAR id
       setManual('');
     } catch (e) {
       setCard(null);
       const c = e instanceof BoardError ? e.code : 'unknown';
+      if (c === 'network') track(lang, 'scan_offline'); else track(lang, 'scan_outcome', { verdict: `error:${c}` });
       setOutcome({ kind: 'bad', text: msg(c, lang), retryable: RETRYABLE.has(c) });
     } finally { setBusy(false); }
   }, [api, tripId, busy, lang]);

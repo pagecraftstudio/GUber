@@ -8,6 +8,8 @@ import { sendConsent, trackEvents } from '@/lib/analytics/client';
 import { ANALYTICS_COPY, type AnalyticsLocale } from '@/lib/analytics/copy';
 import { useAnalyticsLocale } from '@/lib/analytics/use-locale';
 import { useSiteEvents } from '@/lib/analytics/site-events';
+import { screenFromPath } from '@/lib/analytics/screen';
+import { track } from '@/lib/analytics/events';
 
 export type ConsentState = 'unset' | 'granted' | 'denied';
 
@@ -15,7 +17,10 @@ export type ConsentState = 'unset' | 'granted' | 'denied';
 const BTN = cx('min-h-11 rounded-ds-md border border-line-default bg-surface-card px-4 text-base font-medium text-ink-primary', FOCUS);
 
 /** Consent banner + page-view tracking. Mount once in the marketplace root layout via <AnalyticsRoot>. */
-export function AnalyticsClient({ locale: localeProp, initial, site = false, privacyHref }: { locale?: AnalyticsLocale; initial: ConsentState; site?: boolean; privacyHref?: string }) {
+/** Staff areas. dashboard: records which screen was opened (feature_use, no ids). driver: banner only; the driver app sends its own scan events. */
+export type AnalyticsArea = 'dashboard' | 'driver';
+
+export function AnalyticsClient({ locale: localeProp, initial, site = false, privacyHref, area }: { locale?: AnalyticsLocale; initial: ConsentState; site?: boolean; privacyHref?: string; area?: AnalyticsArea }) {
   const detected = useAnalyticsLocale();
   const locale = localeProp ?? detected;
   const t = ANALYTICS_COPY[locale];
@@ -25,10 +30,11 @@ export function AnalyticsClient({ locale: localeProp, initial, site = false, pri
   const last = useRef<string | null>(null);
 
   useEffect(() => {
-    if (state !== 'granted' || last.current === path) return;
+    if (state !== 'granted' || last.current === path || area === 'driver') return;
     last.current = path;
-    void trackEvents(locale, [{ event: site ? 'site_page_view' : 'page_view' }]);
-  }, [state, path, locale, site]);
+    if (area === 'dashboard') track(locale, 'feature_use', { screen: screenFromPath(path), action: 'open' });
+    else void trackEvents(locale, [{ event: site ? 'site_page_view' : 'page_view' }]);
+  }, [state, path, locale, site, area]);
   useSiteEvents(site && state === 'granted', locale);
 
   async function choose(granted: boolean) {

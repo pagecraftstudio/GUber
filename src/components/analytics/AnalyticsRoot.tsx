@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { ANALYTICS_NOTICE_VERSION, CONSENT_COOKIE } from '@/lib/analytics/ctx';
 import type { AnalyticsLocale } from '@/lib/analytics/copy';
-import { AnalyticsClient, type ConsentState } from './AnalyticsClient';
+import { AnalyticsClient, type AnalyticsArea, type ConsentState } from './AnalyticsClient';
 
 /** Server wrapper: reads the consent cookie (httpOnly, so the browser cannot) and hands the state down. A cookie from an older notice version counts as unset, so the banner re-asks. */
 export async function readConsentState(): Promise<ConsentState> {
@@ -12,6 +12,6 @@ export async function readConsentState(): Promise<ConsentState> {
 }
 
 /** `site` = a company's public website: counts site_page_view, tracks clicks and section views, and links the privacy notice at `privacyHref`. */
-export async function AnalyticsRoot({ locale, site, privacyHref }: { locale?: AnalyticsLocale; site?: boolean; privacyHref?: string } = {}) {
-  return <AnalyticsClient locale={locale} initial={await readConsentState()} site={site} privacyHref={privacyHref} />;
+export async function AnalyticsRoot({ locale, site, privacyHref, area }: { locale?: AnalyticsLocale; site?: boolean; privacyHref?: string; area?: AnalyticsArea } = {}) {
+  return <AnalyticsClient locale={locale} initial={await readConsentState()} site={site} privacyHref={privacyHref} area={area} />;
 }
