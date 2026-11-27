@@ -1,8 +1,8 @@
 import { expectList, expectMaybe } from '@/lib/db/query';
 import { mapDbError } from '@/lib/db/map-error';
 import type { TenantServiceContext } from '@/lib/service/context';
-import type { FaresSave, ServiceActive, ServiceSave } from './schema';
-import { FARE_SELECT, SERVICE_SELECT, toFare, toService, type ShuttleFare, type ShuttleFareRow, type ShuttleService, type ShuttleServiceRow } from './types';
+import type { CancelDay, FaresSave, OverviewQuery, ServiceActive, ServiceSave, StartDay } from './schema';
+import { FARE_SELECT, SERVICE_SELECT, toFare, toOverview, toService, toStartResult, type ShuttleOverview, type StartDayResult, type ShuttleFare, type ShuttleFareRow, type ShuttleService, type ShuttleServiceRow } from './types';
 
 export type ShuttleRepository = {
   isEnabled(ctx: TenantServiceContext): Promise<boolean>;
@@ -11,6 +11,10 @@ export type ShuttleRepository = {
   saveService(ctx: TenantServiceContext, i: ServiceSave): Promise<string>;
   setServiceActive(ctx: TenantServiceContext, i: ServiceActive): Promise<void>;
   saveFares(ctx: TenantServiceContext, i: FaresSave): Promise<number>;
+  listLiveServices(ctx: TenantServiceContext): Promise<ShuttleService[]>;
+  overview(ctx: TenantServiceContext, q: OverviewQuery): Promise<ShuttleOverview>;
+  startDay(ctx: TenantServiceContext, i: StartDay): Promise<StartDayResult>;
+  cancelDay(ctx: TenantServiceContext, i: CancelDay): Promise<void>;
 };
 
 export const shuttleRepository: ShuttleRepository = {
@@ -55,5 +59,31 @@ export const shuttleRepository: ShuttleRepository = {
     });
     if (error) throw mapDbError(error);
     return typeof data === 'number' ? data : 0;
+  },
+
+  async listLiveServices(ctx) {
+    const res = await ctx.db.from('shuttle_services').select(SERVICE_SELECT).eq('company_id', ctx.companyId).eq('is_active', true).order('name').order('id').limit(100);
+    return expectList<ShuttleServiceRow, ShuttleService>(res as never, toService);
+  },
+
+  async overview(ctx, q) {
+    const { data, error } = await ctx.db.rpc('shuttle_overview', { p_service_id: q.serviceId, p_date: q.date ?? null });
+    if (error) throw mapDbError(error);
+    return toOverview(data);
+  },
+
+  async startDay(ctx, i) {
+    // The RPC derives the company from the service, checks shuttle.operate, the plan feature, the vehicle limit and every conflict.
+    const { data, error } = await ctx.db.rpc('shuttle_start_day', {
+      p_service_id: i.serviceId, p_service_date: i.serviceDate, p_key: i.key,
+      p_vehicles: i.vehicles.map((v) => ({ bus_id: v.busId, driver_id: v.driverId, start_station_idx: v.startStationIdx, direction: v.direction })),
+    });
+    if (error) throw mapDbError(error);
+    return toStartResult(data);
+  },
+
+  async cancelDay(ctx, i) {
+    const { error } = await ctx.db.rpc('shuttle_cancel_day', { p_day_id: i.dayId, p_reason: i.reason });
+    if (error) throw mapDbError(error);
   },
 };

@@ -4,8 +4,8 @@ import { requirePermission } from '@/lib/service/authorize';
 import type { TenantServiceContext } from '@/lib/service/context';
 import { idSchema } from '@/lib/validation/common';
 import { shuttleRepository, type ShuttleRepository } from './repository';
-import { faresSaveSchema, serviceActiveSchema, serviceSaveSchema } from './schema';
-import type { ShuttleFare, ShuttleService } from './types';
+import { cancelDaySchema, faresSaveSchema, overviewQuerySchema, serviceActiveSchema, serviceSaveSchema, startDaySchema } from './schema';
+import type { ShuttleFare, ShuttleOverview, ShuttleService, StartDayResult } from './types';
 
 /** Order inside every method: authorize -> validate -> repository. Reads need shuttle.read, every change needs shuttle.config. */
 export function makeShuttleService(repo: ShuttleRepository) {
@@ -33,6 +33,23 @@ export function makeShuttleService(repo: ShuttleRepository) {
     async saveFares(ctx: TenantServiceContext, input: unknown): Promise<number> {
       requirePermission(ctx, PERMISSIONS.shuttleConfig);
       return repo.saveFares(ctx, parseInput(faresSaveSchema, input));
+    },
+    async listLiveServices(ctx: TenantServiceContext): Promise<ShuttleService[]> {
+      requirePermission(ctx, PERMISSIONS.shuttleRead);
+      return repo.listLiveServices(ctx);
+    },
+    async overview(ctx: TenantServiceContext, input: unknown): Promise<ShuttleOverview> {
+      requirePermission(ctx, PERMISSIONS.shuttleRead);
+      return repo.overview(ctx, parseInput(overviewQuerySchema, input));
+    },
+    /** Starting or cancelling a day runs the operation: shuttle.operate (owner, manager, operations). */
+    async startDay(ctx: TenantServiceContext, input: unknown): Promise<StartDayResult> {
+      requirePermission(ctx, PERMISSIONS.shuttleOperate);
+      return repo.startDay(ctx, parseInput(startDaySchema, input));
+    },
+    async cancelDay(ctx: TenantServiceContext, input: unknown): Promise<void> {
+      requirePermission(ctx, PERMISSIONS.shuttleOperate);
+      return repo.cancelDay(ctx, parseInput(cancelDaySchema, input));
     },
   };
 }

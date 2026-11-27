@@ -4,8 +4,8 @@ import { mapDbError } from '@/lib/db/map-error';
 import { fakeDb, opsOf, tenantCtx } from '@/test/helpers';
 import { makeShuttleService } from './service';
 import { shuttleRepository, type ShuttleRepository } from './repository';
-import { faresSaveSchema, serviceSaveSchema } from './schema';
-import { toFare, toService } from './types';
+import { cancelDaySchema, faresSaveSchema, serviceSaveSchema, startDaySchema } from './schema';
+import { toFare, toOverview, toService, toStartResult } from './types';
 
 const ID = '00000000-0000-4000-8000-000000000201';
 const S1 = '00000000-0000-4000-8000-000000006901';
@@ -15,6 +15,8 @@ const svc = { routeId: ID, name: 'Campus shuttle', outboundDirection: 'forward',
 const repo = (): ShuttleRepository => ({
   isEnabled: vi.fn(async () => true), liveServiceForRoute: vi.fn(async () => null), listFares: vi.fn(async () => []),
   saveService: vi.fn(async () => ID), setServiceActive: vi.fn(async () => undefined), saveFares: vi.fn(async () => 0),
+  listLiveServices: vi.fn(async () => []), overview: vi.fn(async () => ({ serviceDate: '2026-12-01', day: null, sessions: [] })),
+  startDay: vi.fn(async () => ({ dayId: ID, replayed: false, sessionCount: 1 })), cancelDay: vi.fn(async () => undefined),
 });
 
 describe('serviceSaveSchema (mirrors shuttle_services checks, migration 0074)', () => {
@@ -112,5 +114,108 @@ describe('mapDbError: shuttle messages (migration 0074)', () => {
     expect(mapDbError({ code: '22023', message: 'duplicate station pair in fares' })).toMatchObject({ code: 'validation', detail: 'duplicate_fare_pair' });
     expect(mapDbError({ code: '23514', message: 'fare stops must belong to the service route' })).toMatchObject({ code: 'business_rule', detail: 'shuttle_stop_not_on_route' });
     expect(mapDbError({ code: '23514', message: 'hub stop does not belong to the route' })).toMatchObject({ code: 'business_rule', detail: 'shuttle_stop_not_on_route' });
+  });
+});
+
+const B1 = '00000000-0000-4000-8000-000000007021';
+const B2 = '00000000-0000-4000-8000-000000007022';
+const D1 = '00000000-0000-4000-8000-000000007031';
+const D2 = '00000000-0000-4000-8000-000000007032';
+const veh = (busId: string, driverId: string, startStationIdx = 0, direction: 'forward' | 'backward' = 'forward') => ({ busId, driverId, startStationIdx, direction });
+const day = { serviceId: ID, serviceDate: '2026-12-01', key: 'k-1', vehicles: [veh(B1, D1), veh(B2, D2, 2, 'backward')] };
+
+describe('startDaySchema (mirrors shuttle_start_day input checks, migration 0075)', () => {
+  it('accepts one or many vehicles in either direction', () => {
+    expect(startDaySchema.safeParse(day).success).toBe(true);
+    expect(startDaySchema.safeParse({ ...day, vehicles: [veh(B1, D1)] }).success).toBe(true);
+  });
+  it('refuses an empty list, more than 50, a repeated bus or driver, a bad direction, a bad date, a blank key', () => {
+    expect(startDaySchema.safeParse({ ...day, vehicles: [] }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, vehicles: Array.from({ length: 51 }, (_, i) => veh(`00000000-0000-4000-8000-${String(i).padStart(12, '1')}`, `00000000-0000-4000-8000-${String(i).padStart(12, '2')}`)) }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, vehicles: [veh(B1, D1), veh(B1, D2)] }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, vehicles: [veh(B1, D1), veh(B2, D1)] }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, vehicles: [{ ...veh(B1, D1), direction: 'sideways' }] }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, vehicles: [veh(B1, D1, -1)] }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, serviceDate: '01/12/2026' }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, key: '  ' }).success).toBe(false);
+  });
+  it('refuses a company id and extra keys', () => {
+    expect(startDaySchema.safeParse({ ...day, companyId: ID }).success).toBe(false);
+    expect(startDaySchema.safeParse({ ...day, vehicles: [{ ...veh(B1, D1), extra: 1 }] }).success).toBe(false);
+  });
+  it('cancel needs a 3 to 300 character reason', () => {
+    expect(cancelDaySchema.safeParse({ dayId: ID, reason: 'mistake' }).success).toBe(true);
+    expect(cancelDaySchema.safeParse({ dayId: ID, reason: 'x' }).success).toBe(false);
+    expect(cancelDaySchema.safeParse({ dayId: ID, reason: 'x'.repeat(301) }).success).toBe(false);
+  });
+});
+
+describe('shuttle service: day operations', () => {
+  it('start and cancel need shuttle.operate; overview and listing need shuttle.read', async () => {
+    const r = repo();
+    const s = makeShuttleService(r);
+    const reader = tenantCtx(['shuttle.read']);
+    await expect(s.overview(reader, { serviceId: ID })).resolves.toBeTruthy();
+    await expect(s.listLiveServices(reader)).resolves.toEqual([]);
+    await expect(s.startDay(reader, day)).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(s.cancelDay(reader, { dayId: ID, reason: 'mistake' })).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(s.overview(tenantCtx(['shuttle.drive']), { serviceId: ID })).rejects.toMatchObject({ code: 'forbidden' });
+    expect(r.startDay).not.toHaveBeenCalled();
+    const op = tenantCtx(['shuttle.read', 'shuttle.operate']);
+    await expect(s.startDay(op, day)).resolves.toMatchObject({ dayId: ID });
+    await expect(s.cancelDay(op, { dayId: ID, reason: 'mistake' })).resolves.toBeUndefined();
+  });
+  it('the configurer role alone cannot run the day, and bad input never reaches the repository', async () => {
+    const r = repo();
+    const s = makeShuttleService(r);
+    await expect(s.startDay(tenantCtx(['shuttle.config']), day)).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(s.startDay(tenantCtx(['shuttle.operate']), { ...day, vehicles: [] })).rejects.toMatchObject({ code: 'validation' });
+    await expect(s.overview(tenantCtx(['shuttle.read']), { serviceId: 'nope' })).rejects.toMatchObject({ code: 'validation' });
+    expect(r.startDay).not.toHaveBeenCalled();
+    expect(r.overview).not.toHaveBeenCalled();
+  });
+});
+
+describe('shuttle repository: day rpc arguments and mapping', () => {
+  it('sends snake_case rpc args and no company id', async () => {
+    const { db, calls } = fakeDb({ data: { day_id: ID, replayed: true, sessions: [{}, {}] } });
+    const ctx = tenantCtx(['shuttle.operate'], { db });
+    const out = await shuttleRepository.startDay(ctx, startDaySchema.parse(day));
+    expect(out).toEqual({ dayId: ID, replayed: true, sessionCount: 2 });
+    expect(calls[0]!.target).toBe('rpc:shuttle_start_day');
+    const args = opsOf(calls[0]!, 'args')[0]![0] as Record<string, unknown>;
+    expect(Object.keys(args).sort()).toEqual(['p_key', 'p_service_date', 'p_service_id', 'p_vehicles']);
+    expect((args.p_vehicles as unknown[])[1]).toEqual({ bus_id: B2, driver_id: D2, start_station_idx: 2, direction: 'backward' });
+    const c = fakeDb({ data: null });
+    await shuttleRepository.cancelDay(tenantCtx(['shuttle.operate'], { db: c.db }), { dayId: ID, reason: 'mistake' });
+    expect(opsOf(c.calls[0]!, 'args')[0]![0]).toEqual({ p_day_id: ID, p_reason: 'mistake' });
+  });
+  it('maps the overview jsonb, including a day that was not started', () => {
+    expect(toOverview({ service_date: '2026-12-01', day: null, sessions: [] })).toEqual({ serviceDate: '2026-12-01', day: null, sessions: [] });
+    const o = toOverview({ service_date: '2026-12-01', day: { id: ID, status: 'open', opened_at: 'x', stations: [{ idx: 0, stop_id: S1, name: 'Campus', offset_minutes: 0 }] },
+      sessions: [{ id: ID, state: 'ready', run_id: ID, run_no: 1, direction: 'forward', capacity: 10, bus_id: B1, plate: 'P-1', driver_id: D1, driver_name: 'Ali', station_pos: 0, station_name: 'Campus' }] });
+    expect(o.day?.stations[0]).toEqual({ idx: 0, stopId: S1, name: 'Campus' });
+    expect(o.sessions[0]).toMatchObject({ plate: 'P-1', driverName: 'Ali', stationName: 'Campus', runNo: 1 });
+    expect(toStartResult({ day_id: ID, sessions: [] })).toEqual({ dayId: ID, replayed: false, sessionCount: 0 });
+  });
+});
+
+describe('mapDbError: shuttle day messages (migration 0075)', () => {
+  it.each([
+    ['23505', 'a shuttle day already exists for this date', 'conflict', 'shuttle_day_exists'],
+    ['23505', 'bus is already in a live shuttle session', 'conflict', 'shuttle_bus_busy'],
+    ['23505', 'driver is already in a live shuttle session', 'conflict', 'shuttle_driver_busy'],
+    ['23514', 'bus has a scheduled trip in that window', 'business_rule', 'shuttle_bus_trip_conflict'],
+    ['23514', 'driver has a scheduled trip in that window', 'business_rule', 'shuttle_driver_trip_conflict'],
+    ['23514', 'route needs at least two active stops', 'business_rule', 'shuttle_route_stops'],
+    ['23514', 'day has started and cannot be cancelled', 'business_rule', 'shuttle_day_started'],
+    ['22023', 'invalid service date', 'validation', 'shuttle_invalid_date'],
+    ['22023', 'invalid start station', 'validation', 'shuttle_invalid_start'],
+    ['22023', 'invalid vehicle list', 'validation', 'shuttle_invalid_vehicles'],
+  ])('%s %s', (code, message, appCode, detail) => {
+    expect(mapDbError({ code, message })).toMatchObject({ code: appCode, detail });
+  });
+  it('the vehicle limit is a plan_limit naming the key', () => {
+    expect(mapDbError({ code: '53400', message: 'plan limit reached: max_shuttle_vehicles (3)' })).toMatchObject({ code: 'plan_limit', detail: 'max_shuttle_vehicles' });
   });
 });
