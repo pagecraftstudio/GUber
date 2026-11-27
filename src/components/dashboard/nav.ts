@@ -15,7 +15,7 @@ export const NAV: readonly NavItem[] = [
   { href: '/dashboard/bookings', key: 'bookings', icon: Ticket, permission: PERMISSIONS.bookingsRead },
   { href: '/dashboard/customers', key: 'customers', icon: UserRound, permission: PERMISSIONS.customersRead },
   { href: '/dashboard/plans', key: 'plans', icon: BadgePercent, permission: PERMISSIONS.routesRead },
-  { href: '/dashboard/shuttle/settings', key: 'shuttle', icon: Repeat2, permission: PERMISSIONS.shuttleRead },
+  { href: '/dashboard/shuttle', key: 'shuttle', icon: Repeat2, permission: PERMISSIONS.shuttleRead },
   { href: '/dashboard/subscriptions', key: 'subscriptions', icon: Inbox, permission: PERMISSIONS.bookingsRead },
   { href: '/dashboard/website', key: 'website', icon: Globe2, permission: PERMISSIONS.websiteRead },
   { href: '/dashboard/settings', key: 'settings', icon: Settings2, permission: PERMISSIONS.settingsRead },

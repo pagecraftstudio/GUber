@@ -15,15 +15,16 @@ const str = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
 const num = (f: FormData, k: string) => (str(f, k) === '' ? NaN : Number(normalizeDigits(str(f, k))));
 const flag = (f: FormData, k: string) => str(f, k) === '1';
 const PATH = '/dashboard/shuttle/settings';
+const OVERVIEW = '/dashboard/shuttle';
 
-async function run(work: (c: TenantServiceContext) => Promise<void>): Promise<FormState> {
+async function run(work: (c: TenantServiceContext) => Promise<void>, paths: string[] = [PATH]): Promise<FormState> {
   try {
     const c = createTenantServiceContext(await createClient(), (await requireTenant()));
     await work(c);
   } catch (e) {
     return errorState(e);
   }
-  revalidatePath(PATH);
+  for (const p of paths) revalidatePath(p);
   return successState('saved');
 }
 
@@ -55,4 +56,25 @@ export async function saveShuttleFaresFormAction(_prev: FormState, f: FormData):
     }
     await shuttleService.saveFares(c, { serviceId: str(f, 'serviceId'), fares });
   });
+}
+
+/** The vehicle rows arrive as one JSON field built by the form; anything that is not the expected shape fails validation in the service. */
+function vehiclesOf(f: FormData): unknown {
+  try {
+    return JSON.parse(str(f, 'vehicles'));
+  } catch {
+    return null;
+  }
+}
+
+export async function startShuttleDayFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run(async (c) => {
+    await shuttleService.startDay(c, { serviceId: str(f, 'serviceId'), serviceDate: str(f, 'serviceDate'), key: str(f, 'key'), vehicles: vehiclesOf(f) });
+  }, [OVERVIEW]);
+}
+
+export async function cancelShuttleDayFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  return run(async (c) => {
+    await shuttleService.cancelDay(c, { dayId: str(f, 'dayId'), reason: str(f, 'reason') });
+  }, [OVERVIEW]);
 }
