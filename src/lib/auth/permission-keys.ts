@@ -33,6 +33,14 @@ export const PERMISSIONS = {
   billingRead: 'billing.read',
   auditRead: 'audit.read',
   analyticsRead: 'analytics.read',
+  // continuous shuttle (migration 0074)
+  shuttleRead: 'shuttle.read',
+  shuttleOperate: 'shuttle.operate',
+  shuttleConfirm: 'shuttle.confirm',
+  shuttleAssign: 'shuttle.assign',
+  shuttleCash: 'shuttle.cash',
+  shuttleConfig: 'shuttle.config',
+  shuttleDrive: 'shuttle.drive',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

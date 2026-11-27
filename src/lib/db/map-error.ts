@@ -93,6 +93,10 @@ const RULES: Rule[] = [
   { match: /subscription is not active/, code: 'business_rule', detail: 'subscription_not_active' },
   { match: /booking cannot be cancelled$/, code: 'business_rule', detail: 'revoke_booking_not_cancellable' },
   { match: /subscription is not open/, code: 'business_rule', detail: 'subscription_not_open' },
+  // continuous shuttle (0074)
+  { match: /the route already has a live shuttle service/, code: 'conflict', detail: 'shuttle_service_exists' },
+  { match: /duplicate station pair in fares/, code: 'validation', detail: 'duplicate_fare_pair' },
+  { match: /fare stops must belong to the service route|hub stop does not belong to the route/, code: 'business_rule', detail: 'shuttle_stop_not_on_route' },
   // booking RPCs (0010)
   { match: /invalid phone number/, code: 'validation', detail: 'invalid_phone', fields: { phone: 'invalid_phone' } },
   { match: /idempotency key reused/, code: 'conflict', detail: 'idempotency_conflict' },
@@ -130,6 +134,7 @@ export function mapDbError(error: DbErrorLike): AppError {
       return new AppError('rate_limited', { ...(/^\d{1,6}$/.test(error.hint ?? '') ? { detail: `retry_after_${error.hint}` } : {}), cause: error });
     case '42501': // RLS violation, missing grant, or trigger-raised
       if (/no active subscription/.test(text)) return new AppError('subscription_required', { cause: error });
+      if (/shuttle operations are not included in the plan/.test(text)) return new AppError('forbidden', { detail: 'shuttle_not_in_plan', cause: error });
       // captcha passes (0057): stable details the UI translates; checked before the generic forbidden
       if (/captcha proof invalid/.test(text)) return new AppError('forbidden', { detail: 'captcha_invalid', cause: error });
       if (/captcha required/.test(text)) return new AppError('forbidden', { detail: 'captcha_required', cause: error });
