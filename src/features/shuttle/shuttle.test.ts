@@ -4,19 +4,22 @@ import { mapDbError } from '@/lib/db/map-error';
 import { fakeDb, opsOf, tenantCtx } from '@/test/helpers';
 import { makeShuttleService } from './service';
 import { shuttleRepository, type ShuttleRepository } from './repository';
-import { cancelDaySchema, faresSaveSchema, serviceSaveSchema, startDaySchema } from './schema';
-import { toFare, toOverview, toService, toStartResult } from './types';
+import { arriveSchema, cancelDaySchema, faresSaveSchema, outOfServiceSchema, serviceSaveSchema, sessionActionSchema, startDaySchema } from './schema';
+import { toActionResult, toFare, toOverview, toService, toStartResult, toVehicleDetail } from './types';
 
 const ID = '00000000-0000-4000-8000-000000000201';
 const S1 = '00000000-0000-4000-8000-000000006901';
 const S2 = '00000000-0000-4000-8000-000000006902';
 const svc = { routeId: ID, name: 'Campus shuttle', outboundDirection: 'forward', allowReverse: true, requestTtlMinutes: 20, allowWalkIn: true, maxSeatsPerRequest: 4, hubStopId: null };
 
+const RES = { state: 'loading', replayed: false, reversed: false, late: false } as const;
 const repo = (): ShuttleRepository => ({
   isEnabled: vi.fn(async () => true), liveServiceForRoute: vi.fn(async () => null), listFares: vi.fn(async () => []),
   saveService: vi.fn(async () => ID), setServiceActive: vi.fn(async () => undefined), saveFares: vi.fn(async () => 0),
   listLiveServices: vi.fn(async () => []), overview: vi.fn(async () => ({ serviceDate: '2026-12-01', day: null, sessions: [] })),
   startDay: vi.fn(async () => ({ dayId: ID, replayed: false, sessionCount: 1 })), cancelDay: vi.fn(async () => undefined),
+  vehicleDetail: vi.fn(async () => toVehicleDetail({ session: { id: ID }, run: {} })), openLoading: vi.fn(async () => RES), closeLoading: vi.fn(async () => RES), depart: vi.fn(async () => RES),
+  arrive: vi.fn(async () => RES), setOutOfService: vi.fn(async () => RES), returnToService: vi.fn(async () => RES), endSession: vi.fn(async () => RES),
 });
 
 describe('serviceSaveSchema (mirrors shuttle_services checks, migration 0074)', () => {
@@ -217,5 +220,109 @@ describe('mapDbError: shuttle day messages (migration 0075)', () => {
   });
   it('the vehicle limit is a plan_limit naming the key', () => {
     expect(mapDbError({ code: '53400', message: 'plan limit reached: max_shuttle_vehicles (3)' })).toMatchObject({ code: 'plan_limit', detail: 'max_shuttle_vehicles' });
+  });
+});
+
+const act = { sessionId: ID, expectedState: 'ready', key: 'press-1' };
+
+describe('S3 schemas (mirror shuttle_* action inputs, migration 0076)', () => {
+  it('an action needs a session, a known expected state and a key', () => {
+    expect(sessionActionSchema.safeParse(act).success).toBe(true);
+    expect(sessionActionSchema.safeParse({ ...act, expectedState: 'flying' }).success).toBe(false);
+    expect(sessionActionSchema.safeParse({ ...act, key: ' ' }).success).toBe(false);
+    expect(sessionActionSchema.safeParse({ ...act, companyId: ID }).success).toBe(false);
+    expect(sessionActionSchema.safeParse({ sessionId: ID, key: 'k' }).success).toBe(false);
+  });
+  it('arrive accepts an ISO time with offset and a reason; out of service needs a 3 to 300 character reason', () => {
+    expect(arriveSchema.safeParse({ ...act, expectedState: 'in_transit' }).success).toBe(true);
+    expect(arriveSchema.safeParse({ ...act, expectedState: 'in_transit', occurredAt: '2026-12-01T10:00:00+02:00', reason: 'forgot to press' }).success).toBe(true);
+    expect(arriveSchema.safeParse({ ...act, expectedState: 'in_transit', occurredAt: 'yesterday' }).success).toBe(false);
+    expect(arriveSchema.safeParse({ ...act, expectedState: 'in_transit', reason: 'x' }).success).toBe(false);
+    expect(outOfServiceSchema.safeParse({ ...act, reason: 'flat tyre' }).success).toBe(true);
+    expect(outOfServiceSchema.safeParse({ ...act, reason: 'x' }).success).toBe(false);
+    expect(outOfServiceSchema.safeParse(act).success).toBe(false);
+  });
+});
+
+describe('S3 service: every action needs shuttle.operate, the detail needs shuttle.read', () => {
+  it('a reader or a configurer cannot move a bus', async () => {
+    const r = repo();
+    const s = makeShuttleService(r);
+    for (const who of [tenantCtx(['shuttle.read']), tenantCtx(['shuttle.config']), tenantCtx(['shuttle.drive'])]) {
+      await expect(s.openLoading(who, act)).rejects.toMatchObject({ code: 'forbidden' });
+      await expect(s.depart(who, { ...act, expectedState: 'loading' })).rejects.toMatchObject({ code: 'forbidden' });
+      await expect(s.endSession(who, act)).rejects.toMatchObject({ code: 'forbidden' });
+    }
+    expect(r.openLoading).not.toHaveBeenCalled();
+    expect(r.depart).not.toHaveBeenCalled();
+    await expect(s.vehicleDetail(tenantCtx(['shuttle.drive']), ID)).rejects.toMatchObject({ code: 'forbidden' });
+  });
+  it('an operator runs the whole cycle and bad input stops before the repository', async () => {
+    const r = repo();
+    const s = makeShuttleService(r);
+    const op = tenantCtx(['shuttle.read', 'shuttle.operate']);
+    await expect(s.openLoading(op, act)).resolves.toMatchObject({ state: 'loading' });
+    await s.closeLoading(op, { ...act, expectedState: 'loading' });
+    await s.depart(op, { ...act, expectedState: 'loading' });
+    await s.arrive(op, { ...act, expectedState: 'in_transit' });
+    await s.setOutOfService(op, { ...act, reason: 'flat tyre' });
+    await s.returnToService(op, { ...act, expectedState: 'out_of_service' });
+    await s.endSession(op, act);
+    await expect(s.vehicleDetail(op, ID)).resolves.toBeTruthy();
+    await expect(s.setOutOfService(op, { ...act, reason: 'x' })).rejects.toMatchObject({ code: 'validation' });
+    await expect(s.arrive(op, { ...act, expectedState: 'in_transit', occurredAt: 'nope' })).rejects.toMatchObject({ code: 'validation' });
+    await expect(s.vehicleDetail(op, 'nope')).rejects.toMatchObject({ code: 'validation' });
+    expect(r.setOutOfService).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('S3 repository: rpc arguments and mapping', () => {
+  it('sends the expected state and key, nothing about a company', async () => {
+    const { db, calls } = fakeDb({ data: { state: 'in_transit', replayed: true } });
+    const ctx = tenantCtx(['shuttle.operate'], { db });
+    const out = await shuttleRepository.depart(ctx, sessionActionSchema.parse({ ...act, expectedState: 'loading' }));
+    expect(out).toMatchObject({ state: 'in_transit', replayed: true });
+    expect(calls[0]!.target).toBe('rpc:shuttle_depart');
+    expect(opsOf(calls[0]!, 'args')[0]![0]).toEqual({ p_session: ID, p_expected_state: 'loading', p_key: 'press-1' });
+    const a = fakeDb({ data: { state: 'arrived', late: true } });
+    await shuttleRepository.arrive(tenantCtx(['shuttle.operate'], { db: a.db }), arriveSchema.parse({ ...act, expectedState: 'in_transit', occurredAt: '2026-12-01T10:00:00Z', reason: 'forgot to press' }));
+    expect(opsOf(a.calls[0]!, 'args')[0]![0]).toEqual({ p_session: ID, p_expected_state: 'in_transit', p_key: 'press-1', p_occurred_at: '2026-12-01T10:00:00Z', p_reason: 'forgot to press' });
+    const b = fakeDb({ data: { state: 'arrived' } });
+    await shuttleRepository.arrive(tenantCtx(['shuttle.operate'], { db: b.db }), arriveSchema.parse({ ...act, expectedState: 'in_transit' }));
+    expect(opsOf(b.calls[0]!, 'args')[0]![0]).toMatchObject({ p_occurred_at: null, p_reason: null });
+  });
+  it('maps the detail jsonb', () => {
+    const d = toVehicleDetail({
+      session: { id: ID, state: 'arrived', station_pos: 1, station_name: 'Mid', capacity: 12, out_of_service_from: null, day_id: ID, day_status: 'open', service_date: '2026-12-01', bus_id: B1, plate: 'P-1', driver_id: D1, driver_name: 'Ali' },
+      run: { id: ID, run_no: 2, direction: 'backward', status: 'active' }, stations: ['Port', 'Mid', 'Campus'],
+      visit: { id: ID, station_pos: 1, arrived_at: 'a', loading_started_at: null, loading_closed_at: null, late_recorded: true },
+      leg: { id: ID, seq: 2, from_pos: 0, to_pos: 1, departed_at: 'd', overdue: true },
+      legs: [{ seq: 1, status: 'arrived', departed_at: 'd', arrived_at: 'e', run_no: 1, direction: 'forward', from_name: 'A', to_name: 'B' }],
+      events: [{ kind: 'leg.arrived', at: 't', actor_role: 'driver', reason: 'late' }],
+    });
+    expect(d.session).toMatchObject({ state: 'arrived', plate: 'P-1', driverName: 'Ali', dayStatus: 'open' });
+    expect(d.run).toEqual({ id: ID, runNo: 2, direction: 'backward', status: 'active' });
+    expect(d.visit?.lateRecorded).toBe(true);
+    expect(d.leg).toMatchObject({ overdue: true, fromPos: 0 });
+    expect(d.legs[0]).toMatchObject({ fromName: 'A', status: 'arrived' });
+    expect(d.events[0]).toEqual({ kind: 'leg.arrived', at: 't', actorRole: 'driver', reason: 'late' });
+    expect(toVehicleDetail({ session: { id: ID }, run: {}, visit: null, leg: null }).visit).toBeNull();
+    expect(toActionResult({ state: 'loading', reversed: true })).toEqual({ state: 'loading', replayed: false, reversed: true, late: false });
+  });
+});
+
+describe('mapDbError: shuttle leg messages (migration 0076)', () => {
+  it.each([
+    ['P0001', 'stale state: loading', 'conflict', 'shuttle_stale_state'],
+    ['23514', 'action not allowed in state in_transit', 'business_rule', 'shuttle_action_not_allowed'],
+    ['22023', 'invalid arrival time', 'validation', 'shuttle_invalid_arrival'],
+    ['22023', 'idempotency key already used by another action', 'validation', 'shuttle_key_reused'],
+    ['23514', 'nothing ahead of the last station', 'business_rule', 'shuttle_end_of_run'],
+    ['23514', 'day is not open', 'business_rule', 'shuttle_day_not_open'],
+  ])('%s %s', (code, message, appCode, detail) => {
+    expect(mapDbError({ code, message })).toMatchObject({ code: appCode, detail });
+  });
+  it('a late arrival without a reason is a field error on reason', () => {
+    expect(mapDbError({ code: '22023', message: 'reason required' })).toMatchObject({ code: 'validation', fields: { reason: 'reason_required' } });
   });
 });

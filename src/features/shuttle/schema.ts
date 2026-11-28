@@ -59,3 +59,15 @@ export type CancelDay = z.output<typeof cancelDaySchema>;
 
 export const overviewQuerySchema = z.strictObject({ serviceId: idSchema, date: dateOnlySchema.optional() });
 export type OverviewQuery = z.output<typeof overviewQuerySchema>;
+
+// ---- S3: leg engine (migration 0076). The expected state is what the screen last showed; the database refuses a stale press.
+const sessionState = z.enum(['ready', 'loading', 'in_transit', 'arrived', 'completed', 'out_of_service']);
+const actionBase = { sessionId: idSchema, expectedState: sessionState, key: text(1, 100) };
+export const sessionActionSchema = z.strictObject(actionBase);
+export type SessionAction = z.output<typeof sessionActionSchema>;
+export const arriveSchema = z.strictObject({ ...actionBase, occurredAt: z.iso.datetime({ offset: true }).optional(), reason: text(3, 300).optional() });
+export type ArriveInput = z.output<typeof arriveSchema>;
+export const outOfServiceSchema = z.strictObject({ ...actionBase, reason: text(3, 300) });
+export type OutOfServiceInput = z.output<typeof outOfServiceSchema>;
+export const SESSION_ACTIONS = ['open_loading', 'close_loading', 'depart', 'arrive', 'out_of_service', 'return_to_service', 'end_session'] as const;
+export type SessionActionName = (typeof SESSION_ACTIONS)[number];
