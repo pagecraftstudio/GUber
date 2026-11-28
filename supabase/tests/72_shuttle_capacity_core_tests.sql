@@ -140,13 +140,19 @@ delete from app_private.rate_limit_counters;
 select t.as_user(t.u(3));
 select t.passes('s4a: bus 2 opens loading', $$select public.shuttle_open_loading(t.sess72(7422), 'ready', 'k72-s-ol')$$);
 select t.passes('s4a: bus 2 departs from the first station', $$select public.shuttle_depart(t.sess72(7422), 'loading', 'k72-s-dep')$$);
-select t.eq('s4a: a request for the station the bus already left is too_late', (public.shuttle_decide_booking(t.bk72('k72-t1'), 'confirm', 'k72-d-t1')) ->> 'outcome', 'too_late');
+-- 0078 (S4b): the departure sweep already expired the request that boarded at the station the bus left, so confirming it is already_processed.
+select t.eq('s4a: a request for the station the bus already left was expired by the departure sweep', (public.shuttle_decide_booking(t.bk72('k72-t1'), 'confirm', 'k72-d-t1')) ->> 'outcome', 'already_processed');
+select t.as_admin();
+-- too_late still guards a request that reaches the table after the bus left (inserted directly; the intake RPC would refuse it as station_passed)
+insert into shuttle_bookings (company_id, day_id, run_id, customer_id, from_pos, to_pos, seats, request_key) values (t.u(101), t.day72(), t.run72(2), t.u(7444), 0, 2, 1, 'k72-t4');
+select t.as_user(t.u(3));
+select t.eq('s4a: a request that appears after the bus left is too_late', (public.shuttle_decide_booking(t.bk72('k72-t4'), 'confirm', 'k72-d-t4')) ->> 'outcome', 'too_late');
 select t.eq('s4a: a request for a station still ahead can be confirmed', (public.shuttle_decide_booking(t.bk72('k72-t2'), 'confirm', 'k72-d-t2')) ->> 'outcome', 'confirmed');
 select t.passes('s4a: bus 2 arrives at the second station', $$select public.shuttle_arrive(t.sess72(7422), 'in_transit', 'k72-s-arr')$$);
 select t.passes('s4a: bus 2 ends its session (run finished)', $$select public.shuttle_end_session(t.sess72(7422), 'arrived', 'k72-s-end')$$);
 select t.eq('s4a: a request on a finished run is run_closed', (public.shuttle_decide_booking(t.bk72('k72-t3'), 'confirm', 'k72-d-t3')) ->> 'outcome', 'run_closed');
 select t.as_admin();
-select t.eq('s4a: too_late and run_closed changed nothing', t.seg72(2) || '/' || t.st72('k72-t1') || '/' || t.st72('k72-t3') || '/' || t.drift72()::text, '0,1/requested/requested/0');
+select t.eq('s4a: too_late and run_closed changed nothing', t.seg72(2) || '/' || t.st72('k72-t1') || '/' || t.st72('k72-t3') || '/' || t.st72('k72-t4') || '/' || t.drift72()::text, '0,1/expired/requested/requested/0');
 
 -- 7. guards ---------------------------------------------------------------------------------------------------------------------------------------------
 select t.raises('s4a: a confirmed booking cannot go back to requested', $$update shuttle_bookings set status = 'requested' where request_key = 'k72-b5'$$, '23514');
