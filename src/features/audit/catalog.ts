@@ -2,7 +2,7 @@
  * What the UI knows about audit entries. Unknown actions still render (raw action string); the SQL suite 15 fails
  * when the log contains a namespace missing here, so the catalogue cannot silently fall behind new audit writers.
  */
-export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity', 'payment_settings', 'captcha', 'rating', 'acting', 'plan', 'entitlement', 'platform', 'analytics', 'shuttle_service', 'shuttle_fares', 'shuttle_day'] as const;
+export const AUDIT_NAMESPACES = ['company', 'subscription', 'invite', 'booking', 'trip', 'ticket', 'route', 'member', 'driver', 'route_plan', 'route_subscription', 'domain', 'website', 'media', 'identity', 'payment_settings', 'captcha', 'rating', 'acting', 'plan', 'entitlement', 'platform', 'analytics', 'shuttle_service', 'shuttle_fares', 'shuttle_day', 'shuttle_booking'] as const;
 export type AuditNamespace = (typeof AUDIT_NAMESPACES)[number];
 
 export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
@@ -17,6 +17,7 @@ export const NAMESPACE_LABEL: Record<AuditNamespace, string> = {
   shuttle_service: 'Shuttle service',
   shuttle_fares: 'Shuttle fares',
   shuttle_day: 'Shuttle day',
+  shuttle_booking: 'Shuttle booking',
   route_subscription: 'Rider subscription',
   member: 'Team member',
   driver: 'Driver',
@@ -94,6 +95,9 @@ const ACTION_LABEL: Record<string, string> = {
   'shuttle_fares.saved': 'Shuttle fares saved',
   'shuttle_day.started': 'Shuttle day started',
   'shuttle_day.cancelled': 'Shuttle day cancelled',
+  'shuttle_booking.confirmed': 'Shuttle booking confirmed',
+  'shuttle_booking.rejected': 'Shuttle booking rejected',
+  'shuttle_booking.cancelled': 'Shuttle booking cancelled',
   'route_plan.created': 'Subscription plan created',
   'route_plan.updated': 'Subscription plan updated',
   'route_plan.archived': 'Subscription plan archived',

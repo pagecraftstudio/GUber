@@ -57,3 +57,41 @@ export const toStartResult = (raw: unknown): StartDayResult => {
   const r = (raw ?? {}) as Json;
   return { dayId: String(r.day_id), replayed: r.replayed === true, sessionCount: Array.isArray(r.sessions) ? r.sessions.length : 0 };
 };
+
+// ---- S3: shuttle_vehicle_detail and the action results
+export type VehicleLeg = { seq: number; status: 'in_transit' | 'arrived' | 'interrupted'; departedAt: string; arrivedAt: string | null; runNo: number; direction: ShuttleDirection; fromName: string; toName: string };
+export type VehicleEvent = { kind: string; at: string; actorRole: string; reason: string | null };
+export type VehicleDetail = {
+  session: { id: string; state: SessionState; stationPos: number; stationName: string; capacity: number; outOfServiceFrom: 'ready' | 'arrived' | null; dayId: string; dayStatus: DayStatus; serviceDate: string; busId: string; plate: string; driverId: string; driverName: string };
+  run: { id: string; runNo: number; direction: ShuttleDirection; status: 'planned' | 'active' | 'finished' | 'aborted' };
+  stations: string[];
+  visit: { id: string; stationPos: number; arrivedAt: string; loadingStartedAt: string | null; loadingClosedAt: string | null; lateRecorded: boolean } | null;
+  leg: { id: string; seq: number; fromPos: number; toPos: number; departedAt: string; overdue: boolean } | null;
+  legs: VehicleLeg[];
+  events: VehicleEvent[];
+};
+export const toVehicleDetail = (raw: unknown): VehicleDetail => {
+  const r = (raw ?? {}) as Json;
+  const s = (r.session ?? {}) as Json;
+  const run = (r.run ?? {}) as Json;
+  const v = r.visit as Json | null;
+  const l = r.leg as Json | null;
+  return {
+    session: {
+      id: String(s.id), state: s.state as SessionState, stationPos: Number(s.station_pos), stationName: String(s.station_name ?? ''), capacity: Number(s.capacity),
+      outOfServiceFrom: (s.out_of_service_from as 'ready' | 'arrived' | null) ?? null, dayId: String(s.day_id), dayStatus: s.day_status as DayStatus, serviceDate: String(s.service_date),
+      busId: String(s.bus_id), plate: String(s.plate), driverId: String(s.driver_id), driverName: String(s.driver_name),
+    },
+    run: { id: String(run.id), runNo: Number(run.run_no), direction: run.direction as ShuttleDirection, status: run.status as VehicleDetail['run']['status'] },
+    stations: ((r.stations as unknown[]) ?? []).map(String),
+    visit: v ? { id: String(v.id), stationPos: Number(v.station_pos), arrivedAt: String(v.arrived_at), loadingStartedAt: (v.loading_started_at as string | null) ?? null, loadingClosedAt: (v.loading_closed_at as string | null) ?? null, lateRecorded: v.late_recorded === true } : null,
+    leg: l ? { id: String(l.id), seq: Number(l.seq), fromPos: Number(l.from_pos), toPos: Number(l.to_pos), departedAt: String(l.departed_at), overdue: l.overdue === true } : null,
+    legs: ((r.legs as Json[]) ?? []).map((x) => ({ seq: Number(x.seq), status: x.status as VehicleLeg['status'], departedAt: String(x.departed_at), arrivedAt: (x.arrived_at as string | null) ?? null, runNo: Number(x.run_no), direction: x.direction as ShuttleDirection, fromName: String(x.from_name), toName: String(x.to_name) })),
+    events: ((r.events as Json[]) ?? []).map((x) => ({ kind: String(x.kind), at: String(x.at), actorRole: String(x.actor_role), reason: (x.reason as string | null) ?? null })),
+  };
+};
+export type ActionResult = { state: SessionState; replayed: boolean; reversed: boolean; late: boolean };
+export const toActionResult = (raw: unknown): ActionResult => {
+  const r = (raw ?? {}) as Json;
+  return { state: r.state as SessionState, replayed: r.replayed === true, reversed: r.reversed === true, late: r.late === true };
+};

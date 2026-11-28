@@ -6,6 +6,7 @@ import { requireTenant } from '@/lib/auth/guards';
 import { createTenantServiceContext, type TenantServiceContext } from '@/lib/service/context';
 import { errorState, successState, type FormState } from '@/features/dashboard/form-state';
 import { shuttleService } from './service';
+import { SESSION_ACTIONS, type SessionActionName } from './schema';
 
 /**
  * Server actions for the shuttle settings forms. No company id is read from the form: the context derives it from the session,
@@ -77,4 +78,31 @@ export async function cancelShuttleDayFormAction(_prev: FormState, f: FormData):
   return run(async (c) => {
     await shuttleService.cancelDay(c, { dayId: str(f, 'dayId'), reason: str(f, 'reason') });
   }, [OVERVIEW]);
+}
+
+/**
+ * One entry point for every bus action (open loading, close loading, depart, arrive, out of service, return, end).
+ * The form sends the state it SAW and a key; the database refuses a stale press and replays a double press. After ANY outcome the screen
+ * is revalidated, so a stale press shows the real state straight away.
+ */
+export async function shuttleSessionActionFormAction(_prev: FormState, f: FormData): Promise<FormState> {
+  const action = str(f, 'action') as SessionActionName;
+  if (!SESSION_ACTIONS.includes(action)) return errorState(new Error('invalid action'));
+  const base = { sessionId: str(f, 'sessionId'), expectedState: str(f, 'expectedState'), key: str(f, 'key') };
+  const minutesAgo = num(f, 'minutesAgo');
+  const occurredAt = Number.isFinite(minutesAgo) && minutesAgo > 0 ? new Date(Date.now() - minutesAgo * 60_000).toISOString() : undefined;
+  const reason = str(f, 'reason') || undefined;
+  const result = await run(async (c) => {
+    switch (action) {
+      case 'open_loading': await shuttleService.openLoading(c, base); break;
+      case 'close_loading': await shuttleService.closeLoading(c, base); break;
+      case 'depart': await shuttleService.depart(c, base); break;
+      case 'arrive': await shuttleService.arrive(c, { ...base, occurredAt, reason }); break;
+      case 'out_of_service': await shuttleService.setOutOfService(c, { ...base, reason }); break;
+      case 'return_to_service': await shuttleService.returnToService(c, base); break;
+      case 'end_session': await shuttleService.endSession(c, base); break;
+    }
+  }, [OVERVIEW]);
+  revalidatePath(OVERVIEW, 'layout'); // also after an error: a stale press must show the real state
+  return result;
 }

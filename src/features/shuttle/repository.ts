@@ -1,8 +1,8 @@
 import { expectList, expectMaybe } from '@/lib/db/query';
 import { mapDbError } from '@/lib/db/map-error';
 import type { TenantServiceContext } from '@/lib/service/context';
-import type { CancelDay, FaresSave, OverviewQuery, ServiceActive, ServiceSave, StartDay } from './schema';
-import { FARE_SELECT, SERVICE_SELECT, toFare, toOverview, toService, toStartResult, type ShuttleOverview, type StartDayResult, type ShuttleFare, type ShuttleFareRow, type ShuttleService, type ShuttleServiceRow } from './types';
+import type { ArriveInput, CancelDay, FaresSave, OutOfServiceInput, OverviewQuery, ServiceActive, ServiceSave, SessionAction, StartDay } from './schema';
+import { FARE_SELECT, SERVICE_SELECT, toFare, toActionResult, toOverview, toService, toStartResult, toVehicleDetail, type ActionResult, type ShuttleOverview, type VehicleDetail, type StartDayResult, type ShuttleFare, type ShuttleFareRow, type ShuttleService, type ShuttleServiceRow } from './types';
 
 export type ShuttleRepository = {
   isEnabled(ctx: TenantServiceContext): Promise<boolean>;
@@ -15,6 +15,14 @@ export type ShuttleRepository = {
   overview(ctx: TenantServiceContext, q: OverviewQuery): Promise<ShuttleOverview>;
   startDay(ctx: TenantServiceContext, i: StartDay): Promise<StartDayResult>;
   cancelDay(ctx: TenantServiceContext, i: CancelDay): Promise<void>;
+  vehicleDetail(ctx: TenantServiceContext, sessionId: string): Promise<VehicleDetail>;
+  openLoading(ctx: TenantServiceContext, i: SessionAction): Promise<ActionResult>;
+  closeLoading(ctx: TenantServiceContext, i: SessionAction): Promise<ActionResult>;
+  depart(ctx: TenantServiceContext, i: SessionAction): Promise<ActionResult>;
+  arrive(ctx: TenantServiceContext, i: ArriveInput): Promise<ActionResult>;
+  setOutOfService(ctx: TenantServiceContext, i: OutOfServiceInput): Promise<ActionResult>;
+  returnToService(ctx: TenantServiceContext, i: SessionAction): Promise<ActionResult>;
+  endSession(ctx: TenantServiceContext, i: SessionAction): Promise<ActionResult>;
 };
 
 export const shuttleRepository: ShuttleRepository = {
@@ -86,4 +94,24 @@ export const shuttleRepository: ShuttleRepository = {
     const { error } = await ctx.db.rpc('shuttle_cancel_day', { p_day_id: i.dayId, p_reason: i.reason });
     if (error) throw mapDbError(error);
   },
+
+  async vehicleDetail(ctx, sessionId) {
+    const { data, error } = await ctx.db.rpc('shuttle_vehicle_detail', { p_session: sessionId });
+    if (error) throw mapDbError(error);
+    return toVehicleDetail(data);
+  },
+  // Every action: the company comes from the session row inside the database; the key makes a double press harmless; the expected state refuses a stale press.
+  openLoading: (ctx, i) => callAction(ctx, 'shuttle_open_loading', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key }),
+  closeLoading: (ctx, i) => callAction(ctx, 'shuttle_close_loading', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key }),
+  depart: (ctx, i) => callAction(ctx, 'shuttle_depart', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key }),
+  arrive: (ctx, i) => callAction(ctx, 'shuttle_arrive', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key, p_occurred_at: i.occurredAt ?? null, p_reason: i.reason ?? null }),
+  setOutOfService: (ctx, i) => callAction(ctx, 'shuttle_set_out_of_service', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key, p_reason: i.reason }),
+  returnToService: (ctx, i) => callAction(ctx, 'shuttle_return_to_service', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key }),
+  endSession: (ctx, i) => callAction(ctx, 'shuttle_end_session', { p_session: i.sessionId, p_expected_state: i.expectedState, p_key: i.key }),
 };
+
+async function callAction(ctx: TenantServiceContext, fn: string, args: Record<string, unknown>): Promise<ActionResult> {
+  const { data, error } = await ctx.db.rpc(fn, args);
+  if (error) throw mapDbError(error);
+  return toActionResult(data);
+}

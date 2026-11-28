@@ -110,6 +110,12 @@ const RULES: Rule[] = [
   { match: /invalid service date/, code: 'validation', detail: 'shuttle_invalid_date' },
   { match: /invalid start station/, code: 'validation', detail: 'shuttle_invalid_start' },
   { match: /invalid vehicle list/, code: 'validation', detail: 'shuttle_invalid_vehicles' },
+  // continuous shuttle legs (0076)
+  { match: /^stale state: /, code: 'conflict', detail: 'shuttle_stale_state' },
+  { match: /action not allowed in state/, code: 'business_rule', detail: 'shuttle_action_not_allowed' },
+  { match: /invalid arrival time/, code: 'validation', detail: 'shuttle_invalid_arrival', fields: { occurredAt: 'shuttle_invalid_arrival' } },
+  { match: /idempotency key already used by another action/, code: 'validation', detail: 'shuttle_key_reused' },
+  { match: /nothing ahead of the last station/, code: 'business_rule', detail: 'shuttle_end_of_run' },
   // booking RPCs (0010)
   { match: /invalid phone number/, code: 'validation', detail: 'invalid_phone', fields: { phone: 'invalid_phone' } },
   { match: /idempotency key reused/, code: 'conflict', detail: 'idempotency_conflict' },
@@ -159,6 +165,8 @@ export function mapDbError(error: DbErrorLike): AppError {
     case '23505': // unique_violation
     case '23P01': // exclusion_violation
       return ruled ? withRule(ruled) : new AppError('conflict', { cause: error });
+    case 'P0001': // raise exception without a code: only our own ruled messages are meaningful (stale shuttle state); anything else stays internal
+      return ruled ? withRule(ruled) : new AppError('internal', { cause: error });
     case '23503': // foreign_key_violation
       return /update or delete on table/.test(text)
         ? new AppError('conflict', { detail: 'in_use', cause: error })

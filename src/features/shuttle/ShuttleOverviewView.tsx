@@ -75,7 +75,7 @@ export function ShuttleOverviewView(p: ShuttleOverviewProps) {
                     {p.overview!.sessions.map((x) => (
                       <tr key={x.id} className="border-t border-line-default">
                         <td className="p-3" dir="ltr">{x.runNo}</td>
-                        <td className="p-3" dir="ltr">{x.plate}</td>
+                        <td className="p-3" dir="ltr"><Link href={`/dashboard/shuttle/vehicles/${x.id}`} className="underline">{x.plate}</Link></td>
                         <td className="p-3">{x.driverName}</td>
                         <td className="p-3">{x.direction === 'forward' ? t.forward : t.backward}</td>
                         <td className="p-3">{x.stationName}</td>
